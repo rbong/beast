@@ -1,0 +1,5 @@
+#!/usr/bin/env luajit
+
+local parse_args = require("beast").cli.parse_args
+
+parse_args(arg)

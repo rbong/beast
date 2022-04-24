@@ -1,0 +1,4 @@
+;; 00:c000 Bank 0 comment body
+00:c100 bank_0_label_value
+;; 01:d000 Bank 1 comment body
+01:d100 bank_1_label_value
