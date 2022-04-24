@@ -24,15 +24,15 @@ BEAST can't run in CLI mode yet, but you can use the BEAST module:
 ```lua
 local beast = require("beast")
 
-# Parse a symbols file
+-- Parse a symbols file
 local sym = beast.symbol.create_symbols()
 beast.symbol.read_symbols(sym, io.open("/path/to/symbols.sym", "rb"))
 
-# Parse a ROM file
+-- Parse a ROM file
 local rom = beast.rom.create_rom()
 rom.read_rom(sym, io.open("/path/to/rom.gb", "rb"))
 
-# Output assembly code
+-- Output assembly code
 local formatter = beast.format.create_formatter()
 beast.format.create_asm(formatter, "/path/to/output/dir", rom, sym)
 ```
