@@ -30,7 +30,7 @@ beast.symbol.read_symbols(sym, io.open("/path/to/symbols.sym", "rb"))
 
 -- Parse a ROM file
 local rom = beast.rom.create_rom()
-rom.read_rom(sym, io.open("/path/to/rom.gb", "rb"))
+beast.rom.read_rom(rom, io.open("/path/to/rom.gb", "rb"))
 
 -- Output assembly code
 local formatter = beast.format.create_formatter()
