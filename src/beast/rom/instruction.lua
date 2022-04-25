@@ -4,8 +4,6 @@ local create_processor_register_operand = operand.create_processor_register_oper
 local create_dynamic_byte_operand = operand.create_dynamic_byte_operand
 local create_dynamic_octet_operand = operand.create_dynamic_octet_operand
 
--- TODO: handle signed instructions
-
 -- TODO: handle rgbasm halt with nop
 
 -- TODO: handle invalid instructions and do db instead
@@ -66,13 +64,13 @@ local function create_dynamic_op_instruction_parser(code, l_op, r_op, parse_op, 
    }
 end
 
-local function create_byte_op_instruction_parser(code, l_op, r_op, reference, offset)
+local function create_byte_op_instruction_parser(code, l_op, r_op, reference, offset, signed)
    return create_dynamic_op_instruction_parser(
       code,
       l_op,
       r_op,
       function (byte)
-         return create_dynamic_byte_operand(string.byte(byte), reference, false, offset)
+         return create_dynamic_byte_operand(string.byte(byte), reference, false, offset, signed)
       end,
       2,
       1)
@@ -100,13 +98,13 @@ local function create_octet_op_instruction_parser(code, l_op, r_op, reference)
       2)
 end
 
-local function create_sp_offset_op_instruction_parser(code, l_op, r_op, reference)
+local function create_sp_offset_op_instruction_parser(code, l_op, r_op)
    return create_dynamic_op_instruction_parser(
       code,
       l_op,
       r_op,
       function (byte)
-         return create_processor_register_operand("sp", reference, false, string.byte(byte))
+         return create_dynamic_byte_operand(string.byte(byte), false, false, "sp", true)
       end,
       2,
       1)
@@ -813,7 +811,7 @@ local instructions = {
       "ld", op.sp_register),
    -- add sp, e8
    [string.char(0xe8)] = create_byte_op_instruction_parser(
-      "add", op.sp_register),
+      "add", op.sp_register, nil, false, false, true),
    -- ld hl, sp+e8
    [string.char(0xf8)] = create_sp_offset_op_instruction_parser(
       "ld", op.hl_register_set),
@@ -854,19 +852,20 @@ local instructions = {
       "jp", op.nz_condition),
 
    -- jr e8
-   [string.char(0x18)] = create_byte_op_instruction_parser("jr"),
+   [string.char(0x18)] = create_byte_op_instruction_parser(
+      "jr", nil, nil, false, false, true),
    -- jr c, e8
    [string.char(0x38)] = create_byte_op_instruction_parser(
-      "jr", op.c_condition),
+      "jr", op.c_condition, nil, false, false, true),
    -- jr z, e8
    [string.char(0x28)] = create_byte_op_instruction_parser(
-      "jr", op.z_condition),
+      "jr", op.z_condition, nil, false, false, true),
    -- jr nc, e8
    [string.char(0x30)] = create_byte_op_instruction_parser(
-      "jr", op.nc_condition),
+      "jr", op.nc_condition, nil, false, false, true),
    -- jr nz, e8
    [string.char(0x20)] = create_byte_op_instruction_parser(
-      "jr", op.nz_condition),
+      "jr", op.nz_condition, nil, false, false, true),
 
    -- jp hl
    [string.char(0xe9)] = create_instruction_parser(

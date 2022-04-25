@@ -71,12 +71,13 @@ local function create_dynamic_octet_operand(value, reference, increment, offset)
    }
 end
 
-local function create_dynamic_byte_operand(value, reference, increment, offset)
+local function create_dynamic_byte_operand(value, reference, increment, offset, signed)
    return {
       value = value,
       reference = reference or false,
       increment = increment or 0,
       offset = offset or 0,
+      signed = signed,
       size = 1,
       is_dynamic = true
    }

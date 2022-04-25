@@ -481,20 +481,19 @@ describe("Rom", function()
             -- cp a, n8
             create_instruction("cp", op.a_register, create_dynamic_byte_operand(0x11), 2),
             -- add sp, e8
-            create_instruction("add", op.sp_register, create_dynamic_byte_operand(0x21), 2),
+            create_instruction("add", op.sp_register, create_dynamic_byte_operand(0x21, false, false, false, true), 2),
             -- ld hl, sp+e8
-            create_instruction("ld", op.hl_register_set, create_processor_register_operand("sp", false, false, 0x31), 2),
-            -- TODO: these bytes should actually be negative and relative
+            create_instruction("ld", op.hl_register_set, create_dynamic_byte_operand(0x31, false, false, "sp", true), 2),
             -- jr e8
-            create_instruction("jr", create_dynamic_byte_operand(0xfe), nil, 2),
+            create_instruction("jr", create_dynamic_byte_operand(0xfe, false, false, false, true), nil, 2),
             -- jr c, e8
-            create_instruction("jr", op.c_condition, create_dynamic_byte_operand(0xfc), 2),
+            create_instruction("jr", op.c_condition, create_dynamic_byte_operand(0xfc, false, false, false, true), 2),
             -- jr z, e8
-            create_instruction("jr", op.z_condition, create_dynamic_byte_operand(0xfa), 2),
+            create_instruction("jr", op.z_condition, create_dynamic_byte_operand(0xfa, false, false, false, true), 2),
             -- jr nc, e8
-            create_instruction("jr", op.nc_condition, create_dynamic_byte_operand(0xf8), 2),
+            create_instruction("jr", op.nc_condition, create_dynamic_byte_operand(0xf8, false, false, false, true), 2),
             -- jr nz, e8
-            create_instruction("jr", op.nz_condition, create_dynamic_byte_operand(0xf6), 2)
+            create_instruction("jr", op.nz_condition, create_dynamic_byte_operand(0xf6, false, false, false, true), 2)
       })
    end)
 
