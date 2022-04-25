@@ -6,19 +6,14 @@ local create_dynamic_octet_operand = operand.create_dynamic_octet_operand
 
 -- TODO: handle instructions which are offset from 0xff00
 
--- TODO: handle instructions with [a16] operands (offset not handled)
-
 -- TODO: handle signed instructions
 
 -- TODO: handle rgbasm halt with nop
-
--- TODO: optimize so that instructions are read only once
 
 -- TODO: refer to instructions for more ghost operands (rla, etc.)
 
 -- TODO: handle invalid instructions and do db instead
 -- instructions that are too short
--- STOP (anything but 0)
 -- LDH A [(anything not in HRAM)]
 -- LDH [(anything not in HRAM)], A
 
@@ -75,13 +70,13 @@ local function create_dynamic_op_instruction_parser(code, l_op, r_op, parse_op, 
    }
 end
 
-local function create_byte_op_instruction_parser(code, l_op, r_op, reference)
+local function create_byte_op_instruction_parser(code, l_op, r_op, reference, offset)
    return create_dynamic_op_instruction_parser(
       code,
       l_op,
       r_op,
       function (byte)
-         return create_dynamic_byte_operand(string.byte(byte), reference)
+         return create_dynamic_byte_operand(string.byte(byte), reference, false, offset)
       end,
       2,
       1)
@@ -103,7 +98,7 @@ local function create_octet_op_instruction_parser(code, l_op, r_op, reference)
             return nil
          end
 
-         return create_dynamic_octet_operand(byte2 * 0x100 + byte1, reference)
+         return create_dynamic_octet_operand(byte2 * 0x100 + byte1, reference, false, offset)
       end,
       3,
       2)
@@ -365,24 +360,24 @@ local instructions = {
 
    -- ldio a, [$ff00+a8]
    [string.char(0xf0)] = create_byte_op_instruction_parser(
-      "ldio", op.a_register),
+      "ldio", op.a_register, nil, true, 0xff00),
    -- ldio [$ff00+a8], a
    [string.char(0xe0)] = create_byte_op_instruction_parser(
-      "ldio", nil, op.a_register),
+      "ldio", nil, op.a_register, true, 0xff00),
 
    -- ld a, [a16]
    [string.char(0xfa)] = create_octet_op_instruction_parser(
-      "ld", op.a_register),
+      "ld", op.a_register, nil, true),
    -- ld [a16], a
    [string.char(0xea)] = create_octet_op_instruction_parser(
-      "ld", nil, op.a_register),
+      "ld", nil, op.a_register, true),
 
    -- ld a, [$ff00+c]
    [string.char(0xf2)] = create_instruction_parser(
-      "ld", op.a_register, op.c_register_reference),
+      "ld", op.a_register, op.c_register_hram_offset_reference),
    -- ld [$ff00+c], a
    [string.char(0xe2)] = create_instruction_parser(
-      "ld", op.c_register_reference, op.a_register),
+      "ld", op.c_register_hram_offset_reference, op.a_register),
 
    -- ld a, [hl+]
    [string.char(0x2a)] = create_instruction_parser(
@@ -828,7 +823,7 @@ local instructions = {
       "ld", op.hl_register_set),
    -- ld [a16], sp
    [string.char(0x08)] = create_octet_op_instruction_parser(
-      "ld", nil, op.sp_register),
+      "ld", nil, op.sp_register, true),
 
    -- Jump/Call Instructions --
 

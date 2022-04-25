@@ -99,6 +99,7 @@ local hl_register_set_op = create_processor_register_set_operand("hl")
 local sp_register_op = create_processor_register_operand("sp")
 
 local c_register_reference_op = create_processor_register_operand("c", true)
+local c_register_hram_offset_reference_op = create_processor_register_set_reference_operand("c", true, false, 0xff00)
 
 local bc_register_set_reference_op = create_processor_register_set_reference_operand("bc")
 local de_register_set_reference_op = create_processor_register_set_reference_operand("de")
@@ -135,6 +136,7 @@ local operands = {
    hl_register_set = hl_register_set_op,
    sp_register = sp_register_op,
    c_register_reference = c_register_reference_op,
+   c_register_hram_offset_reference = c_register_hram_offset_reference_op,
    bc_register_set_reference = bc_register_set_reference_op,
    de_register_set_reference = de_register_set_reference_op,
    hl_register_set_reference = hl_register_set_reference_op,

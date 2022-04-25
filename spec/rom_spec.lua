@@ -170,9 +170,9 @@ describe("Rom", function()
             -- ld [hl], l
             create_instruction("ld", op.hl_register_set_reference, op.l_register),
             -- ld a, [$ff00+c]
-            create_instruction("ld", op.a_register, op.c_register_reference),
+            create_instruction("ld", op.a_register, op.c_register_hram_offset_reference),
             -- ld [$ff00+c], a
-            create_instruction("ld", op.c_register_reference, op.a_register),
+            create_instruction("ld", op.c_register_hram_offset_reference, op.a_register),
             -- ld a, [hl+]
             create_instruction("ld", op.a_register, op.hl_inc_register_set_reference),
             -- ld a, [hl-]
@@ -458,11 +458,10 @@ describe("Rom", function()
             create_instruction("ld", op.h_register, create_dynamic_byte_operand(0x50), 2),
             -- ld l, d8
             create_instruction("ld", op.l_register, create_dynamic_byte_operand(0x60), 2),
-            -- TODO: these ldio instructions should be by reference
             -- ldio a, [$ff00+a8]
-            create_instruction("ldio", op.a_register, create_dynamic_byte_operand(0x70, false), 2),
+            create_instruction("ldio", op.a_register, create_dynamic_byte_operand(0x70, true, false, 0xff00), 2),
             -- ldio [$ff00+a8], a
-            create_instruction("ldio", create_dynamic_byte_operand(0x80, false), op.a_register, 2),
+            create_instruction("ldio", create_dynamic_byte_operand(0x80, true, false, 0xff00), op.a_register, 2),
             -- ld [hl], d8
             create_instruction("ld", op.hl_register_set_reference, create_dynamic_byte_operand(0x90), 2),
             -- add a, d8
@@ -503,11 +502,10 @@ describe("Rom", function()
       local rom = create_rom()
       read_rom(rom, io.open("./spec/fixtures/octet_op_instructions.gb", "rb"))
       assert.are.same(rom.banks[0].instructions, {
-            -- TODO: these next two instructions are supposed to have reference addresses
             -- ld a, [a16]
-            create_instruction("ld", op.a_register, create_dynamic_octet_operand(0x0000), 3),
+            create_instruction("ld", op.a_register, create_dynamic_octet_operand(0x0000, true), 3),
             -- ld [a16], a
-            create_instruction("ld", create_dynamic_octet_operand(0x0100), op.a_register, 3),
+            create_instruction("ld", create_dynamic_octet_operand(0x0100, true), op.a_register, 3),
             -- ld hl, d16
             create_instruction("ld", op.hl_register_set, create_dynamic_octet_operand(0x0200), 3),
             -- ld bc, d16
@@ -516,9 +514,8 @@ describe("Rom", function()
             create_instruction("ld", op.de_register_set, create_dynamic_octet_operand(0x0400), 3),
             -- ld sp, a16
             create_instruction("ld", op.sp_register, create_dynamic_octet_operand(0x0500), 3),
-            -- TODO: this instruction is supposed to have a reference addresse
             -- ld [a16], sp
-            create_instruction("ld", create_dynamic_octet_operand(0x0600), op.sp_register, 3),
+            create_instruction("ld", create_dynamic_octet_operand(0x0600, true), op.sp_register, 3),
             -- call a16
             create_instruction("call", create_dynamic_octet_operand(0x0700), nil, 3),
             -- call c, a16
