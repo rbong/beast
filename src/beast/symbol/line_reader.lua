@@ -28,7 +28,6 @@ local function read_rest(reader)
 end
 
 local function has_remaining(reader)
-   -- TODO: should this be using ~=?
    return reader.index ~= reader.len
 end
 
