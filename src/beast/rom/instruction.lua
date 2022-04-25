@@ -1,6 +1,5 @@
 local operand = require("beast/rom/operand")
 
-local create_processor_register_operand = operand.create_processor_register_operand
 local create_dynamic_byte_operand = operand.create_dynamic_byte_operand
 local create_dynamic_octet_operand = operand.create_dynamic_octet_operand
 
@@ -92,7 +91,7 @@ local function create_octet_op_instruction_parser(code, l_op, r_op, reference)
             return nil
          end
 
-         return create_dynamic_octet_operand(byte2 * 0x100 + byte1, reference, false, offset)
+         return create_dynamic_octet_operand(byte2 * 0x100 + byte1, reference)
       end,
       3,
       2)
