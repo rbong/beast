@@ -328,43 +328,43 @@ local instructions = {
    [string.char(0x75)] = create_instruction_parser(
       "ld", op.hl_register_set_reference, op.l_register),
 
-   -- "ld r8, d8" Instructions --
+   -- "ld r8, n8" Instructions --
 
-   -- ld a, d8
+   -- ld a, n8
    [string.char(0x3e)] = create_byte_op_instruction_parser(
       "ld", op.a_register),
-   -- ld b, d8
+   -- ld b, n8
    [string.char(0x06)] = create_byte_op_instruction_parser(
       "ld", op.b_register),
-   -- ld c, d8
+   -- ld c, n8
    [string.char(0x0e)] = create_byte_op_instruction_parser(
       "ld", op.c_register),
-   -- ld d, d8
+   -- ld d, n8
    [string.char(0x16)] = create_byte_op_instruction_parser(
       "ld", op.d_register),
-   -- ld e, d8
+   -- ld e, n8
    [string.char(0x1e)] = create_byte_op_instruction_parser(
       "ld", op.e_register),
-   -- ld h, d8
+   -- ld h, n8
    [string.char(0x26)] = create_byte_op_instruction_parser(
       "ld", op.h_register),
-   -- ld l, d8
+   -- ld l, n8
    [string.char(0x2e)] = create_byte_op_instruction_parser(
       "ld", op.l_register),
 
    -- Misc. "ld"/"ldh"/"ldio" Instructions --
 
-   -- ldio a, [$ff00+a8]
+   -- ldio a, [$ff00+n8]
    [string.char(0xf0)] = create_byte_op_instruction_parser(
       "ldio", op.a_register, nil, true, 0xff00),
-   -- ldio [$ff00+a8], a
+   -- ldio [$ff00+n8], a
    [string.char(0xe0)] = create_byte_op_instruction_parser(
       "ldio", nil, op.a_register, true, 0xff00),
 
-   -- ld a, [a16]
+   -- ld a, [n16]
    [string.char(0xfa)] = create_octet_op_instruction_parser(
       "ld", op.a_register, nil, true),
-   -- ld [a16], a
+   -- ld [n16], a
    [string.char(0xea)] = create_octet_op_instruction_parser(
       "ld", nil, op.a_register, true),
 
@@ -388,13 +388,13 @@ local instructions = {
    [string.char(0x1a)] = create_instruction_parser(
       "ld", op.a_register, op.de_register_set_reference),
 
-   -- ld hl, d16
+   -- ld hl, n8
    [string.char(0x21)] = create_octet_op_instruction_parser(
       "ld", op.hl_register_set),
-   -- ld bc, d16
+   -- ld bc, n8
    [string.char(0x01)] = create_octet_op_instruction_parser(
       "ld", op.bc_register_set),
-   -- ld de, d16
+   -- ld de, n8
    [string.char(0x11)] = create_octet_op_instruction_parser(
       "ld", op.de_register_set),
 
@@ -405,7 +405,7 @@ local instructions = {
    [string.char(0x32)] = create_instruction_parser(
       "ld", op.hl_dec_register_set_reference, op.a_register),
 
-   -- ld [hl], d8
+   -- ld [hl], n8
    [string.char(0x36)] = create_byte_op_instruction_parser(
       "ld", op.hl_register_set_reference),
 
@@ -444,7 +444,7 @@ local instructions = {
    [string.char(0x86)] = create_instruction_parser(
       "add", op.a_register, op.hl_register_set_reference),
 
-   -- add a, d8
+   -- add a, n8
    [string.char(0xc6)] = create_byte_op_instruction_parser(
       "add", op.a_register),
 
@@ -474,7 +474,7 @@ local instructions = {
    [string.char(0x8e)] = create_instruction_parser(
       "adc", op.a_register, op.hl_register_set_reference),
 
-   -- adc a, d8
+   -- adc a, n8
    [string.char(0xce)] = create_byte_op_instruction_parser(
       "adc", op.a_register),
 
@@ -504,7 +504,7 @@ local instructions = {
    [string.char(0x96)] = create_instruction_parser(
       "sub", op.a_register, op.hl_register_set_reference),
 
-   -- sub a, d8
+   -- sub a, n8
    [string.char(0xd6)] = create_byte_op_instruction_parser(
       "sub", op.a_register),
 
@@ -534,7 +534,7 @@ local instructions = {
    [string.char(0x9e)] = create_instruction_parser(
       "sbc", op.a_register, op.hl_register_set_reference),
 
-   -- sbc a, d8
+   -- sbc a, n8
    [string.char(0xde)] = create_byte_op_instruction_parser(
       "sbc", op.a_register),
 
@@ -581,7 +581,7 @@ local instructions = {
    [string.char(0xa6)] = create_instruction_parser(
       "and", op.a_register, op.hl_register_set_reference),
 
-   -- and a, d8
+   -- and a, n8
    [string.char(0xe6)] = create_byte_op_instruction_parser(
       "and", op.a_register),
 
@@ -611,7 +611,7 @@ local instructions = {
    [string.char(0xae)] = create_instruction_parser(
       "xor", op.a_register, op.hl_register_set_reference),
 
-   -- xor a, d8
+   -- xor a, n8
    [string.char(0xee)] = create_byte_op_instruction_parser(
       "xor", op.a_register),
 
@@ -641,7 +641,7 @@ local instructions = {
    [string.char(0xb6)] = create_instruction_parser(
       "or", op.a_register, op.hl_register_set_reference),
 
-   -- or a, d8
+   -- or a, n8
    [string.char(0xf6)] = create_byte_op_instruction_parser(
       "or", op.a_register),
 
@@ -671,7 +671,7 @@ local instructions = {
    [string.char(0xbe)] = create_instruction_parser(
       "cp", op.a_register, op.hl_register_set_reference),
 
-   -- cp a, d8
+   -- cp a, n8
    [string.char(0xfe)] = create_byte_op_instruction_parser(
       "cp", op.a_register),
 
@@ -808,63 +808,63 @@ local instructions = {
    [string.char(0x39)] = create_instruction_parser(
       "add", op.hl_register_set, op.sp_register),
 
-   -- ld sp, a16
+   -- ld sp, n16
    [string.char(0x31)] = create_octet_op_instruction_parser(
       "ld", op.sp_register),
-   -- add sp, a8
+   -- add sp, e8
    [string.char(0xe8)] = create_byte_op_instruction_parser(
       "add", op.sp_register),
-   -- ld hl, sp+a8
+   -- ld hl, sp+e8
    [string.char(0xf8)] = create_sp_offset_op_instruction_parser(
       "ld", op.hl_register_set),
-   -- ld [a16], sp
+   -- ld [n16], sp
    [string.char(0x08)] = create_octet_op_instruction_parser(
       "ld", nil, op.sp_register, true),
 
    -- Jump/Call Instructions --
 
-   -- call a16
+   -- call n16
    [string.char(0xcd)] = create_octet_op_instruction_parser("call"),
-   -- call c, a16
+   -- call c, n16
    [string.char(0xdc)] = create_octet_op_instruction_parser(
       "call", op.c_condition),
-   -- call z, a16
+   -- call z, n16
    [string.char(0xcc)] = create_octet_op_instruction_parser(
       "call", op.z_condition),
-   -- call nc, a16
+   -- call nc, n16
    [string.char(0xd4)] = create_octet_op_instruction_parser(
       "call", op.nc_condition),
-   -- call nz, a16
+   -- call nz, n16
    [string.char(0xc4)] = create_octet_op_instruction_parser(
       "call", op.nz_condition),
 
-   -- jp a16
+   -- jp n16
    [string.char(0xc3)] = create_octet_op_instruction_parser("jp"),
-   -- jp c, a16
+   -- jp c, n16
    [string.char(0xda)] = create_octet_op_instruction_parser(
       "jp", op.c_condition),
-   -- jp z, a16
+   -- jp z, n16
    [string.char(0xca)] = create_octet_op_instruction_parser(
       "jp", op.z_condition),
-   -- jp nc, a16
+   -- jp nc, n16
    [string.char(0xd2)] = create_octet_op_instruction_parser(
       "jp", op.nc_condition),
-   -- jp nz, a16
+   -- jp nz, n16
    [string.char(0xc2)] = create_octet_op_instruction_parser(
       "jp", op.nz_condition),
 
-   -- jr a8
+   -- jr e8
    [string.char(0x18)] = create_byte_op_instruction_parser("jr"),
-   -- jr c, a8
+   -- jr c, e8
    [string.char(0x38)] = create_byte_op_instruction_parser(
       "jr", op.c_condition),
-   -- jr z, a8
+   -- jr z, e8
    [string.char(0x28)] = create_byte_op_instruction_parser(
       "jr", op.z_condition),
-   -- jr nc, a8
+   -- jr nc, e8
    [string.char(0x30)] = create_byte_op_instruction_parser(
       "jr", op.nc_condition),
-   -- jr nz, a8
+   -- jr nz, e8
    [string.char(0x20)] = create_byte_op_instruction_parser(
       "jr", op.nz_condition),
 

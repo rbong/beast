@@ -253,7 +253,7 @@ describe("Rom", function()
             create_instruction("sbc", op.a_register, op.l_register),
             -- sbc a, [hl]
             create_instruction("sbc", op.a_register, op.hl_register_set_reference),
-            -- sbc a, d8
+            -- sbc a, n8
             create_instruction("sbc", op.hl_register_set, op.hl_register_set),
             -- add hl, hl
             create_instruction("sbc", op.hl_register_set, op.bc_register_set),
@@ -407,7 +407,7 @@ describe("Rom", function()
             create_instruction("ld", op.sp_register, op.hl_register_set),
             -- add hl, sp
             create_instruction("add", op.hl_register_set, op.sp_register),
-            -- jp a16
+            -- jp n16
             create_instruction("jp", op.hl_register_set_reference),
             -- rst 00h
             create_instruction("rst", op.vector_00h),
@@ -444,56 +444,56 @@ describe("Rom", function()
       local rom = create_rom()
       read_rom(rom, io.open("./spec/fixtures/byte_op_instructions.gb", "rb"))
       assert.are.same(rom.banks[0].instructions, {
-            -- ld a, d8
+            -- ld a, n8
             create_instruction("ld", op.a_register, create_dynamic_byte_operand(0x00), 2),
-            -- ld b, d8
+            -- ld b, n8
             create_instruction("ld", op.b_register, create_dynamic_byte_operand(0x10), 2),
-            -- ld c, d8
+            -- ld c, n8
             create_instruction("ld", op.c_register, create_dynamic_byte_operand(0x20), 2),
-            -- ld d, d8
+            -- ld d, n8
             create_instruction("ld", op.d_register, create_dynamic_byte_operand(0x30), 2),
-            -- ld e, d8
+            -- ld e, n8
             create_instruction("ld", op.e_register, create_dynamic_byte_operand(0x40), 2),
-            -- ld h, d8
+            -- ld h, n8
             create_instruction("ld", op.h_register, create_dynamic_byte_operand(0x50), 2),
-            -- ld l, d8
+            -- ld l, n8
             create_instruction("ld", op.l_register, create_dynamic_byte_operand(0x60), 2),
-            -- ldio a, [$ff00+a8]
+            -- ldio a, [$ff00+n8]
             create_instruction("ldio", op.a_register, create_dynamic_byte_operand(0x70, true, false, 0xff00), 2),
-            -- ldio [$ff00+a8], a
+            -- ldio [$ff00+n8], a
             create_instruction("ldio", create_dynamic_byte_operand(0x80, true, false, 0xff00), op.a_register, 2),
-            -- ld [hl], d8
+            -- ld [hl], n8
             create_instruction("ld", op.hl_register_set_reference, create_dynamic_byte_operand(0x90), 2),
-            -- add a, d8
+            -- add a, n8
             create_instruction("add", op.a_register, create_dynamic_byte_operand(0xa0), 2),
-            -- adc a, d8
+            -- adc a, n8
             create_instruction("adc", op.a_register, create_dynamic_byte_operand(0xb0), 2),
-            -- sub a, d8
+            -- sub a, n8
             create_instruction("sub", op.a_register, create_dynamic_byte_operand(0xc0), 2),
-            -- sbc a, d8
+            -- sbc a, n8
             create_instruction("sbc", op.a_register, create_dynamic_byte_operand(0xd0), 2),
-            -- and a, d8
+            -- and a, n8
             create_instruction("and", op.a_register, create_dynamic_byte_operand(0xe0), 2),
-            -- xor a, d8
+            -- xor a, n8
             create_instruction("xor", op.a_register, create_dynamic_byte_operand(0xf0), 2),
-            -- or a, d8
+            -- or a, n8
             create_instruction("or", op.a_register, create_dynamic_byte_operand(0x01), 2),
-            -- cp a, d8
+            -- cp a, n8
             create_instruction("cp", op.a_register, create_dynamic_byte_operand(0x11), 2),
-            -- add sp, a8
+            -- add sp, e8
             create_instruction("add", op.sp_register, create_dynamic_byte_operand(0x21), 2),
-            -- ld hl, sp+a8
+            -- ld hl, sp+e8
             create_instruction("ld", op.hl_register_set, create_processor_register_operand("sp", false, false, 0x31), 2),
             -- TODO: these bytes should actually be negative and relative
-            -- jr a8
+            -- jr e8
             create_instruction("jr", create_dynamic_byte_operand(0xfe), nil, 2),
-            -- jr c, a8
+            -- jr c, e8
             create_instruction("jr", op.c_condition, create_dynamic_byte_operand(0xfc), 2),
-            -- jr z, a8
+            -- jr z, e8
             create_instruction("jr", op.z_condition, create_dynamic_byte_operand(0xfa), 2),
-            -- jr nc, a8
+            -- jr nc, e8
             create_instruction("jr", op.nc_condition, create_dynamic_byte_operand(0xf8), 2),
-            -- jr nz, a8
+            -- jr nz, e8
             create_instruction("jr", op.nz_condition, create_dynamic_byte_operand(0xf6), 2)
       })
    end)
@@ -502,39 +502,39 @@ describe("Rom", function()
       local rom = create_rom()
       read_rom(rom, io.open("./spec/fixtures/octet_op_instructions.gb", "rb"))
       assert.are.same(rom.banks[0].instructions, {
-            -- ld a, [a16]
+            -- ld a, [n16]
             create_instruction("ld", op.a_register, create_dynamic_octet_operand(0x0000, true), 3),
-            -- ld [a16], a
+            -- ld [n16], a
             create_instruction("ld", create_dynamic_octet_operand(0x0100, true), op.a_register, 3),
-            -- ld hl, d16
+            -- ld hl, n8
             create_instruction("ld", op.hl_register_set, create_dynamic_octet_operand(0x0200), 3),
-            -- ld bc, d16
+            -- ld bc, n8
             create_instruction("ld", op.bc_register_set, create_dynamic_octet_operand(0x0300), 3),
-            -- ld de, d16
+            -- ld de, n8
             create_instruction("ld", op.de_register_set, create_dynamic_octet_operand(0x0400), 3),
-            -- ld sp, a16
+            -- ld sp, n16
             create_instruction("ld", op.sp_register, create_dynamic_octet_operand(0x0500), 3),
-            -- ld [a16], sp
+            -- ld [n16], sp
             create_instruction("ld", create_dynamic_octet_operand(0x0600, true), op.sp_register, 3),
-            -- call a16
+            -- call n16
             create_instruction("call", create_dynamic_octet_operand(0x0700), nil, 3),
-            -- call c, a16
+            -- call c, n16
             create_instruction("call", op.c_condition, create_dynamic_octet_operand(0x0800), 3),
-            -- call z, a16
+            -- call z, n16
             create_instruction("call", op.z_condition, create_dynamic_octet_operand(0x0900), 3),
-            -- call nc, a16
+            -- call nc, n16
             create_instruction("call", op.nc_condition, create_dynamic_octet_operand(0x0a00), 3),
-            -- call nz, a16
+            -- call nz, n16
             create_instruction("call", op.nz_condition, create_dynamic_octet_operand(0x0b00), 3),
-            -- jp a16
+            -- jp n16
             create_instruction("jp", create_dynamic_octet_operand(0x0c00), nil, 3),
-            -- jp c, a16
+            -- jp c, n16
             create_instruction("jp", op.c_condition, create_dynamic_octet_operand(0x0f00), 3),
-            -- jp z, a16
+            -- jp z, n16
             create_instruction("jp", op.z_condition, create_dynamic_octet_operand(0x1000), 3),
-            -- jp nc, a16
+            -- jp nc, n16
             create_instruction("jp", op.nc_condition, create_dynamic_octet_operand(0x1100), 3),
-            -- jp nz, a16
+            -- jp nz, n16
             create_instruction("jp", op.nz_condition, create_dynamic_octet_operand(0x1200), 3)
       })
    end)
