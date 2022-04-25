@@ -8,8 +8,6 @@ local create_dynamic_octet_operand = operand.create_dynamic_octet_operand
 
 -- TODO: handle rgbasm halt with nop
 
--- TODO: refer to instructions for more ghost operands (rla, etc.)
-
 -- TODO: handle invalid instructions and do db instead
 -- instructions that are too short
 -- LDH A [(anything not in HRAM)]
