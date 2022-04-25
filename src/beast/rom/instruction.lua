@@ -4,8 +4,6 @@ local create_processor_register_operand = operand.create_processor_register_oper
 local create_dynamic_byte_operand = operand.create_dynamic_byte_operand
 local create_dynamic_octet_operand = operand.create_dynamic_octet_operand
 
--- TODO: handle instructions which are offset from 0xff00
-
 -- TODO: handle signed instructions
 
 -- TODO: handle rgbasm halt with nop
