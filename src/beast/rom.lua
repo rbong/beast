@@ -7,6 +7,7 @@ return {
    create_bank = bank.create_bank,
    read_bank = bank.read_bank,
    create_instruction = instruction.create_instruction,
+   create_data = instruction.create_data,
    instructions = instruction.instructions,
    read_next_instruction = instruction.read_next_instruction,
    create_operand = operand.create_operand,

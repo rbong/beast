@@ -1,3 +1,5 @@
+-- TODO: add support for all instructions
+
 local function create_formatter()
    return {}
 end
@@ -41,10 +43,20 @@ local function format_op(formatter, op)
    error("Unrecognized operand")
 end
 
+-- TODO: handle more complex data
+local function format_data(formatter, instructions, instruction_index)
+   return 1, string.format("db $%02x", instructions[instruction_index].data[1])
+end
+
 local function format_instructions(formatter, instructions, instruction_index)
    local instruction = instructions[instruction_index]
 
    local code = instruction.code
+
+   if instruction.is_data then
+      return format_data(formatter, instructions, instruction_index)
+   end
+
    local l_op = instruction.l_op
    local r_op = instruction.r_op
 

@@ -3,6 +3,7 @@ local beast = require("beast")
 local create_rom = beast.rom.create_rom
 local read_rom = beast.rom.read_rom
 local create_instruction = beast.rom.create_instruction
+local create_data = beast.rom.create_data
 
 local op = beast.rom.operands
 
@@ -1056,6 +1057,32 @@ describe("Rom", function()
             create_instruction("set", create_dynamic_byte_operand(7), op.l_register, 2),
             -- set 7, [hl]
             create_instruction("set", create_dynamic_byte_operand(7), op.hl_register_set_reference, 2)
+      })
+   end)
+
+   it("reads data", function()
+      local rom = create_rom()
+      read_rom(rom, io.open("./spec/fixtures/non_instructions.gb", "rb"))
+      assert.are.same(rom.banks[0].instructions, {
+            -- All non-instruction bytes
+            create_data("db", { 0xd3 }),
+            create_data("db", { 0xe3 }),
+            create_data("db", { 0xe4 }),
+            create_data("db", { 0xf4 }),
+            create_data("db", { 0xdb }),
+            create_data("db", { 0xeb }),
+            create_data("db", { 0xec }),
+            create_data("db", { 0xfc }),
+            create_data("db", { 0xed }),
+            create_data("db", { 0xdd })
+      })
+   end)
+
+   it("reads cut off instruction", function()
+      local rom = create_rom()
+      read_rom(rom, io.open("./spec/fixtures/cut_off_instruction.gb", "rb"))
+      assert.are.same(rom.banks[0].instructions, {
+            create_data("db", { 0xcb })
       })
    end)
 end)

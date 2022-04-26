@@ -4,6 +4,7 @@ local beast = require("beast")
 
 local format = beast.format
 local create_instruction = beast.rom.create_instruction
+local create_data = beast.rom.create_data
 
 local op = beast.rom.operands
 
@@ -97,6 +98,18 @@ describe("format", function()
                1)
          },
          { 1, "jp $0eef" })
+   end)
+
+   it("formats data", function()
+      local formatter = format.create_formatter()
+      assert.are.same(
+         {
+            format.format_instructions(
+               formatter,
+               { create_data("db", { 0xcb }) },
+               1)
+         },
+         { 1, "db $cb" })
    end)
 
    -- TODO: test some of the previously unsupported operands

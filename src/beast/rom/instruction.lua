@@ -21,6 +21,15 @@ local function create_instruction(code, l_op, r_op, size)
    }
 end
 
+local function create_data(code, data, size)
+   return {
+      code = code,
+      data = data,
+      size = size or 1,
+      is_data = true
+   }
+end
+
 local function create_instruction_parser(code, l_op, r_op, size)
    local instruction = create_instruction(code, l_op, r_op, size)
 
@@ -44,20 +53,22 @@ local function create_dynamic_op_instruction_parser(code, l_op, r_op, parse_op, 
       size = size,
       op_size = op_size,
       read = function (file)
+         -- TODO: let parse function read for itself
+
          local bytes = file:read(op_size)
          if not bytes then
             return
          end
 
-         local parsed_op = parse_op(bytes)
+         local parsed_byte, parsed_op = parse_op(bytes)
          if not parsed_op then
-            return bytes
+            return parsed_byte
          end
 
          if l_op == nil then
-            return bytes, create_instruction(code, parsed_op, r_op, size)
+            return nil, create_instruction(code, parsed_op, r_op, size)
          else
-            return bytes, create_instruction(code, l_op, parsed_op, size)
+            return nil, create_instruction(code, l_op, parsed_op, size)
          end
       end
    }
@@ -69,7 +80,7 @@ local function create_byte_op_instruction_parser(code, l_op, r_op, reference, of
       l_op,
       r_op,
       function (byte)
-         return create_dynamic_byte_operand(string.byte(byte), reference, false, offset, signed)
+         return nil, create_dynamic_byte_operand(string.byte(byte), reference, false, offset, signed)
       end,
       2,
       1)
@@ -83,15 +94,15 @@ local function create_octet_op_instruction_parser(code, l_op, r_op, reference)
       function (bytes)
          local byte1 = string.byte(bytes)
          if byte1 == nil then
-            return nil
+            return
          end
 
          local byte2 = string.byte(bytes, 2)
          if byte2 == nil then
-            return nil
+            return byte1
          end
 
-         return create_dynamic_octet_operand(byte2 * 0x100 + byte1, reference)
+         return nil, create_dynamic_octet_operand(byte2 * 0x100 + byte1, reference)
       end,
       3,
       2)
@@ -103,7 +114,7 @@ local function create_sp_offset_op_instruction_parser(code, l_op, r_op)
       l_op,
       r_op,
       function (byte)
-         return create_dynamic_byte_operand(string.byte(byte), false, false, "sp", true)
+         return nil, create_dynamic_byte_operand(string.byte(byte), false, false, "sp", true)
       end,
       2,
       1)
@@ -1745,7 +1756,7 @@ local extended_instructions = {
 
 -- TODO: handle reading over end of bank
 local function read_next_instruction(file, max)
-   max = max or 4000
+   max = max or 0x4000
 
    if max == 0 then
       return
@@ -1757,15 +1768,15 @@ local function read_next_instruction(file, max)
    end
 
    local parser = instructions[byte]
-   local next_byte
+   local extra_byte
 
    if not parser and max > 1 then
       local extended = extended_instructions[byte]
       if extended then
-         next_byte = file:read(1)
+         extra_byte = file:read(1)
 
-         if next_byte then
-            parser = extended[next_byte]
+         if extra_byte then
+            parser = extended[extra_byte]
          end
       end
    end
@@ -1774,18 +1785,27 @@ local function read_next_instruction(file, max)
       parser = nil
    end
 
-   -- TODO: handle unrecognized instructions
+   -- TODO: test data
    if not parser then
-      return create_instruction("nop", nil, nil, next_byte and 2 or 1)
+      if extra_byte then
+         file:seek("cur", -1)
+      end
+      return create_data("db", { string.byte(byte) }, 1)
    end
 
-   local bytes, instruction = parser.read(file)
+   local parsed_byte, instruction = parser.read(file)
 
-   -- TODO: handle remaining bytes
-   -- TODO: handle bad instruction
+   -- Could not fully parse an instruction, this is data
    if not instruction then
-      local nbytes = bytes and #bytes or 0
-      return create_instruction("nop", nil, nil, (next_byte and 2 or 1) + nbytes)
+      if extra_byte then
+         file:seek("cur", -1)
+      end
+
+      if parsed_byte then
+         file:seek("cur", -1)
+      end
+
+      return create_data("db", { string.byte(byte) }, 1)
    end
 
    return instruction
@@ -1793,6 +1813,7 @@ end
 
 return {
    create_instruction = create_instruction,
+   create_data = create_data,
    instructions = instructions,
    extended_instructions = extended_instructions,
    read_next_instruction = read_next_instruction
