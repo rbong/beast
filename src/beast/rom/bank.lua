@@ -1,7 +1,7 @@
 local symbol = require("beast/symbol")
 
 local create_symbols = symbol.create_symbols
-local get_rom_area_regions = symbol.get_rom_area_regions
+local get_region_symbols = symbol.get_region_symbols
 
 local parse_next_instruction = require("beast/rom/instruction").parse_next_instruction
 
@@ -25,23 +25,21 @@ local function parse_bank_code_regions(bank)
    -- TODO: detect new code locaions
    local code_locations = {}
 
-   local regions = bank.symbols.rom_banks[bank.bank_num]
-   if regions then
-      for address, region in get_rom_area_regions(regions) do
-         if region.region_type == "code" then
-            local remaining = region.size
+   for region in get_region_symbols(bank.symbols, bank.bank_num) do
+      if region.region_type == "code" then
+         local address = region.address
+         local remaining = region.size
 
-            while remaining > 0 do
-               local instruction = parse_next_instruction(bank.data, address, remaining)
+         while remaining > 0 do
+            local instruction = parse_next_instruction(bank.data, address, remaining)
 
-               if instruction then
-                  local size = region.size
-                  remaining = remaining - size
-                  address = address + size
-               else
-                  remaining = remaining - 1
-                  address = address + 1
-               end
+            if instruction then
+               local size = region.size
+               remaining = remaining - size
+               address = address + size
+            else
+               remaining = remaining - 1
+               address = address + 1
             end
          end
       end

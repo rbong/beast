@@ -1,20 +1,35 @@
-local mem_area = require("beast/symbol/memory_area")
 local line_reader = require("beast/symbol/line_reader")
-
-local add_mem_area_label = mem_area.add_mem_area_label
-local add_mem_area_comment = mem_area.add_mem_area_comment
-local create_rom_symbols = mem_area.create_rom_symbols
-local set_rom_area_region = mem_area.set_rom_area_region
-local add_rom_area_replacement = mem_area.add_rom_area_replacement
-local set_rom_area_left_op = mem_area.set_rom_area_left_op
-local set_rom_area_right_op = mem_area.set_rom_area_right_op
-local create_ram_symbols = mem_area.create_ram_symbols
 
 local create_line_reader = line_reader.create_line_reader
 local read_pattern = line_reader.read_pattern
 local read_hex_pattern = line_reader.read_hex_pattern
 local read_rest = line_reader.read_rest
 local has_remaining = line_reader.has_remaining
+
+local function create_rom_symbols(bank_num)
+   return {
+      labels = {},
+      comments = {},
+      -- TODO: specify duplicate regions/replacements not allowed
+      regions = {},
+      _regions_list = {},
+      replacements = {},
+      operands = {},
+      bank_num = bank_num,
+      is_ram = false,
+      is_rom = true
+   }
+end
+
+local function create_ram_symbols(bank_num)
+   return {
+      labels = {},
+      comments = {},
+      bank_num = bank_num,
+      is_rom = false,
+      is_ram = true
+   }
+end
 
 local function create_symbols(options)
    return {
@@ -116,7 +131,8 @@ local function add_replacement_symbol(sym, bank_num, address, size, body)
    if mem.is_ram then
       error(string.format("Attempted to add replacement at RAM target: %x:%x", bank_num, address))
    end
-   add_rom_area_replacement(mem, address, size, body)
+
+   mem.replacements[address] = { size = size, body = body }
 end
 
 local function set_left_op_symbol(sym, bank_num, address, value)
@@ -124,7 +140,12 @@ local function set_left_op_symbol(sym, bank_num, address, value)
    if mem.is_ram then
       error(string.format("Attempted to add left operand at RAM target: %x:%x", bank_num, address))
    end
-   set_rom_area_left_op(mem, address, value)
+
+   if mem.operands[address] then
+      mem.operands[address].l_op = value
+   else
+      mem.operands[address] = { l_op = value }
+   end
 end
 
 local function set_right_op_symbol(sym, bank_num, address, value)
@@ -132,15 +153,32 @@ local function set_right_op_symbol(sym, bank_num, address, value)
    if mem.is_ram then
       error(string.format("Attempted to add right operand at RAM target: %x:%x", bank_num, address))
    end
-   set_rom_area_right_op(mem, address, value)
+
+   if mem.operands[address] then
+      mem.operands[address].r_op = value
+   else
+      mem.operands[address] = { r_op = value }
+   end
 end
 
 local function add_comment_symbol(sym, bank_num, address, body)
-   add_mem_area_comment(get_memory_area(sym, bank_num, address), address, body)
+   local comments = get_memory_area(sym, bank_num, address).comments
+
+   if comments[address] then
+      table.insert(comments[address], body)
+   else
+      comments[address] = { body }
+   end
 end
 
 local function add_label_symbol(sym, bank_num, address, body)
-   add_mem_area_label(get_memory_area(sym, bank_num, address), address, body)
+   local labels = get_memory_area(sym, bank_num, address).labels
+
+   if labels[address] then
+      table.insert(labels[address], body)
+   else
+      labels[address] = { body }
+   end
 end
 
 local function add_region_symbol(sym, bank_num, address, region_type, size)
@@ -148,7 +186,41 @@ local function add_region_symbol(sym, bank_num, address, region_type, size)
    if mem.is_ram then
       error(string.format("Attempted to add region to RAM target: %x:%x", bank_num, address))
    end
-   set_rom_area_region(mem, address, region_type, size)
+
+   local region = { region_type = region_type, address = address, size = size }
+   mem.regions[address] = region
+   -- Add the region to a list so it can be iterated through
+   table.insert(mem._regions_list, region)
+end
+
+local function get_region_symbols(sym, bank_num)
+   local i = 1
+   local regions
+   local regions_list
+
+   if sym.rom_banks[bank_num] then
+      regions = sym.rom_banks[bank_num].regions
+      regions_list = sym.rom_banks[bank_num]._regions_list
+   end
+
+   return function ()
+      if not regions then
+         return
+      end
+
+      local region
+      -- Skip over regions that were overwritten
+      repeat
+         region = regions_list[i]
+         i = i + 1
+      until not region or regions[region[1]]
+
+      if not region then
+         return
+      end
+
+      return region[1], region[2]
+   end
 end
 
 local function _read_replacement(sym, reader, bank_num, address)
@@ -269,19 +341,19 @@ local function read_symbols(sym, file)
    -- Check regions for overlapping
    if not sym.options.no_warn_overlaps then
       for bank_num, bank in pairs(sym.rom_banks) do
-         local definitions = bank.regions.definitions
+         local regions = bank.regions
 
-         for address, definition in pairs(definitions) do
-            for i = address + 1, address + definition.size - 1 do
-               local conflict = definitions[i]
+         for address, region in pairs(regions) do
+            for i = address + 1, address + region.size - 1 do
+               local conflict = regions[i]
 
                if conflict then
                   io.stderr:write(string.format(
                         "Warning: detected region overlap between %02x:%04x:%04x .%s and %02x:%04x:%04x .%s\n",
                         bank_num,
                         address,
-                        definition.size,
-                        definition.region_type,
+                        region.size,
+                        region.region_type,
                         bank_num,
                         i,
                         conflict.size,
@@ -303,5 +375,6 @@ return {
    add_comment_symbol = add_comment_symbol,
    add_label_symbol = add_label_symbol,
    add_region_symbol = add_region_symbol,
+   get_region_symbols = get_region_symbols,
    read_symbols = read_symbols
 }
