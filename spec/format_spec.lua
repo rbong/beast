@@ -23,7 +23,7 @@ describe("format", function()
       local formatter = format.create_formatter()
       assert.are.same(
          format.format_bank_header(formatter, 2),
-         "SECTION \"ROM Bank $002\", ROMX[$8000], BANK[$002]")
+         "SECTION \"ROM Bank $002\", ROMX[$4000], BANK[$002]")
    end)
 
    it("formats basic instruction", function()

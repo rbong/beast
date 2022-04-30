@@ -96,9 +96,8 @@ local function format_bank_header(formatter, bank_num)
    end
 
    return string.format(
-      "SECTION \"ROM Bank $%03x\", ROMX[$%04x], BANK[$%03x]",
+      "SECTION \"ROM Bank $%03x\", ROMX[$4000], BANK[$%03x]",
       bank_num,
-      bank_num * 0x4000,
       bank_num)
 end
 
