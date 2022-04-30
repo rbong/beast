@@ -13,7 +13,7 @@ local function create_byte_op_instruction_parser(instruc)
          if not char then
             return
          end
-         return { instruc = instruc, data = char, size = 2 }
+         return { instruc = instruc, data = string.byte(char), size = 2 }
       end
    }
 end
@@ -34,7 +34,26 @@ local function create_octet_op_instruction_parser(instruc)
             return
          end
 
-         return { instruc = instruc, data = { char1, char2 }, size = 3 }
+         local value = string.byte(char2) * 0x100 + string.byte(char1)
+
+         return { instruc = instruc, data = value, size = 3 }
+      end
+   }
+end
+
+local function create_signed_op_instruction_parser(instruc)
+   return {
+      size = 2,
+      parse = function (data, index)
+         local char = data:sub(index, index)
+         if not char then
+            return
+         end
+
+         local byte = string.byte(char)
+         local value = (byte >= 0x80) and (byte - 256) or byte
+
+         return { instruc = instruc, data = value, size = 2 }
       end
    }
 end
@@ -661,8 +680,8 @@ local instruction_parsers = {
 
    -- Stack Instructions --
 
-   [string.char(0xe8)] = create_byte_op_instruction_parser("add sp, e8"),
-   [string.char(0xf8)] = create_byte_op_instruction_parser("ld hl, sp+e8"),
+   [string.char(0xe8)] = create_signed_op_instruction_parser("add sp, e8"),
+   [string.char(0xf8)] = create_signed_op_instruction_parser("ld hl, sp+e8"),
 
    [string.char(0x31)] = create_octet_op_instruction_parser("ld sp, n16"),
    [string.char(0x08)] = create_octet_op_instruction_parser("ld [n16], sp"),
@@ -675,11 +694,11 @@ local instruction_parsers = {
    [string.char(0xd4)] = create_octet_op_instruction_parser("call nc, n16"),
    [string.char(0xc4)] = create_octet_op_instruction_parser("call nz, n16"),
 
-   [string.char(0x18)] = create_byte_op_instruction_parser("jr e8"),
-   [string.char(0x38)] = create_byte_op_instruction_parser("jr c, e8"),
-   [string.char(0x28)] = create_byte_op_instruction_parser("jr z, e8"),
-   [string.char(0x30)] = create_byte_op_instruction_parser("jr nc, e8"),
-   [string.char(0x20)] = create_byte_op_instruction_parser("jr nz, e8"),
+   [string.char(0x18)] = create_signed_op_instruction_parser("jr e8"),
+   [string.char(0x38)] = create_signed_op_instruction_parser("jr c, e8"),
+   [string.char(0x28)] = create_signed_op_instruction_parser("jr z, e8"),
+   [string.char(0x30)] = create_signed_op_instruction_parser("jr nc, e8"),
+   [string.char(0x20)] = create_signed_op_instruction_parser("jr nz, e8"),
 
    [string.char(0xc3)] = create_octet_op_instruction_parser("jp n16"),
    [string.char(0xda)] = create_octet_op_instruction_parser("jp c, n16"),

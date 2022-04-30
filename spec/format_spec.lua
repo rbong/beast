@@ -52,7 +52,7 @@ describe("format", function()
       assert.are.same(
          format.format_instruction(
             formatter,
-            { instruc = "ld a, n8", data = string.char(0xbf) }),
+            { instruc = "ld a, n8", data = 0xbf }),
          "ld a, $bf")
    end)
 
@@ -61,7 +61,7 @@ describe("format", function()
       assert.are.same(
          format.format_instruction(
             formatter,
-            { instruc = "ld a, [n16]", data = { string.char(0xef), string.char(0xbe) } }),
+            { instruc = "ld a, [n16]", data = 0xbeef }),
          "ld a, [$beef]")
    end)
 
@@ -70,7 +70,7 @@ describe("format", function()
       assert.are.same(
          format.format_instruction(
             formatter,
-            { instruc = "add sp, e8", data = string.char(1) }),
+            { instruc = "add sp, e8", data = 1 }),
          "add sp, 1")
    end)
 
@@ -79,25 +79,7 @@ describe("format", function()
       assert.are.same(
          format.format_instruction(
             formatter,
-            { instruc = "add sp, e8", data = string.char(0xff) }),
+            { instruc = "add sp, e8", data = -1 }),
          "add sp, -1")
-   end)
-
-   it("formats positive signed instruction with sign", function ()
-      local formatter = format.create_formatter()
-      assert.are.same(
-         format.format_instruction(
-            formatter,
-            { instruc = "ld hl, sp+e8", data = string.char(1) }),
-         "ld hl, sp+1")
-   end)
-
-   it("formats negative signed instruction with sign", function ()
-      local formatter = format.create_formatter()
-      assert.are.same(
-         format.format_instruction(
-            formatter,
-            { instruc = "ld hl, sp+e8", data = string.char(0xff) }),
-         "ld hl, sp-1")
    end)
 end)
