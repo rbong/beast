@@ -1,4 +1,7 @@
-local create_symbols = require("beast/symbol").create_symbols
+local symbol = require("beast/symbol")
+
+local create_symbols = symbol.create_symbols
+local get_rom_area_regions = symbol.get_rom_area_regions
 
 local parse_next_instruction = require("beast/rom/instruction").parse_next_instruction
 
@@ -18,7 +21,36 @@ local function read_bank(bank, file)
    bank.size = bank.data and #bank.data or 0
 end
 
-local function parse_bank_instructions(bank, address, max)
+local function parse_bank_code_regions(bank)
+   -- TODO: detect new code locaions
+   local code_locations = {}
+
+   local regions = bank.symbols.rom_banks[bank.bank_num]
+   if regions then
+      for address, region in get_rom_area_regions(regions) do
+         if region.region_type == "code" then
+            local remaining = region.size
+
+            while remaining > 0 do
+               local instruction = parse_next_instruction(bank.data, address, remaining)
+
+               if instruction then
+                  local size = region.size
+                  remaining = remaining - size
+                  address = address + size
+               else
+                  remaining = remaining - 1
+                  address = address + 1
+               end
+            end
+         end
+      end
+   end
+
+   return code_locations
+end
+
+local function parse_bank_code_location(bank, address, max)
    local instructions = bank.instructions
    local nread = 0
 
@@ -27,7 +59,7 @@ local function parse_bank_instructions(bank, address, max)
    while max > 0 do
       local instruction = parse_next_instruction(bank.data, address, max)
 
-      -- -- TODO: stop on non-instructions
+      -- TODO: return on data
       -- if not instruction then
       --    return nread
       -- end
@@ -45,6 +77,11 @@ local function parse_bank_instructions(bank, address, max)
       address = address + size
       max = max - size
       nread = nread + 1
+
+      -- TODO: return on code end
+      -- if instruction.code_end then
+      --    return nread
+      -- end
    end
 
    return nread
@@ -53,5 +90,6 @@ end
 return {
    create_bank = create_bank,
    read_bank = read_bank,
-   parse_bank_instructions = parse_bank_instructions
+   parse_bank_code_regions = parse_bank_code_regions,
+   parse_bank_code_location = parse_bank_code_location
 }
