@@ -36,7 +36,6 @@ build = {
       ["beast/rom/instruction"] = "src/beast/rom/instruction.lua",
       ["beast/rom/rom"] = "src/beast/rom/rom.lua",
       ["beast/symbol"] = "src/beast/symbol.lua",
-      ["beast/symbol/line_reader"] = "src/beast/symbol/line_reader.lua",
       ["beast/symbol/symbol"] = "src/beast/symbol/symbol.lua"
    },
    install = {

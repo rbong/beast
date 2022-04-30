@@ -1,10 +1,35 @@
-local line_reader = require("beast/symbol/line_reader")
+local function create_line_reader(line)
+   return {
+      index = 1,
+      line = line,
+      len = #line
+   }
+end
 
-local create_line_reader = line_reader.create_line_reader
-local read_pattern = line_reader.read_pattern
-local read_hex_pattern = line_reader.read_hex_pattern
-local read_rest = line_reader.read_rest
-local has_remaining = line_reader.has_remaining
+local function read_pattern(reader, pattern, offset)
+   local _, pattern_end, group = reader.line:find(pattern, reader.index)
+   if pattern_end then
+      pattern_end = pattern_end + 1
+      reader.index = pattern_end + (offset or 0)
+   end
+   return pattern_end, group
+end
+
+local function read_hex_pattern(reader, pattern, offset)
+   local pattern_end, group = read_pattern(reader, pattern, offset)
+   if group then
+      group = tonumber(group, 16)
+   end
+   return pattern_end, group
+end
+
+local function read_rest(reader)
+   return reader.len, reader.line:sub(reader.index)
+end
+
+local function reader_has_remaining(reader)
+   return reader.index ~= reader.len
+end
 
 local function create_rom_symbols(bank_num)
    return {
@@ -230,7 +255,7 @@ local function _read_replacement(sym, reader, bank_num, address)
    end
 
    local space_end = read_pattern(reader, "^%s+")
-   if not space_end and has_remaining(reader) then
+   if not space_end and reader_has_remaining(reader) then
       -- Unrecognized data after size
       return
    end
@@ -242,7 +267,7 @@ end
 
 local function _read_left_op(sym, reader, bank_num, address)
    local space_end = read_pattern(reader, "^%s+")
-   if not space_end and has_remaining(reader) then
+   if not space_end and reader_has_remaining(reader) then
       -- Unrecognized data after l_op
       return
    end
@@ -253,7 +278,7 @@ end
 
 local function _read_right_op(sym, reader, bank_num, address)
    local space_end = read_pattern(reader, "^%s+")
-   if not space_end and has_remaining(reader) then
+   if not space_end and reader_has_remaining(reader) then
       -- Unrecognized data after l_op
       return
    end
@@ -264,7 +289,7 @@ end
 
 local function _read_comment(sym, reader, bank_num, address)
    local space_end = read_pattern(reader, "^%s+")
-   if not space_end and has_remaining(reader) then
+   if not space_end and reader_has_remaining(reader) then
       -- Unrecognized data after address
       return
    end
