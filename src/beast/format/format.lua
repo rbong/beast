@@ -101,8 +101,7 @@ local function format_bank_header(formatter, bank_num)
       bank_num)
 end
 
-local function format_instructions(formatter, instructions, instruction_index)
-   local instruction = instructions[instruction_index]
+local function format_instruction(formatter, instruction)
    local instruction_type = instruction.instruc
 
    if instruction_type then
@@ -110,16 +109,19 @@ local function format_instructions(formatter, instructions, instruction_index)
 
 			-- Format complex instruction
 			if instruction_formatter then
-				 return 1, instruction_formatter(instruction.data)
+				 return instruction_formatter(instruction.data)
 			end
 
       -- Format basic instruction
-      return 1, instruction_type
+      return instruction_type
    end
 
-   -- Format data
-   -- TODO: handle more complex data
-   return 1, string.format("db $%02x", string.byte(instruction.data[1]))
+   error(string.format("Unrecognized instruction: %s", instruction.instruc))
+end
+
+local function format_data(formatter, data, address)
+   local index = address + 1
+   return 1, string.format("db $%02x", string.byte(data:sub(index, index)))
 end
 
 -- TODO: rename
@@ -138,24 +140,25 @@ local function create_asm(formatter, base_path, rom, sym)
       file:write(format_bank_header(formatter, bank_num))
       file:write("\n\n")
 
+      local size = bank.size
       local instructions = bank.instructions
-      local instruction_index = 1
-      local ninstructions = #instructions
+      local data = bank.data
 
-      while instruction_index <= ninstructions do
-         local instructions_read, instruction_values = format_instructions(formatter, instructions, instruction_index)
+      local address = 0
 
-         if instructions_read == 1 then
-            file:write(instruction_values)
-            file:write("\n")
+      while address < size do
+         local instruction = instructions[address]
+
+         if instruction then
+            file:write(format_instruction(formatter, instruction))
+            address = address + (instruction.size or 1)
          else
-            for _, instruction_value in pairs(instruction_values) do
-               file:write(instruction_value)
-               file:write("\n")
-            end
+            local data_size, formatted_data = format_data(formatter, data, address)
+            file:write(formatted_data)
+            address = address + data_size
          end
 
-         instruction_index = instruction_index + instructions_read
+         file:write("\n")
       end
 
       file:close()
@@ -165,6 +168,7 @@ end
 return {
    create_formatter = create_formatter,
    format_bank_header = format_bank_header,
-   format_instructions = format_instructions,
+   format_instruction = format_instruction,
+   format_data = format_data,
    create_asm = create_asm
 }

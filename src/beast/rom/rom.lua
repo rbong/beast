@@ -4,6 +4,7 @@ local bank_module = require("beast/rom/bank")
 
 local create_bank = bank_module.create_bank
 local read_bank = bank_module.read_bank
+local parse_bank_instructions = bank_module.parse_bank_instructions
 
 local function create_rom(symbols, options)
    return {
@@ -27,6 +28,11 @@ local function read_rom(rom, file)
 
       rom.banks[bank_num] = bank
       rom.nbanks = bank_num + 1
+   end
+
+   for _, bank in pairs(rom.banks) do
+      -- TODO: handle symbols, regions, etc.
+      parse_bank_instructions(bank, 0)
    end
 end
 

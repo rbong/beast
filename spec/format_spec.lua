@@ -29,23 +29,20 @@ describe("format", function()
    it("formats basic instruction", function()
       local formatter = format.create_formatter()
       assert.are.same(
-         {
-            format.format_instructions(
-               formatter,
-               { { instruc = "inc a" } },
-               1)
-         },
-         { 1, "inc a" })
+         format.format_instruction(
+            formatter,
+            { instruc = "inc a" }),
+         "inc a")
    end)
 
    it("formats data", function()
       local formatter = format.create_formatter()
       assert.are.same(
          {
-            format.format_instructions(
+            format.format_data(
                formatter,
-               { { data = { string.char(0xcb) }, size = 1 } },
-               1)
+               string.char(0xcb),
+               0)
          },
          { 1, "db $cb" })
    end)
@@ -53,72 +50,54 @@ describe("format", function()
    it("formats byte instruction", function ()
       local formatter = format.create_formatter()
       assert.are.same(
-         {
-            format.format_instructions(
-               formatter,
-               { { instruc = "ld a, n8", data = string.char(0xbf) } },
-               1)
-         },
-         { 1, "ld a, $bf" })
+         format.format_instruction(
+            formatter,
+            { instruc = "ld a, n8", data = string.char(0xbf) }),
+         "ld a, $bf")
    end)
 
    it("formats octet instruction", function ()
       local formatter = format.create_formatter()
       assert.are.same(
-         {
-            format.format_instructions(
-               formatter,
-               { { instruc = "ld a, [n16]", data = { string.char(0xef), string.char(0xbe) } } },
-               1)
-         },
-         { 1, "ld a, [$beef]" })
+         format.format_instruction(
+            formatter,
+            { instruc = "ld a, [n16]", data = { string.char(0xef), string.char(0xbe) } }),
+         "ld a, [$beef]")
    end)
 
    it("formats positive signed instruction", function ()
       local formatter = format.create_formatter()
       assert.are.same(
-         {
-            format.format_instructions(
-               formatter,
-               { { instruc = "add sp, e8", data = string.char(1) } },
-               1)
-         },
-         { 1, "add sp, 1" })
+         format.format_instruction(
+            formatter,
+            { instruc = "add sp, e8", data = string.char(1) }),
+         "add sp, 1")
    end)
 
    it("formats negative signed instruction", function ()
       local formatter = format.create_formatter()
       assert.are.same(
-         {
-            format.format_instructions(
-               formatter,
-               { { instruc = "add sp, e8", data = string.char(0xff) } },
-               1)
-         },
-         { 1, "add sp, -1" })
+         format.format_instruction(
+            formatter,
+            { instruc = "add sp, e8", data = string.char(0xff) }),
+         "add sp, -1")
    end)
 
    it("formats positive signed instruction with sign", function ()
       local formatter = format.create_formatter()
       assert.are.same(
-         {
-            format.format_instructions(
-               formatter,
-               { { instruc = "ld hl, sp+e8", data = string.char(1) } },
-               1)
-         },
-         { 1, "ld hl, sp+1" })
+         format.format_instruction(
+            formatter,
+            { instruc = "ld hl, sp+e8", data = string.char(1) }),
+         "ld hl, sp+1")
    end)
 
    it("formats negative signed instruction with sign", function ()
       local formatter = format.create_formatter()
       assert.are.same(
-         {
-            format.format_instructions(
-               formatter,
-               { { instruc = "ld hl, sp+e8", data = string.char(0xff) } },
-               1)
-         },
-         { 1, "ld hl, sp-1" })
+         format.format_instruction(
+            formatter,
+            { instruc = "ld hl, sp+e8", data = string.char(0xff) }),
+         "ld hl, sp-1")
    end)
 end)

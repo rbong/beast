@@ -5,34 +5,36 @@
 -- LDH A [(anything not in HRAM)]
 -- LDH [(anything not in HRAM)], A
 
-local function create_byte_op_instruction_reader(instruc)
+local function create_byte_op_instruction_parser(instruc)
    return {
       size = 2,
-      read = function (file)
-         local char = file:read(1)
+      parse = function (data, index)
+         local char = data:sub(index, index)
          if not char then
             return
          end
-         return nil, { instruc = instruc, data = char, size = 2 }
+         return { instruc = instruc, data = char, size = 2 }
       end
    }
 end
 
-local function create_octet_op_instruction_reader(instruc)
+local function create_octet_op_instruction_parser(instruc)
    return {
       size = 3,
-      read = function (file)
-         local char1 = file:read(1)
+      parse = function (data, index)
+         local char1 = data:sub(index, index)
          if not char1 then
             return
          end
 
-         local char2 = file:read(1)
+         index = index + 1
+
+         local char2 = data:sub(index, index)
          if not char2 then
-            return char1
+            return
          end
 
-         return nil, { instruc = instruc, data = { char1, char2 }, size = 3 }
+         return { instruc = instruc, data = { char1, char2 }, size = 3 }
       end
    }
 end
@@ -620,95 +622,98 @@ local extended_instructions = {
    }
 }
 
-local instruction_readers = {
+local instruction_parsers = {
    -- "ld" Instructions --
 
-   [string.char(0x3e)] = create_byte_op_instruction_reader("ld a, n8"),
-   [string.char(0x06)] = create_byte_op_instruction_reader("ld b, n8"),
-   [string.char(0x0e)] = create_byte_op_instruction_reader("ld c, n8"),
-   [string.char(0x16)] = create_byte_op_instruction_reader("ld d, n8"),
-   [string.char(0x1e)] = create_byte_op_instruction_reader("ld e, n8"),
-   [string.char(0x26)] = create_byte_op_instruction_reader("ld h, n8"),
-   [string.char(0x2e)] = create_byte_op_instruction_reader("ld l, n8"),
+   [string.char(0x3e)] = create_byte_op_instruction_parser("ld a, n8"),
+   [string.char(0x06)] = create_byte_op_instruction_parser("ld b, n8"),
+   [string.char(0x0e)] = create_byte_op_instruction_parser("ld c, n8"),
+   [string.char(0x16)] = create_byte_op_instruction_parser("ld d, n8"),
+   [string.char(0x1e)] = create_byte_op_instruction_parser("ld e, n8"),
+   [string.char(0x26)] = create_byte_op_instruction_parser("ld h, n8"),
+   [string.char(0x2e)] = create_byte_op_instruction_parser("ld l, n8"),
 
-   [string.char(0xfa)] = create_octet_op_instruction_reader("ld a, [n16]"),
-   [string.char(0xea)] = create_octet_op_instruction_reader("ld [n16], a"),
+   [string.char(0xfa)] = create_octet_op_instruction_parser("ld a, [n16]"),
+   [string.char(0xea)] = create_octet_op_instruction_parser("ld [n16], a"),
 
-   [string.char(0xf0)] = create_byte_op_instruction_reader("ldio a, [$ff00+n8]"),
-   [string.char(0xe0)] = create_byte_op_instruction_reader("ldio [$ff00+n8], a"),
+   [string.char(0xf0)] = create_byte_op_instruction_parser("ldio a, [$ff00+n8]"),
+   [string.char(0xe0)] = create_byte_op_instruction_parser("ldio [$ff00+n8], a"),
 
-   [string.char(0x36)] = create_byte_op_instruction_reader("ld [hl], n8"),
+   [string.char(0x36)] = create_byte_op_instruction_parser("ld [hl], n8"),
 
-   [string.char(0x21)] = create_octet_op_instruction_reader("ld hl, n16"),
-   [string.char(0x01)] = create_octet_op_instruction_reader("ld bc, n16"),
-   [string.char(0x11)] = create_octet_op_instruction_reader("ld de, n16"),
+   [string.char(0x21)] = create_octet_op_instruction_parser("ld hl, n16"),
+   [string.char(0x01)] = create_octet_op_instruction_parser("ld bc, n16"),
+   [string.char(0x11)] = create_octet_op_instruction_parser("ld de, n16"),
 
    -- Arithmetic Instructions --
 
-   [string.char(0xc6)] = create_byte_op_instruction_reader("add a, n8"),
-   [string.char(0xce)] = create_byte_op_instruction_reader("adc a, n8"),
-   [string.char(0xd6)] = create_byte_op_instruction_reader("sub a, n8"),
-   [string.char(0xde)] = create_byte_op_instruction_reader("sbc a, n8"),
-   [string.char(0xe6)] = create_byte_op_instruction_reader("and a, n8"),
+   [string.char(0xc6)] = create_byte_op_instruction_parser("add a, n8"),
+   [string.char(0xce)] = create_byte_op_instruction_parser("adc a, n8"),
+   [string.char(0xd6)] = create_byte_op_instruction_parser("sub a, n8"),
+   [string.char(0xde)] = create_byte_op_instruction_parser("sbc a, n8"),
+   [string.char(0xe6)] = create_byte_op_instruction_parser("and a, n8"),
 
    -- Logical Instructions --
 
-   [string.char(0xee)] = create_byte_op_instruction_reader("xor a, n8"),
-   [string.char(0xf6)] = create_byte_op_instruction_reader("or a, n8"),
-   [string.char(0xfe)] = create_byte_op_instruction_reader("cp a, n8"),
+   [string.char(0xee)] = create_byte_op_instruction_parser("xor a, n8"),
+   [string.char(0xf6)] = create_byte_op_instruction_parser("or a, n8"),
+   [string.char(0xfe)] = create_byte_op_instruction_parser("cp a, n8"),
 
    -- Stack Instructions --
 
-   [string.char(0xe8)] = create_byte_op_instruction_reader("add sp, e8"),
-   [string.char(0xf8)] = create_byte_op_instruction_reader("ld hl, sp+e8"),
+   [string.char(0xe8)] = create_byte_op_instruction_parser("add sp, e8"),
+   [string.char(0xf8)] = create_byte_op_instruction_parser("ld hl, sp+e8"),
 
-   [string.char(0x31)] = create_octet_op_instruction_reader("ld sp, n16"),
-   [string.char(0x08)] = create_octet_op_instruction_reader("ld [n16], sp"),
+   [string.char(0x31)] = create_octet_op_instruction_parser("ld sp, n16"),
+   [string.char(0x08)] = create_octet_op_instruction_parser("ld [n16], sp"),
 
    -- Jump/Call Instructions --
 
-   [string.char(0xcd)] = create_octet_op_instruction_reader("call n16"),
-   [string.char(0xdc)] = create_octet_op_instruction_reader("call c, n16"),
-   [string.char(0xcc)] = create_octet_op_instruction_reader("call z, n16"),
-   [string.char(0xd4)] = create_octet_op_instruction_reader("call nc, n16"),
-   [string.char(0xc4)] = create_octet_op_instruction_reader("call nz, n16"),
+   [string.char(0xcd)] = create_octet_op_instruction_parser("call n16"),
+   [string.char(0xdc)] = create_octet_op_instruction_parser("call c, n16"),
+   [string.char(0xcc)] = create_octet_op_instruction_parser("call z, n16"),
+   [string.char(0xd4)] = create_octet_op_instruction_parser("call nc, n16"),
+   [string.char(0xc4)] = create_octet_op_instruction_parser("call nz, n16"),
 
-   [string.char(0x18)] = create_byte_op_instruction_reader("jr e8"),
-   [string.char(0x38)] = create_byte_op_instruction_reader("jr c, e8"),
-   [string.char(0x28)] = create_byte_op_instruction_reader("jr z, e8"),
-   [string.char(0x30)] = create_byte_op_instruction_reader("jr nc, e8"),
-   [string.char(0x20)] = create_byte_op_instruction_reader("jr nz, e8"),
+   [string.char(0x18)] = create_byte_op_instruction_parser("jr e8"),
+   [string.char(0x38)] = create_byte_op_instruction_parser("jr c, e8"),
+   [string.char(0x28)] = create_byte_op_instruction_parser("jr z, e8"),
+   [string.char(0x30)] = create_byte_op_instruction_parser("jr nc, e8"),
+   [string.char(0x20)] = create_byte_op_instruction_parser("jr nz, e8"),
 
-   [string.char(0xc3)] = create_octet_op_instruction_reader("jp n16"),
-   [string.char(0xda)] = create_octet_op_instruction_reader("jp c, n16"),
-   [string.char(0xca)] = create_octet_op_instruction_reader("jp z, n16"),
-   [string.char(0xd2)] = create_octet_op_instruction_reader("jp nc, n16"),
-   [string.char(0xc2)] = create_octet_op_instruction_reader("jp nz, n16"),
+   [string.char(0xc3)] = create_octet_op_instruction_parser("jp n16"),
+   [string.char(0xda)] = create_octet_op_instruction_parser("jp c, n16"),
+   [string.char(0xca)] = create_octet_op_instruction_parser("jp z, n16"),
+   [string.char(0xd2)] = create_octet_op_instruction_parser("jp nc, n16"),
+   [string.char(0xc2)] = create_octet_op_instruction_parser("jp nz, n16"),
 }
 
-local function read_next_instruction(file, max)
+local function parse_next_instruction(data, address, max)
    max = max or 0x4000
 
    if max == 0 then
       return
    end
 
-   local char = file:read(1)
-   if char == nil then
+   local index = address + 1
+
+   local char = data:sub(index, index)
+   if not char then
       return
    end
+   index = index + 1
 
    local instruction = instructions[char]
    local extra_byte
 
    if not instruction then
-      local reader = instruction_readers[char]
+      local parser = instruction_parsers[char]
 
-      if reader then
-         -- Read using instruction reader
+      if parser then
+         -- Read using instruction parser
 
-         if (reader.size or 2) <= max then
-            extra_byte, instruction = reader.read(file)
+         if (parser.size or 2) <= max then
+            instruction = parser.parse(data, index)
          end
       elseif max > 1 then
          -- Find extended instruction
@@ -716,7 +721,7 @@ local function read_next_instruction(file, max)
          local byte_extended_instructions = extended_instructions[char]
 
          if byte_extended_instructions then
-            extra_byte = file:read(1)
+            extra_byte = data:sub(index, index)
 
             if extra_byte then
                instruction = byte_extended_instructions[extra_byte]
@@ -725,16 +730,9 @@ local function read_next_instruction(file, max)
       end
    end
 
-   if instruction == nil then
-      if extra_byte then
-         file:seek("cur", -1)
-      end
-      return { data = { char } }
-   end
-
    return instruction
 end
 
 return {
-   read_next_instruction = read_next_instruction
+   parse_next_instruction = parse_next_instruction
 }
