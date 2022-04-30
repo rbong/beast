@@ -297,8 +297,8 @@ local instructions = {
    [string.char(0xf7)] = { instruc = "rst $30" },
    [string.char(0xff)] = { instruc = "rst $38" },
 
-   [string.char(0xc9)] = { instruc = "ret" },
-   [string.char(0xd9)] = { instruc = "reti" },
+   [string.char(0xc9)] = { instruc = "ret", code_end = true },
+   [string.char(0xd9)] = { instruc = "reti", code_end = true },
    [string.char(0xd8)] = { instruc = "ret c" },
    [string.char(0xc8)] = { instruc = "ret z" },
    [string.char(0xd0)] = { instruc = "ret nc" },

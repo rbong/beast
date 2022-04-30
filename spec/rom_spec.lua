@@ -20,7 +20,7 @@ describe("Rom", function()
       local rom = create_rom()
       read_rom(rom, io.open("./spec/fixtures/ret.gb", "rb"))
       assert.are.same(rom.banks[0].instructions, {
-         [0x000] = { instruc = "ret" }
+         [0x000] = { instruc = "ret", code_end = true }
       })
    end)
 
@@ -223,8 +223,8 @@ describe("Rom", function()
             [0x00c0] = { instruc = "rst $28" },
             [0x00c1] = { instruc = "rst $30" },
             [0x00c2] = { instruc = "rst $38" },
-            [0x00c3] = { instruc = "ret" },
-            [0x00c4] = { instruc = "reti" },
+            [0x00c3] = { instruc = "ret", code_end = true },
+            [0x00c4] = { instruc = "reti", code_end = true },
             [0x00c5] = { instruc = "ret c" },
             [0x00c6] = { instruc = "ret z" },
             [0x00c7] = { instruc = "ret nc" },
