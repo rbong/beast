@@ -70,7 +70,7 @@ local instruction_formatters = {
    ["call c, n16"] = create_octet_op_instruction_formatter("call c, $%02x%02x"),
    ["call z, n16"] = create_octet_op_instruction_formatter("call z, $%02x%02x"),
    ["call nc, n16"] = create_octet_op_instruction_formatter("call nc, $%02x%02x"),
-   ["call nz, n16"] = create_octet_op_instruction_formatter("call nz $%02x%02x"),
+   ["call nz, n16"] = create_octet_op_instruction_formatter("call nz, $%02x%02x"),
 
    ["jr e8"] = create_signed_op_instruction_formatter("jr %d"),
    ["jr c, e8"] = create_signed_op_instruction_formatter("jr c, %d"),
