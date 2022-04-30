@@ -286,14 +286,14 @@ local instructions = {
 
    [string.char(0xe9)] = { instruc = "jp hl" },
 
-   [string.char(0xc7)] = { instruc = "rst 00h" },
-   [string.char(0xcf)] = { instruc = "rst 08h" },
-   [string.char(0xd7)] = { instruc = "rst 10h" },
-   [string.char(0xdf)] = { instruc = "rst 18h" },
-   [string.char(0xe7)] = { instruc = "rst 20h" },
-   [string.char(0xef)] = { instruc = "rst 28h" },
-   [string.char(0xf7)] = { instruc = "rst 30h" },
-   [string.char(0xff)] = { instruc = "rst 38h" },
+   [string.char(0xc7)] = { instruc = "rst $00" },
+   [string.char(0xcf)] = { instruc = "rst $08" },
+   [string.char(0xd7)] = { instruc = "rst $10" },
+   [string.char(0xdf)] = { instruc = "rst $18" },
+   [string.char(0xe7)] = { instruc = "rst $20" },
+   [string.char(0xef)] = { instruc = "rst $28" },
+   [string.char(0xf7)] = { instruc = "rst $30" },
+   [string.char(0xff)] = { instruc = "rst $38" },
 
    [string.char(0xc9)] = { instruc = "ret" },
    [string.char(0xd9)] = { instruc = "reti" },
