@@ -16,67 +16,18 @@ local function format_bank_header(formatter, bank_num)
       bank_num)
 end
 
-local function format_op(formatter, op)
-   if not op then
-      return
-   end
-
-   if op.is_register or op.is_condition then
-      return op.value
-   end
-
-   if op.is_vector then
-      return string.format("$%02x", op.value)
-   end
-
-   if op.is_dynamic then
-      if op.size == 1 then
-         return string.format("$%02x", op.value)
-      end
-
-      if op.size == 2 then
-         return string.format("$%04x", op.value)
-      end
-   end
-
-   -- TODO: better error handling
-   error("Unrecognized operand")
-end
-
--- TODO: handle more complex data
-local function format_data(formatter, instructions, instruction_index)
-   return 1, string.format("db $%02x", instructions[instruction_index].data[1])
-end
-
 local function format_instructions(formatter, instructions, instruction_index)
    local instruction = instructions[instruction_index]
+   local instruction_type = instruction.instruc
 
-   local code = instruction.code
-
-   if instruction.is_data then
-      return format_data(formatter, instructions, instruction_index)
+   if instruction_type then
+      -- Format basic instruction
+      return 1, instruction_type
    end
 
-   local l_op = instruction.l_op
-   local r_op = instruction.r_op
-
-   if r_op and not l_op then
-      -- TODO: better error handling
-      error("Got right operand but no left operand")
-   end
-
-   local l_op_value = format_op(formatter, instruction.l_op)
-   local r_op_value = format_op(formatter, instruction.r_op)
-
-   if r_op then
-      return 1, code .. " " .. l_op_value .. ", " .. r_op_value
-   end
-
-   if l_op then
-      return 1, code .. " " .. l_op_value
-   end
-
-   return 1, code
+   -- Format data
+   -- TODO: handle more complex data
+   return 1, string.format("db $%02x", string.byte(instruction.data[1]))
 end
 
 -- TODO: rename
