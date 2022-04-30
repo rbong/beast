@@ -8,7 +8,6 @@ local symbol = require("beast/symbol/symbol")
 return {
    create_region_definition = definition.create_region_definition,
    create_replacement_definition = definition.create_replacement_definition,
-   create_operand_definitions = definition.create_operand_definitions,
    set_left_op_definition = definition.set_left_op_definition,
    set_right_op_definition = definition.set_right_op_definition,
    create_definition_collection = definition.create_definition_collection,

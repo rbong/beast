@@ -10,7 +10,6 @@ return {
    create_data = instruction.create_data,
    instructions = instruction.instructions,
    read_next_instruction = instruction.read_next_instruction,
-   create_operand = operand.create_operand,
    create_processor_register_operand = operand.create_processor_register_operand,
    create_processor_register_set_operand = operand.create_processor_register_set_operand,
    create_processor_register_set_reference_operand = operand.create_processor_register_set_reference_operand,

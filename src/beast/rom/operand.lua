@@ -1,15 +1,5 @@
 -- TODO: remove unneeded args from classes
 
-local function create_operand(value, reference, increment, offset, size)
-   return {
-      value = value,
-      reference = reference,
-      increment = increment,
-      offset = offset,
-      size = size or 1
-   }
-end
-
 local function create_processor_register_operand(value, reference, increment, offset)
    return {
       value = value,
@@ -158,7 +148,6 @@ local operands = {
 }
 
 return {
-   create_operand = create_operand,
    create_processor_register_operand = create_processor_register_operand,
    create_processor_register_set_operand = create_processor_register_set_operand,
    create_processor_register_set_reference_operand = create_processor_register_set_reference_operand,
