@@ -1,5 +1,3 @@
--- TODO: remove unneeded args from classes
-
 local function create_processor_register_operand(value, reference, increment, offset)
    return {
       value = value,
