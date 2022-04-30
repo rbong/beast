@@ -38,9 +38,9 @@ local instruction_formatters = {
 
    ["ld [hl], n8"] = create_byte_op_instruction_formatter("ld [hl], $%02x"),
 
-   ["ld hl, n8"] = create_octet_op_instruction_formatter("ld hl, $%02x%02x"),
-   ["ld bc, n8"] = create_octet_op_instruction_formatter("ld bc, $%02x%02x"),
-   ["ld de, n8"] = create_octet_op_instruction_formatter("ld de, $%02x%02x"),
+   ["ld hl, n16"] = create_octet_op_instruction_formatter("ld hl, $%02x%02x"),
+   ["ld bc, n16"] = create_octet_op_instruction_formatter("ld bc, $%02x%02x"),
+   ["ld de, n16"] = create_octet_op_instruction_formatter("ld de, $%02x%02x"),
 
    -- Arithmetic Instructions --
 
