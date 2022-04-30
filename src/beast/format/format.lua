@@ -72,11 +72,12 @@ local instruction_formatters = {
    ["call nc, n16"] = create_octet_op_instruction_formatter("call nc, $%02x%02x"),
    ["call nz, n16"] = create_octet_op_instruction_formatter("call nz, $%02x%02x"),
 
-   ["jr e8"] = create_signed_op_instruction_formatter("jr %d"),
-   ["jr c, e8"] = create_signed_op_instruction_formatter("jr c, %d"),
-   ["jr z, e8"] = create_signed_op_instruction_formatter("jr z, %d"),
-   ["jr nc, e8"] = create_signed_op_instruction_formatter("jr nc, %d"),
-   ["jr nz, e8"] = create_signed_op_instruction_formatter("jr nz, %d"),
+	 -- TODO: use labels for these instructions
+   ["jr e8"] = create_signed_op_instruction_formatter("jr @%+d+2"),
+   ["jr c, e8"] = create_signed_op_instruction_formatter("jr c, @%+d+2"),
+   ["jr z, e8"] = create_signed_op_instruction_formatter("jr z, @%+d+2"),
+   ["jr nc, e8"] = create_signed_op_instruction_formatter("jr nc, @%+d+2"),
+   ["jr nz, e8"] = create_signed_op_instruction_formatter("jr nz, @%+d+2"),
 
    ["jp n16"] = create_octet_op_instruction_formatter("jp $%02x%02x"),
    ["jp c, n16"] = create_octet_op_instruction_formatter("jp c, $%02x%02x"),
