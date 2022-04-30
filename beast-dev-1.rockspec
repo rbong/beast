@@ -34,7 +34,6 @@ build = {
       ["beast/rom"] = "src/beast/rom.lua",
       ["beast/rom/bank"] = "src/beast/rom/bank.lua",
       ["beast/rom/instruction"] = "src/beast/rom/instruction.lua",
-      ["beast/rom/operand"] = "src/beast/rom/operand.lua",
       ["beast/rom/rom"] = "src/beast/rom/rom.lua",
       ["beast/symbol"] = "src/beast/symbol.lua",
       ["beast/symbol/definition"] = "src/beast/symbol/definition.lua",

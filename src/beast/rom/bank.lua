@@ -17,7 +17,7 @@ local function read_bank(bank, file)
       end
 
       table.insert(bank.instructions, instruction)
-      remaining = remaining - instruction.size
+      remaining = remaining - (instruction.size or 1)
    end
    bank.size = 0x4000 - remaining
 end

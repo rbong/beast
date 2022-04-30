@@ -1,8 +1,3 @@
-local operand = require("beast/rom/operand")
-
-local create_dynamic_byte_operand = operand.create_dynamic_byte_operand
-local create_dynamic_octet_operand = operand.create_dynamic_octet_operand
-
 -- TODO: handle rgbasm halt with nop
 
 -- TODO: handle invalid instructions and do db instead
@@ -10,1748 +5,685 @@ local create_dynamic_octet_operand = operand.create_dynamic_octet_operand
 -- LDH A [(anything not in HRAM)]
 -- LDH [(anything not in HRAM)], A
 
-local op = operand.operands
-
-local function create_instruction(code, l_op, r_op, size)
+local function create_byte_op_instruction_reader(instruc)
    return {
-      code = code,
-      l_op = l_op,
-      r_op = r_op,
-      size = size or 1
-   }
-end
-
-local function create_data(code, data, size)
-   return {
-      code = code,
-      data = data,
-      size = size or 1,
-      is_data = true
-   }
-end
-
-local function create_instruction_parser(code, l_op, r_op, size)
-   local instruction = create_instruction(code, l_op, r_op, size)
-
-   return {
-      size = size or 1,
-      read = function ()
-         return nil, instruction
-      end
-   }
-end
-
-local function create_extended_instruction_parser(code, l_op, r_op)
-   return create_instruction_parser(code, l_op, r_op, 2)
-end
-
-local function create_dynamic_op_instruction_parser(code, l_op, r_op, parse_op, size, op_size)
-   size = size or 2
-   op_size = op_size or 1
-
-   return {
-      size = size,
-      op_size = op_size,
+      size = 2,
       read = function (file)
-         -- TODO: let parse function read for itself
-
-         local bytes = file:read(op_size)
-         if not bytes then
+         local char = file:read(1)
+         if not char then
             return
          end
-
-         local parsed_byte, parsed_op = parse_op(bytes)
-         if not parsed_op then
-            return parsed_byte
-         end
-
-         if l_op == nil then
-            return nil, create_instruction(code, parsed_op, r_op, size)
-         else
-            return nil, create_instruction(code, l_op, parsed_op, size)
-         end
+         return nil, { instruc = instruc, data = char, size = 2 }
       end
    }
 end
 
-local function create_byte_op_instruction_parser(code, l_op, r_op, reference, offset, signed)
-   return create_dynamic_op_instruction_parser(
-      code,
-      l_op,
-      r_op,
-      function (byte)
-         return nil, create_dynamic_byte_operand(string.byte(byte), reference, nil, offset, signed)
-      end,
-      2,
-      1)
-end
-
-local function create_octet_op_instruction_parser(code, l_op, r_op, reference)
-   return create_dynamic_op_instruction_parser(
-      code,
-      l_op,
-      r_op,
-      function (bytes)
-         local byte1 = string.byte(bytes)
-         if byte1 == nil then
+local function create_octet_op_instruction_reader(instruc)
+   return {
+      size = 3,
+      read = function (file)
+         local char1 = file:read(1)
+         if not char1 then
             return
          end
 
-         local byte2 = string.byte(bytes, 2)
-         if byte2 == nil then
-            return byte1
+         local char2 = file:read(1)
+         if not char2 then
+            return char1
          end
 
-         return nil, create_dynamic_octet_operand(byte2 * 0x100 + byte1, reference)
-      end,
-      3,
-      2)
-end
-
-local function create_sp_offset_op_instruction_parser(code, l_op, r_op)
-   return create_dynamic_op_instruction_parser(
-      code,
-      l_op,
-      r_op,
-      function (byte)
-         return nil, create_dynamic_byte_operand(string.byte(byte), nil, nil, "sp", true)
-      end,
-      2,
-      1)
+         return nil, { instruc = instruc, data = { char1, char2 }, size = 3 }
+      end
+   }
 end
 
 local instructions = {
    -- Control Instructions --
 
-   -- nop
-   [string.char(0x00)] = create_instruction_parser("nop"),
-   -- halt
-   [string.char(0x76)] = create_instruction_parser("halt"),
-   -- di
-   [string.char(0xf3)] = create_instruction_parser("di"),
-   -- ei
-   [string.char(0xfb)] = create_instruction_parser("ei"),
+   [string.char(0x00)] = { instruc = "nop" },
+   [string.char(0x76)] = { instruc = "halt" },
+   [string.char(0xf3)] = { instruc = "di" },
+   [string.char(0xfb)] = { instruc = "ei" },
 
-   -- "ld r8, r8" Instructions --
+   -- "ld" Instructions --
 
-   -- ld a, a
-   [string.char(0x7f)] = create_instruction_parser(
-      "ld", op.a_register, op.a_register),
-   -- ld a, b
-   [string.char(0x78)] = create_instruction_parser(
-      "ld", op.a_register, op.b_register),
-   -- ld a, c
-   [string.char(0x79)] = create_instruction_parser(
-      "ld", op.a_register, op.c_register),
-   -- ld a, d
-   [string.char(0x7a)] = create_instruction_parser(
-      "ld", op.a_register, op.d_register),
-   -- ld a, e
-   [string.char(0x7b)] = create_instruction_parser(
-      "ld", op.a_register, op.e_register),
-   -- ld a, h
-   [string.char(0x7c)] = create_instruction_parser(
-      "ld", op.a_register, op.f_register),
-   -- ld a, l
-   [string.char(0x7d)] = create_instruction_parser(
-      "ld", op.a_register, op.l_register),
+   [string.char(0x7f)] = { instruc = "ld a, a" },
+   [string.char(0x78)] = { instruc = "ld a, b" },
+   [string.char(0x79)] = { instruc = "ld a, c" },
+   [string.char(0x7a)] = { instruc = "ld a, d" },
+   [string.char(0x7b)] = { instruc = "ld a, e" },
+   [string.char(0x7c)] = { instruc = "ld a, h" },
+   [string.char(0x7d)] = { instruc = "ld a, l" },
 
-   -- ld b, a
-   [string.char(0x47)] = create_instruction_parser(
-      "ld", op.b_register, op.a_register),
-   -- ld b, b
-   [string.char(0x40)] = create_instruction_parser(
-      "ld", op.b_register, op.b_register),
-   -- ld b, c
-   [string.char(0x41)] = create_instruction_parser(
-      "ld", op.b_register, op.c_register),
-   -- ld b, d
-   [string.char(0x42)] = create_instruction_parser(
-      "ld", op.b_register, op.d_register),
-   -- ld b, e
-   [string.char(0x43)] = create_instruction_parser(
-      "ld", op.b_register, op.e_register),
-   -- ld b, h
-   [string.char(0x44)] = create_instruction_parser(
-      "ld", op.b_register, op.h_register),
-   -- ld b, l
-   [string.char(0x45)] = create_instruction_parser(
-      "ld", op.b_register, op.l_register),
+   [string.char(0x47)] = { instruc = "ld b, a" },
+   [string.char(0x40)] = { instruc = "ld b, b" },
+   [string.char(0x41)] = { instruc = "ld b, c" },
+   [string.char(0x42)] = { instruc = "ld b, d" },
+   [string.char(0x43)] = { instruc = "ld b, e" },
+   [string.char(0x44)] = { instruc = "ld b, h" },
+   [string.char(0x45)] = { instruc = "ld b, l" },
 
-   -- ld c, a
-   [string.char(0x4f)] = create_instruction_parser(
-      "ld", op.c_register, op.a_register),
-   -- ld c, b
-   [string.char(0x48)] = create_instruction_parser(
-      "ld", op.c_register, op.b_register),
-   -- ld c, c
-   [string.char(0x49)] = create_instruction_parser(
-      "ld", op.c_register, op.c_register),
-   -- ld c, d
-   [string.char(0x4a)] = create_instruction_parser(
-      "ld", op.c_register, op.d_register),
-   -- ld c, e
-   [string.char(0x4b)] = create_instruction_parser(
-      "ld", op.c_register, op.e_register),
-   -- ld c, h
-   [string.char(0x4c)] = create_instruction_parser(
-      "ld", op.c_register, op.h_register),
-   -- ld c, l
-   [string.char(0x4d)] = create_instruction_parser(
-      "ld", op.c_register, op.l_register),
+   [string.char(0x4f)] = { instruc = "ld c, a" },
+   [string.char(0x48)] = { instruc = "ld c, b" },
+   [string.char(0x49)] = { instruc = "ld c, c" },
+   [string.char(0x4a)] = { instruc = "ld c, d" },
+   [string.char(0x4b)] = { instruc = "ld c, e" },
+   [string.char(0x4c)] = { instruc = "ld c, h" },
+   [string.char(0x4d)] = { instruc = "ld c, l" },
 
-   -- ld d, a
-   [string.char(0x57)] = create_instruction_parser(
-      "ld", op.d_register, op.a_register),
-   -- ld d, b
-   [string.char(0x50)] = create_instruction_parser(
-      "ld", op.d_register, op.b_register),
-   -- ld d, c
-   [string.char(0x51)] = create_instruction_parser(
-      "ld", op.d_register, op.c_register),
-   -- ld d, d
-   [string.char(0x52)] = create_instruction_parser(
-      "ld", op.d_register, op.d_register),
-   -- ld d, e
-   [string.char(0x53)] = create_instruction_parser(
-      "ld", op.d_register, op.e_register),
-   -- ld d, h
-   [string.char(0x54)] = create_instruction_parser(
-      "ld", op.d_register, op.h_register),
-   -- ld d, l
-   [string.char(0x55)] = create_instruction_parser(
-      "ld", op.d_register, op.l_register),
+   [string.char(0x57)] = { instruc = "ld d, a" },
+   [string.char(0x50)] = { instruc = "ld d, b" },
+   [string.char(0x51)] = { instruc = "ld d, c" },
+   [string.char(0x52)] = { instruc = "ld d, d" },
+   [string.char(0x53)] = { instruc = "ld d, e" },
+   [string.char(0x54)] = { instruc = "ld d, h" },
+   [string.char(0x55)] = { instruc = "ld d, l" },
 
-   -- ld e, a
-   [string.char(0x5f)] = create_instruction_parser(
-      "ld", op.e_register, op.a_register),
-   -- ld e, b
-   [string.char(0x58)] = create_instruction_parser(
-      "ld", op.e_register, op.b_register),
-   -- ld e, c
-   [string.char(0x59)] = create_instruction_parser(
-      "ld", op.e_register, op.c_register),
-   -- ld e, d
-   [string.char(0x5a)] = create_instruction_parser(
-      "ld", op.e_register, op.d_register),
-   -- ld e, e
-   [string.char(0x5b)] = create_instruction_parser(
-      "ld", op.e_register, op.e_register),
-   -- ld e, h
-   [string.char(0x5c)] = create_instruction_parser(
-      "ld", op.e_register, op.h_register),
-   -- ld e, l
-   [string.char(0x5d)] = create_instruction_parser(
-      "ld", op.e_register, op.l_register),
+   [string.char(0x5f)] = { instruc = "ld e, a" },
+   [string.char(0x58)] = { instruc = "ld e, b" },
+   [string.char(0x59)] = { instruc = "ld e, c" },
+   [string.char(0x5a)] = { instruc = "ld e, d" },
+   [string.char(0x5b)] = { instruc = "ld e, e" },
+   [string.char(0x5c)] = { instruc = "ld e, h" },
+   [string.char(0x5d)] = { instruc = "ld e, l" },
 
-   -- ld h, a
-   [string.char(0x67)] = create_instruction_parser(
-      "ld", op.h_register, op.a_register),
-   -- ld h, b
-   [string.char(0x60)] = create_instruction_parser(
-      "ld", op.h_register, op.b_register),
-   -- ld h, c
-   [string.char(0x61)] = create_instruction_parser(
-      "ld", op.h_register, op.c_register),
-   -- ld h, d
-   [string.char(0x62)] = create_instruction_parser(
-      "ld", op.h_register, op.d_register),
-   -- ld h, e
-   [string.char(0x63)] = create_instruction_parser(
-      "ld", op.h_register, op.e_register),
-   -- ld h, h
-   [string.char(0x64)] = create_instruction_parser(
-      "ld", op.h_register, op.h_register),
-   -- ld h, l
-   [string.char(0x65)] = create_instruction_parser(
-      "ld", op.h_register, op.l_register),
+   [string.char(0x67)] = { instruc = "ld h, a" },
+   [string.char(0x60)] = { instruc = "ld h, b" },
+   [string.char(0x61)] = { instruc = "ld h, c" },
+   [string.char(0x62)] = { instruc = "ld h, d" },
+   [string.char(0x63)] = { instruc = "ld h, e" },
+   [string.char(0x64)] = { instruc = "ld h, h" },
+   [string.char(0x65)] = { instruc = "ld h, l" },
 
-   -- ld l, a
-   [string.char(0x6f)] = create_instruction_parser(
-      "ld", op.l_register, op.a_register),
-   -- ld l, b
-   [string.char(0x68)] = create_instruction_parser(
-      "ld", op.l_register, op.b_register),
-   -- ld l, c
-   [string.char(0x69)] = create_instruction_parser(
-      "ld", op.l_register, op.c_register),
-   -- ld l, d
-   [string.char(0x6a)] = create_instruction_parser(
-      "ld", op.l_register, op.d_register),
-   -- ld l, e
-   [string.char(0x6b)] = create_instruction_parser(
-      "ld", op.l_register, op.e_register),
-   -- ld l, h
-   [string.char(0x6c)] = create_instruction_parser(
-      "ld", op.l_register, op.h_register),
-   -- ld l, l
-   [string.char(0x6d)] = create_instruction_parser(
-      "ld", op.l_register, op.l_register),
+   [string.char(0x6f)] = { instruc = "ld l, a" },
+   [string.char(0x68)] = { instruc = "ld l, b" },
+   [string.char(0x69)] = { instruc = "ld l, c" },
+   [string.char(0x6a)] = { instruc = "ld l, d" },
+   [string.char(0x6b)] = { instruc = "ld l, e" },
+   [string.char(0x6c)] = { instruc = "ld l, h" },
+   [string.char(0x6d)] = { instruc = "ld l, l" },
 
-   -- "ld r8, [hl]" Instructions --
+   [string.char(0x7e)] = { instruc = "ld a, [hl]" },
+   [string.char(0x46)] = { instruc = "ld b, [hl]" },
+   [string.char(0x4e)] = { instruc = "ld c, [hl]" },
+   [string.char(0x56)] = { instruc = "ld d, [hl]" },
+   [string.char(0x5e)] = { instruc = "ld e, [hl]" },
+   [string.char(0x66)] = { instruc = "ld h, [hl]" },
+   [string.char(0x6e)] = { instruc = "ld l, [hl]" },
 
-   -- ld a, [hl]
-   [string.char(0x7e)] = create_instruction_parser(
-      "ld", op.a_register, op.hl_register_set_reference),
-   -- ld b, [hl]
-   [string.char(0x46)] = create_instruction_parser(
-      "ld", op.b_register, op.hl_register_set_reference),
-   -- ld c, [hl]
-   [string.char(0x4e)] = create_instruction_parser(
-      "ld", op.c_register, op.hl_register_set_reference),
-   -- ld d, [hl]
-   [string.char(0x56)] = create_instruction_parser(
-      "ld", op.d_register, op.hl_register_set_reference),
-   -- ld e, [hl]
-   [string.char(0x5e)] = create_instruction_parser(
-      "ld", op.e_register, op.hl_register_set_reference),
-   -- ld h, [hl]
-   [string.char(0x66)] = create_instruction_parser(
-      "ld", op.h_register, op.hl_register_set_reference),
-   -- ld l, [hl]
-   [string.char(0x6e)] = create_instruction_parser(
-      "ld", op.l_register, op.hl_register_set_reference),
+   [string.char(0x77)] = { instruc = "ld [hl], a" },
+   [string.char(0x70)] = { instruc = "ld [hl], b" },
+   [string.char(0x71)] = { instruc = "ld [hl], c" },
+   [string.char(0x72)] = { instruc = "ld [hl], d" },
+   [string.char(0x73)] = { instruc = "ld [hl], e" },
+   [string.char(0x74)] = { instruc = "ld [hl], h" },
+   [string.char(0x75)] = { instruc = "ld [hl], l" },
 
-   -- "ld [hl], r8" Instructions --
+   [string.char(0xf2)] = { instruc = "ld a, [$ff00+c]" },
+   [string.char(0xe2)] = { instruc = "ld [$ff00+c], a" },
 
-   -- ld [hl], a
-   [string.char(0x77)] = create_instruction_parser(
-      "ld", op.hl_register_set_reference, op.a_register),
-   -- ld [hl], b
-   [string.char(0x70)] = create_instruction_parser(
-      "ld", op.hl_register_set_reference, op.b_register),
-   -- ld [hl], c
-   [string.char(0x71)] = create_instruction_parser(
-      "ld", op.hl_register_set_reference, op.c_register),
-   -- ld [hl], d
-   [string.char(0x72)] = create_instruction_parser(
-      "ld", op.hl_register_set_reference, op.d_register),
-   -- ld [hl], e
-   [string.char(0x73)] = create_instruction_parser(
-      "ld", op.hl_register_set_reference, op.e_register),
-   -- ld [hl], h
-   [string.char(0x74)] = create_instruction_parser(
-      "ld", op.hl_register_set_reference, op.h_register),
-   -- ld [hl], l
-   [string.char(0x75)] = create_instruction_parser(
-      "ld", op.hl_register_set_reference, op.l_register),
+   [string.char(0x2a)] = { instruc = "ld a, [hl+]" },
+   [string.char(0x3a)] = { instruc = "ld a, [hl-]" },
+   [string.char(0x0a)] = { instruc = "ld a, [bc]" },
+   [string.char(0x1a)] = { instruc = "ld a, [de]" },
 
-   -- "ld r8, n8" Instructions --
+   [string.char(0x22)] = { instruc = "ld [hl+], a" },
+   [string.char(0x32)] = { instruc = "ld [hl-], a" },
 
-   -- ld a, n8
-   [string.char(0x3e)] = create_byte_op_instruction_parser(
-      "ld", op.a_register),
-   -- ld b, n8
-   [string.char(0x06)] = create_byte_op_instruction_parser(
-      "ld", op.b_register),
-   -- ld c, n8
-   [string.char(0x0e)] = create_byte_op_instruction_parser(
-      "ld", op.c_register),
-   -- ld d, n8
-   [string.char(0x16)] = create_byte_op_instruction_parser(
-      "ld", op.d_register),
-   -- ld e, n8
-   [string.char(0x1e)] = create_byte_op_instruction_parser(
-      "ld", op.e_register),
-   -- ld h, n8
-   [string.char(0x26)] = create_byte_op_instruction_parser(
-      "ld", op.h_register),
-   -- ld l, n8
-   [string.char(0x2e)] = create_byte_op_instruction_parser(
-      "ld", op.l_register),
-
-   -- Misc. "ld"/"ldh"/"ldio" Instructions --
-
-   -- ldio a, [$ff00+n8]
-   [string.char(0xf0)] = create_byte_op_instruction_parser(
-      "ldio", op.a_register, nil, true, 0xff00),
-   -- ldio [$ff00+n8], a
-   [string.char(0xe0)] = create_byte_op_instruction_parser(
-      "ldio", nil, op.a_register, true, 0xff00),
-
-   -- ld a, [n16]
-   [string.char(0xfa)] = create_octet_op_instruction_parser(
-      "ld", op.a_register, nil, true),
-   -- ld [n16], a
-   [string.char(0xea)] = create_octet_op_instruction_parser(
-      "ld", nil, op.a_register, true),
-
-   -- ld a, [$ff00+c]
-   [string.char(0xf2)] = create_instruction_parser(
-      "ld", op.a_register, op.c_register_hram_offset_reference),
-   -- ld [$ff00+c], a
-   [string.char(0xe2)] = create_instruction_parser(
-      "ld", op.c_register_hram_offset_reference, op.a_register),
-
-   -- ld a, [hl+]
-   [string.char(0x2a)] = create_instruction_parser(
-      "ld", op.a_register, op.hl_inc_register_set_reference),
-   -- ld a, [hl-]
-   [string.char(0x3a)] = create_instruction_parser(
-      "ld", op.a_register, op.hl_dec_register_set_reference),
-   -- ld a, [bc]
-   [string.char(0x0a)] = create_instruction_parser(
-      "ld", op.a_register, op.bc_register_set_reference),
-   -- ld a, [de]
-   [string.char(0x1a)] = create_instruction_parser(
-      "ld", op.a_register, op.de_register_set_reference),
-
-   -- ld hl, n8
-   [string.char(0x21)] = create_octet_op_instruction_parser(
-      "ld", op.hl_register_set),
-   -- ld bc, n8
-   [string.char(0x01)] = create_octet_op_instruction_parser(
-      "ld", op.bc_register_set),
-   -- ld de, n8
-   [string.char(0x11)] = create_octet_op_instruction_parser(
-      "ld", op.de_register_set),
-
-   -- ld [hl+], a
-   [string.char(0x22)] = create_instruction_parser(
-      "ld", op.hl_inc_register_set_reference, op.a_register),
-   -- ld [hl-], a
-   [string.char(0x32)] = create_instruction_parser(
-      "ld", op.hl_dec_register_set_reference, op.a_register),
-
-   -- ld [hl], n8
-   [string.char(0x36)] = create_byte_op_instruction_parser(
-      "ld", op.hl_register_set_reference),
-
-   -- ld [bc], a
-   [string.char(0x02)] = create_instruction_parser(
-      "ld", op.bc_register_set_reference, op.a_register),
-   -- ld [de], a
-   [string.char(0x12)] = create_instruction_parser(
-      "ld", op.de_register_set_reference, op.a_register),
+   [string.char(0x02)] = { instruc = "ld [bc], a" },
+   [string.char(0x12)] = { instruc = "ld [de], a" },
 
    -- Arithmetic Instructions --
 
-   -- add a, a
-   [string.char(0x87)] = create_instruction_parser(
-      "add", op.a_register, op.a_register),
-   -- add a, b
-   [string.char(0x80)] = create_instruction_parser(
-      "add", op.a_register, op.b_register),
-   -- add a, c
-   [string.char(0x81)] = create_instruction_parser(
-      "add", op.a_register, op.c_register),
-   -- add a, d
-   [string.char(0x82)] = create_instruction_parser(
-      "add", op.a_register, op.d_register),
-   -- add a, e
-   [string.char(0x83)] = create_instruction_parser(
-      "add", op.a_register, op.e_register),
-   -- add a, h
-   [string.char(0x84)] = create_instruction_parser(
-      "add", op.a_register, op.h_register),
-   -- add a, l
-   [string.char(0x85)] = create_instruction_parser(
-      "add", op.a_register, op.l_register),
+   [string.char(0x87)] = { instruc = "add a, a" },
+   [string.char(0x80)] = { instruc = "add a, b" },
+   [string.char(0x81)] = { instruc = "add a, c" },
+   [string.char(0x82)] = { instruc = "add a, d" },
+   [string.char(0x83)] = { instruc = "add a, e" },
+   [string.char(0x84)] = { instruc = "add a, h" },
+   [string.char(0x85)] = { instruc = "add a, l" },
 
-   -- add a, [hl]
-   [string.char(0x86)] = create_instruction_parser(
-      "add", op.a_register, op.hl_register_set_reference),
+   [string.char(0x86)] = { instruc = "add a, [hl]" },
 
-   -- add a, n8
-   [string.char(0xc6)] = create_byte_op_instruction_parser(
-      "add", op.a_register),
+   [string.char(0x8f)] = { instruc = "adc a, a" },
+   [string.char(0x88)] = { instruc = "adc a, b" },
+   [string.char(0x89)] = { instruc = "adc a, c" },
+   [string.char(0x8a)] = { instruc = "adc a, d" },
+   [string.char(0x8b)] = { instruc = "adc a, e" },
+   [string.char(0x8c)] = { instruc = "adc a, h" },
+   [string.char(0x8d)] = { instruc = "adc a, l" },
 
-   -- adc a, a
-   [string.char(0x8f)] = create_instruction_parser(
-      "adc", op.a_register, op.a_register),
-   -- adc a, b
-   [string.char(0x88)] = create_instruction_parser(
-      "adc", op.a_register, op.b_register),
-   -- adc a, c
-   [string.char(0x89)] = create_instruction_parser(
-      "adc", op.a_register, op.c_register),
-   -- adc a, d
-   [string.char(0x8a)] = create_instruction_parser(
-      "adc", op.a_register, op.d_register),
-   -- adc a, e
-   [string.char(0x8b)] = create_instruction_parser(
-      "adc", op.a_register, op.e_register),
-   -- adc a, h
-   [string.char(0x8c)] = create_instruction_parser(
-      "adc", op.a_register, op.h_register),
-   -- adc a, l
-   [string.char(0x8d)] = create_instruction_parser(
-      "adc", op.a_register, op.l_register),
+   [string.char(0x8e)] = { instruc = "adc a, [hl]" },
 
-   -- adc a, [hl]
-   [string.char(0x8e)] = create_instruction_parser(
-      "adc", op.a_register, op.hl_register_set_reference),
+   [string.char(0x97)] = { instruc = "sub a, a" },
+   [string.char(0x90)] = { instruc = "sub a, b" },
+   [string.char(0x91)] = { instruc = "sub a, c" },
+   [string.char(0x92)] = { instruc = "sub a, d" },
+   [string.char(0x93)] = { instruc = "sub a, e" },
+   [string.char(0x94)] = { instruc = "sub a, h" },
+   [string.char(0x95)] = { instruc = "sub a, l" },
 
-   -- adc a, n8
-   [string.char(0xce)] = create_byte_op_instruction_parser(
-      "adc", op.a_register),
+   [string.char(0x96)] = { instruc = "sub a, [hl]" },
 
-   -- sub a, a
-   [string.char(0x97)] = create_instruction_parser(
-      "sub", op.a_register, op.a_register),
-   -- sub a, b
-   [string.char(0x90)] = create_instruction_parser(
-      "sub", op.a_register, op.b_register),
-   -- sub a, c
-   [string.char(0x91)] = create_instruction_parser(
-      "sub", op.a_register, op.c_register),
-   -- sub a, d
-   [string.char(0x92)] = create_instruction_parser(
-      "sub", op.a_register, op.d_register),
-   -- sub a, e
-   [string.char(0x93)] = create_instruction_parser(
-      "sub", op.a_register, op.e_register),
-   -- sub a, h
-   [string.char(0x94)] = create_instruction_parser(
-      "sub", op.a_register, op.h_register),
-   -- sub a, l
-   [string.char(0x95)] = create_instruction_parser(
-      "sub", op.a_register, op.l_register),
+   [string.char(0x9f)] = { instruc = "sbc a, a" },
+   [string.char(0x98)] = { instruc = "sbc a, b" },
+   [string.char(0x99)] = { instruc = "sbc a, c" },
+   [string.char(0x9a)] = { instruc = "sbc a, d" },
+   [string.char(0x9b)] = { instruc = "sbc a, e" },
+   [string.char(0x9c)] = { instruc = "sbc a, h" },
+   [string.char(0x9d)] = { instruc = "sbc a, l" },
 
-   -- sub a, [hl]
-   [string.char(0x96)] = create_instruction_parser(
-      "sub", op.a_register, op.hl_register_set_reference),
+   [string.char(0x9e)] = { instruc = "sbc a, [hl]" },
 
-   -- sub a, n8
-   [string.char(0xd6)] = create_byte_op_instruction_parser(
-      "sub", op.a_register),
+   [string.char(0x29)] = { instruc = "add hl, hl" },
+   [string.char(0x09)] = { instruc = "add hl, bc" },
+   [string.char(0x19)] = { instruc = "add hl, de" },
 
-   -- sbc a, a
-   [string.char(0x9f)] = create_instruction_parser(
-      "sbc", op.a_register, op.a_register),
-   -- sbc a, b
-   [string.char(0x98)] = create_instruction_parser(
-      "sbc", op.a_register, op.b_register),
-   -- sbc a, c
-   [string.char(0x99)] = create_instruction_parser(
-      "sbc", op.a_register, op.c_register),
-   -- sbc a, d
-   [string.char(0x9a)] = create_instruction_parser(
-      "sbc", op.a_register, op.d_register),
-   -- sbc a, e
-   [string.char(0x9b)] = create_instruction_parser(
-      "sbc", op.a_register, op.e_register),
-   -- sbc a, h
-   [string.char(0x9c)] = create_instruction_parser(
-      "sbc", op.a_register, op.h_register),
-   -- sbc a, l
-   [string.char(0x9d)] = create_instruction_parser(
-      "sbc", op.a_register, op.l_register),
-
-   -- sbc a, [hl]
-   [string.char(0x9e)] = create_instruction_parser(
-      "sbc", op.a_register, op.hl_register_set_reference),
-
-   -- sbc a, n8
-   [string.char(0xde)] = create_byte_op_instruction_parser(
-      "sbc", op.a_register),
-
-   -- add hl, hl
-   [string.char(0x29)] = create_instruction_parser(
-      "sbc", op.hl_register_set, op.hl_register_set),
-   -- add hl, bc
-   [string.char(0x09)] = create_instruction_parser(
-      "sbc", op.hl_register_set, op.bc_register_set),
-   -- add hl, de
-   [string.char(0x19)] = create_instruction_parser(
-      "sbc", op.hl_register_set, op.de_register_set),
-
-   -- daa
-   [string.char(0x27)] = create_instruction_parser("daa"),
-   -- scf
-   [string.char(0x37)] = create_instruction_parser("scf"),
+   [string.char(0x27)] = { instruc = "daa" },
+   [string.char(0x37)] = { instruc = "scf" },
 
    -- Logical Instructions --
 
-   -- and a, a
-   [string.char(0xa7)] = create_instruction_parser(
-      "and", op.a_register, op.a_register),
-   -- and a, b
-   [string.char(0xa0)] = create_instruction_parser(
-      "and", op.a_register, op.b_register),
-   -- and a, c
-   [string.char(0xa1)] = create_instruction_parser(
-      "and", op.a_register, op.c_register),
-   -- and a, d
-   [string.char(0xa2)] = create_instruction_parser(
-      "and", op.a_register, op.d_register),
-   -- and a, e
-   [string.char(0xa3)] = create_instruction_parser(
-      "and", op.a_register, op.e_register),
-   -- and a, h
-   [string.char(0xa4)] = create_instruction_parser(
-      "and", op.a_register, op.h_register),
-   -- and a, l
-   [string.char(0xa5)] = create_instruction_parser(
-      "and", op.a_register, op.l_register),
+   [string.char(0xa7)] = { instruc = "and a, a" },
+   [string.char(0xa0)] = { instruc = "and a, b" },
+   [string.char(0xa1)] = { instruc = "and a, c" },
+   [string.char(0xa2)] = { instruc = "and a, d" },
+   [string.char(0xa3)] = { instruc = "and a, e" },
+   [string.char(0xa4)] = { instruc = "and a, h" },
+   [string.char(0xa5)] = { instruc = "and a, l" },
 
-   -- and a, [hl]
-   [string.char(0xa6)] = create_instruction_parser(
-      "and", op.a_register, op.hl_register_set_reference),
+   [string.char(0xa6)] = { instruc = "and a, [hl]" },
 
-   -- and a, n8
-   [string.char(0xe6)] = create_byte_op_instruction_parser(
-      "and", op.a_register),
+   [string.char(0xaf)] = { instruc = "xor a, a" },
+   [string.char(0xa8)] = { instruc = "xor a, b" },
+   [string.char(0xa9)] = { instruc = "xor a, c" },
+   [string.char(0xaa)] = { instruc = "xor a, d" },
+   [string.char(0xab)] = { instruc = "xor a, e" },
+   [string.char(0xac)] = { instruc = "xor a, h" },
+   [string.char(0xad)] = { instruc = "xor a, l" },
 
-   -- xor a, a
-   [string.char(0xaf)] = create_instruction_parser(
-      "xor", op.a_register, op.a_register),
-   -- xor a, b
-   [string.char(0xa8)] = create_instruction_parser(
-      "xor", op.a_register, op.b_register),
-   -- xor a, c
-   [string.char(0xa9)] = create_instruction_parser(
-      "xor", op.a_register, op.c_register),
-   -- xor a, d
-   [string.char(0xaa)] = create_instruction_parser(
-      "xor", op.a_register, op.d_register),
-   -- xor a, e
-   [string.char(0xab)] = create_instruction_parser(
-      "xor", op.a_register, op.e_register),
-   -- xor a, h
-   [string.char(0xac)] = create_instruction_parser(
-      "xor", op.a_register, op.h_register),
-   -- xor a, l
-   [string.char(0xad)] = create_instruction_parser(
-      "xor", op.a_register, op.l_register),
+   [string.char(0xae)] = { instruc = "xor a, [hl]" },
 
-   -- xor a, [hl]
-   [string.char(0xae)] = create_instruction_parser(
-      "xor", op.a_register, op.hl_register_set_reference),
+   [string.char(0xb7)] = { instruc = "or a, a" },
+   [string.char(0xb0)] = { instruc = "or a, b" },
+   [string.char(0xb1)] = { instruc = "or a, c" },
+   [string.char(0xb2)] = { instruc = "or a, d" },
+   [string.char(0xb3)] = { instruc = "or a, e" },
+   [string.char(0xb4)] = { instruc = "or a, h" },
+   [string.char(0xb5)] = { instruc = "or a, l" },
 
-   -- xor a, n8
-   [string.char(0xee)] = create_byte_op_instruction_parser(
-      "xor", op.a_register),
+   [string.char(0xb6)] = { instruc = "or a, [hl]" },
 
-   -- or a, a
-   [string.char(0xb7)] = create_instruction_parser(
-      "or", op.a_register, op.a_register),
-   -- or a, b
-   [string.char(0xb0)] = create_instruction_parser(
-      "or", op.a_register, op.b_register),
-   -- or a, c
-   [string.char(0xb1)] = create_instruction_parser(
-      "or", op.a_register, op.c_register),
-   -- or a, d
-   [string.char(0xb2)] = create_instruction_parser(
-      "or", op.a_register, op.d_register),
-   -- or a, e
-   [string.char(0xb3)] = create_instruction_parser(
-      "or", op.a_register, op.e_register),
-   -- or a, h
-   [string.char(0xb4)] = create_instruction_parser(
-      "or", op.a_register, op.h_register),
-   -- or a, l
-   [string.char(0xb5)] = create_instruction_parser(
-      "or", op.a_register, op.l_register),
+   [string.char(0xbf)] = { instruc = "cp a, a" },
+   [string.char(0xb8)] = { instruc = "cp a, b" },
+   [string.char(0xb9)] = { instruc = "cp a, c" },
+   [string.char(0xba)] = { instruc = "cp a, d" },
+   [string.char(0xbb)] = { instruc = "cp a, e" },
+   [string.char(0xbc)] = { instruc = "cp a, h" },
+   [string.char(0xbd)] = { instruc = "cp a, l" },
 
-   -- or a, [hl]
-   [string.char(0xb6)] = create_instruction_parser(
-      "or", op.a_register, op.hl_register_set_reference),
+   [string.char(0xbe)] = { instruc = "cp a, [hl]" },
 
-   -- or a, n8
-   [string.char(0xf6)] = create_byte_op_instruction_parser(
-      "or", op.a_register),
-
-   -- cp a, a
-   [string.char(0xbf)] = create_instruction_parser(
-      "cp", op.a_register, op.a_register),
-   -- cp a, b
-   [string.char(0xb8)] = create_instruction_parser(
-      "cp", op.a_register, op.b_register),
-   -- cp a, c
-   [string.char(0xb9)] = create_instruction_parser(
-      "cp", op.a_register, op.c_register),
-   -- cp a, d
-   [string.char(0xba)] = create_instruction_parser(
-      "cp", op.a_register, op.d_register),
-   -- cp a, e
-   [string.char(0xbb)] = create_instruction_parser(
-      "cp", op.a_register, op.e_register),
-   -- cp a, h
-   [string.char(0xbc)] = create_instruction_parser(
-      "cp", op.a_register, op.h_register),
-   -- cp a, l
-   [string.char(0xbd)] = create_instruction_parser(
-      "cp", op.a_register, op.l_register),
-
-   -- cp a, [hl]
-   [string.char(0xbe)] = create_instruction_parser(
-      "cp", op.a_register, op.hl_register_set_reference),
-
-   -- cp a, n8
-   [string.char(0xfe)] = create_byte_op_instruction_parser(
-      "cp", op.a_register),
-
-   -- cpl
-   [string.char(0x2f)] = create_instruction_parser("cpl"),
-   -- ccf
-   [string.char(0x3f)] = create_instruction_parser("ccf"),
+   [string.char(0x2f)] = { instruc = "cpl" },
+   [string.char(0x3f)] = { instruc = "ccf" },
 
    -- Shift/Rotation Instructions --
 
-   -- rlca
-   [string.char(0x07)] = create_instruction_parser("rlca"),
-   -- rla
-   [string.char(0x17)] = create_instruction_parser("rla"),
+   [string.char(0x07)] = { instruc = "rlca" },
+   [string.char(0x17)] = { instruc = "rla" },
 
-   -- rrca
-   [string.char(0x0f)] = create_instruction_parser("rrca"),
-   -- rra
-   [string.char(0x1f)] = create_instruction_parser("rra"),
+   [string.char(0x0f)] = { instruc = "rrca" },
+   [string.char(0x1f)] = { instruc = "rra" },
 
-   -- Increment/Decrement Instructions
 
-   -- inc a
-   [string.char(0x3c)] = create_instruction_parser(
-      "inc", op.a_register),
-   -- inc b
-   [string.char(0x04)] = create_instruction_parser(
-      "inc", op.b_register),
-   -- inc c
-   [string.char(0x0c)] = create_instruction_parser(
-      "inc", op.c_register),
-   -- inc d
-   [string.char(0x14)] = create_instruction_parser(
-      "inc", op.d_register),
-   -- inc e
-   [string.char(0x1c)] = create_instruction_parser(
-      "inc", op.e_register),
-   -- inc h
-   [string.char(0x24)] = create_instruction_parser(
-      "inc", op.h_register),
-   -- inc l
-   [string.char(0x2c)] = create_instruction_parser(
-      "inc", op.l_register),
+   [string.char(0x3c)] = { instruc = "inc a" },
+   [string.char(0x04)] = { instruc = "inc b" },
+   [string.char(0x0c)] = { instruc = "inc c" },
+   [string.char(0x14)] = { instruc = "inc d" },
+   [string.char(0x1c)] = { instruc = "inc e" },
+   [string.char(0x24)] = { instruc = "inc h" },
+   [string.char(0x2c)] = { instruc = "inc l" },
 
-   -- inc hl
-   [string.char(0x23)] = create_instruction_parser(
-      "inc", op.hl_register_set),
-   -- inc bc
-   [string.char(0x03)] = create_instruction_parser(
-      "inc", op.bc_register_set),
-   -- inc de
-   [string.char(0x13)] = create_instruction_parser(
-      "inc", op.de_register_set),
+   [string.char(0x23)] = { instruc = "inc hl" },
+   [string.char(0x03)] = { instruc = "inc bc" },
+   [string.char(0x13)] = { instruc = "inc de" },
 
-   -- inc [hl]
-   [string.char(0x34)] = create_instruction_parser(
-      "inc", op.hl_register_set_reference),
+   [string.char(0x34)] = { instruc = "inc [hl]" },
 
-   -- dec a
-   [string.char(0x3d)] = create_instruction_parser(
-      "dec", op.a_register),
-   -- dec b
-   [string.char(0x05)] = create_instruction_parser(
-      "dec", op.b_register),
-   -- dec c
-   [string.char(0x0d)] = create_instruction_parser(
-      "dec", op.c_register),
-   -- dec d
-   [string.char(0x15)] = create_instruction_parser(
-      "dec", op.d_register),
-   -- dec e
-   [string.char(0x1d)] = create_instruction_parser(
-      "dec", op.e_register),
-   -- dec h
-   [string.char(0x25)] = create_instruction_parser(
-      "dec", op.h_register),
-   -- dec l
-   [string.char(0x2d)] = create_instruction_parser(
-      "dec", op.l_register),
+   [string.char(0x3d)] = { instruc = "dec a" },
+   [string.char(0x05)] = { instruc = "dec b" },
+   [string.char(0x0d)] = { instruc = "dec c" },
+   [string.char(0x15)] = { instruc = "dec d" },
+   [string.char(0x1d)] = { instruc = "dec e" },
+   [string.char(0x25)] = { instruc = "dec h" },
+   [string.char(0x2d)] = { instruc = "dec l" },
 
-   -- dec hl
-   [string.char(0x2b)] = create_instruction_parser(
-      "dec", op.hl_register_set),
-   -- dec bc
-   [string.char(0x0b)] = create_instruction_parser(
-      "dec", op.bc_register_set),
-   -- dec de
-   [string.char(0x1b)] = create_instruction_parser(
-      "dec", op.de_register_set),
+   [string.char(0x2b)] = { instruc = "dec hl" },
+   [string.char(0x0b)] = { instruc = "dec bc" },
+   [string.char(0x1b)] = { instruc = "dec de" },
 
-   -- dec [hl]
-   [string.char(0x35)] = create_instruction_parser(
-      "dec", op.hl_register_set_reference),
+   [string.char(0x35)] = { instruc = "dec [hl]" },
 
    -- Stack Instructions --
 
-   -- push af
-   [string.char(0xf5)] = create_instruction_parser(
-      "push", op.af_register_set),
-   -- push bc
-   [string.char(0xc5)] = create_instruction_parser(
-      "push", op.bc_register_set),
-   -- push de
-   [string.char(0xd5)] = create_instruction_parser(
-      "push", op.de_register_set),
-   -- push hl
-   [string.char(0xe5)] = create_instruction_parser(
-      "push", op.hl_register_set),
+   [string.char(0xf5)] = { instruc = "push af" },
+   [string.char(0xc5)] = { instruc = "push bc" },
+   [string.char(0xd5)] = { instruc = "push de" },
+   [string.char(0xe5)] = { instruc = "push hl" },
 
-   -- pop af
-   [string.char(0xf1)] = create_instruction_parser(
-      "pop", op.af_register_set),
-   -- pop bc
-   [string.char(0xc1)] = create_instruction_parser(
-      "pop", op.bc_register_set),
-   -- pop de
-   [string.char(0xd1)] = create_instruction_parser(
-      "pop", op.de_register_set),
-   -- pop hl
-   [string.char(0xe1)] = create_instruction_parser(
-      "pop", op.hl_register_set),
+   [string.char(0xf1)] = { instruc = "pop af" },
+   [string.char(0xc1)] = { instruc = "pop bc" },
+   [string.char(0xd1)] = { instruc = "pop de" },
+   [string.char(0xe1)] = { instruc = "pop hl" },
 
-   -- inc sp
-   [string.char(0x33)] = create_instruction_parser(
-      "inc", op.sp_register),
-   -- dec sp
-   [string.char(0x3b)] = create_instruction_parser(
-      "dec", op.sp_register),
+   [string.char(0x33)] = { instruc = "inc sp" },
+   [string.char(0x3b)] = { instruc = "dec sp" },
 
-   -- ld sp, hl
-   [string.char(0xf9)] = create_instruction_parser(
-      "ld", op.sp_register, op.hl_register_set),
-   -- add hl, sp
-   [string.char(0x39)] = create_instruction_parser(
-      "add", op.hl_register_set, op.sp_register),
-
-   -- ld sp, n16
-   [string.char(0x31)] = create_octet_op_instruction_parser(
-      "ld", op.sp_register),
-   -- add sp, e8
-   [string.char(0xe8)] = create_byte_op_instruction_parser(
-      "add", op.sp_register, nil, nil, nil, true),
-   -- ld hl, sp+e8
-   [string.char(0xf8)] = create_sp_offset_op_instruction_parser(
-      "ld", op.hl_register_set),
-   -- ld [n16], sp
-   [string.char(0x08)] = create_octet_op_instruction_parser(
-      "ld", nil, op.sp_register, true),
+   [string.char(0xf9)] = { instruc = "ld sp, hl" },
+   [string.char(0x39)] = { instruc = "add hl, sp" },
 
    -- Jump/Call Instructions --
 
-   -- call n16
-   [string.char(0xcd)] = create_octet_op_instruction_parser("call"),
-   -- call c, n16
-   [string.char(0xdc)] = create_octet_op_instruction_parser(
-      "call", op.c_condition),
-   -- call z, n16
-   [string.char(0xcc)] = create_octet_op_instruction_parser(
-      "call", op.z_condition),
-   -- call nc, n16
-   [string.char(0xd4)] = create_octet_op_instruction_parser(
-      "call", op.nc_condition),
-   -- call nz, n16
-   [string.char(0xc4)] = create_octet_op_instruction_parser(
-      "call", op.nz_condition),
+   [string.char(0xe9)] = { instruc = "jp hl" },
 
-   -- jp n16
-   [string.char(0xc3)] = create_octet_op_instruction_parser("jp"),
-   -- jp c, n16
-   [string.char(0xda)] = create_octet_op_instruction_parser(
-      "jp", op.c_condition),
-   -- jp z, n16
-   [string.char(0xca)] = create_octet_op_instruction_parser(
-      "jp", op.z_condition),
-   -- jp nc, n16
-   [string.char(0xd2)] = create_octet_op_instruction_parser(
-      "jp", op.nc_condition),
-   -- jp nz, n16
-   [string.char(0xc2)] = create_octet_op_instruction_parser(
-      "jp", op.nz_condition),
+   [string.char(0xc7)] = { instruc = "rst 00h" },
+   [string.char(0xcf)] = { instruc = "rst 08h" },
+   [string.char(0xd7)] = { instruc = "rst 10h" },
+   [string.char(0xdf)] = { instruc = "rst 18h" },
+   [string.char(0xe7)] = { instruc = "rst 20h" },
+   [string.char(0xef)] = { instruc = "rst 28h" },
+   [string.char(0xf7)] = { instruc = "rst 30h" },
+   [string.char(0xff)] = { instruc = "rst 38h" },
 
-   -- jr e8
-   [string.char(0x18)] = create_byte_op_instruction_parser(
-      "jr", nil, nil, nil, nil, true),
-   -- jr c, e8
-   [string.char(0x38)] = create_byte_op_instruction_parser(
-      "jr", op.c_condition, nil, nil, nil, true),
-   -- jr z, e8
-   [string.char(0x28)] = create_byte_op_instruction_parser(
-      "jr", op.z_condition, nil, nil, nil, true),
-   -- jr nc, e8
-   [string.char(0x30)] = create_byte_op_instruction_parser(
-      "jr", op.nc_condition, nil, nil, nil, true),
-   -- jr nz, e8
-   [string.char(0x20)] = create_byte_op_instruction_parser(
-      "jr", op.nz_condition, nil, nil, nil, true),
-
-   -- jp hl
-   [string.char(0xe9)] = create_instruction_parser(
-      "jp", op.hl_register_set_reference),
-
-   -- rst 00h
-   [string.char(0xc7)] = create_instruction_parser(
-      "rst", op.vector_00h),
-   -- rst 08h
-   [string.char(0xcf)] = create_instruction_parser(
-      "rst", op.vector_08h),
-   -- rst 10h
-   [string.char(0xd7)] = create_instruction_parser(
-      "rst", op.vector_10h),
-   -- rst 18h
-   [string.char(0xdf)] = create_instruction_parser(
-      "rst", op.vector_18h),
-   -- rst 20h
-   [string.char(0xe7)] = create_instruction_parser(
-      "rst", op.vector_20h),
-   -- rst 28h
-   [string.char(0xef)] = create_instruction_parser(
-      "rst", op.vector_28h),
-   -- rst 30h
-   [string.char(0xf7)] = create_instruction_parser(
-      "rst", op.vector_30h),
-   -- rst 38h
-   [string.char(0xff)] = create_instruction_parser(
-      "rst", op.vector_38h),
-
-   -- ret
-   [string.char(0xc9)] = create_instruction_parser("ret"),
-   -- reti
-   [string.char(0xd9)] = create_instruction_parser("reti"),
-   -- ret c
-   [string.char(0xd8)] = create_instruction_parser(
-      "ret", op.c_condition),
-   -- ret z
-   [string.char(0xc8)] = create_instruction_parser(
-      "ret", op.z_condition),
-   -- ret nc
-   [string.char(0xd0)] = create_instruction_parser(
-      "ret", op.nc_condition),
-   -- ret nz
-   [string.char(0xc0)] = create_instruction_parser(
-      "ret", op.nz_condition)
+   [string.char(0xc9)] = { instruc = "ret" },
+   [string.char(0xd9)] = { instruc = "reti" },
+   [string.char(0xd8)] = { instruc = "ret c" },
+   [string.char(0xc8)] = { instruc = "ret z" },
+   [string.char(0xd0)] = { instruc = "ret nc" },
+   [string.char(0xc0)] = { instruc = "ret nz" }
 }
 
 local extended_instructions = {
    [string.char(0x10)] = {
-      -- stop
-      [string.char(0x00)] = create_extended_instruction_parser("stop", create_dynamic_byte_operand(0))
+      [string.char(0x00)] = { instruc = "stop", size = 2 }
    },
    [string.char(0xcb)] = {
       -- "rlc" Instructions --
 
-      -- rlc a
-      [string.char(0x07)] = create_extended_instruction_parser(
-         "rlc", op.a_register),
-      -- rlc b
-      [string.char(0x00)] = create_extended_instruction_parser(
-         "rlc", op.b_register),
-      -- rlc c
-      [string.char(0x01)] = create_extended_instruction_parser(
-         "rlc", op.c_register),
-      -- rlc d
-      [string.char(0x02)] = create_extended_instruction_parser(
-         "rlc", op.d_register),
-      -- rlc e
-      [string.char(0x03)] = create_extended_instruction_parser(
-         "rlc", op.e_register),
-      -- rlc h
-      [string.char(0x04)] = create_extended_instruction_parser(
-         "rlc", op.h_register),
-      -- rlc l
-      [string.char(0x05)] = create_extended_instruction_parser(
-         "rlc", op.l_register),
-      -- rlc [hl]
-      [string.char(0x06)] = create_extended_instruction_parser(
-         "rlc", op.hl_register_set_reference),
+      [string.char(0x07)] = { instruc = "rlc a", size = 2 },
+      [string.char(0x00)] = { instruc = "rlc b", size = 2 },
+      [string.char(0x01)] = { instruc = "rlc c", size = 2 },
+      [string.char(0x02)] = { instruc = "rlc d", size = 2 },
+      [string.char(0x03)] = { instruc = "rlc e", size = 2 },
+      [string.char(0x04)] = { instruc = "rlc h", size = 2 },
+      [string.char(0x05)] = { instruc = "rlc l", size = 2 },
+      [string.char(0x06)] = { instruc = "rlc [hl]", size = 2 },
 
       -- "rrc" Instructions --
 
-      -- rrc a
-      [string.char(0x0f)] = create_extended_instruction_parser(
-         "rrc", op.a_register),
-      -- rrc b
-      [string.char(0x08)] = create_extended_instruction_parser(
-         "rrc", op.b_register),
-      -- rrc c
-      [string.char(0x09)] = create_extended_instruction_parser(
-         "rrc", op.c_register),
-      -- rrc d
-      [string.char(0x0a)] = create_extended_instruction_parser(
-         "rrc", op.d_register),
-      -- rrc e
-      [string.char(0x0b)] = create_extended_instruction_parser(
-         "rrc", op.e_register),
-      -- rrc h
-      [string.char(0x0c)] = create_extended_instruction_parser(
-         "rrc", op.h_register),
-      -- rrc l
-      [string.char(0x0d)] = create_extended_instruction_parser(
-         "rrc", op.l_register),
-      -- rrc [hl]
-      [string.char(0x0e)] = create_extended_instruction_parser(
-         "rrc", op.hl_register_set_reference),
+      [string.char(0x0f)] = { instruc = "rrc a", size = 2 },
+      [string.char(0x08)] = { instruc = "rrc b", size = 2 },
+      [string.char(0x09)] = { instruc = "rrc c", size = 2 },
+      [string.char(0x0a)] = { instruc = "rrc d", size = 2 },
+      [string.char(0x0b)] = { instruc = "rrc e", size = 2 },
+      [string.char(0x0c)] = { instruc = "rrc h", size = 2 },
+      [string.char(0x0d)] = { instruc = "rrc l", size = 2 },
+      [string.char(0x0e)] = { instruc = "rrc [hl]", size = 2 },
 
       -- "rl" Instructions --
 
-      -- rl a
-      [string.char(0x17)] = create_extended_instruction_parser(
-         "rl", op.a_register),
-      -- rl b
-      [string.char(0x10)] = create_extended_instruction_parser(
-         "rl", op.b_register),
-      -- rl c
-      [string.char(0x11)] = create_extended_instruction_parser(
-         "rl", op.c_register),
-      -- rl d
-      [string.char(0x12)] = create_extended_instruction_parser(
-         "rl", op.d_register),
-      -- rl e
-      [string.char(0x13)] = create_extended_instruction_parser(
-         "rl", op.e_register),
-      -- rl h
-      [string.char(0x14)] = create_extended_instruction_parser(
-         "rl", op.h_register),
-      -- rl l
-      [string.char(0x15)] = create_extended_instruction_parser(
-         "rl", op.l_register),
-      -- rl [hl]
-      [string.char(0x16)] = create_extended_instruction_parser(
-         "rl", op.hl_register_set_reference),
+      [string.char(0x17)] = { instruc = "rl a", size = 2 },
+      [string.char(0x10)] = { instruc = "rl b", size = 2 },
+      [string.char(0x11)] = { instruc = "rl c", size = 2 },
+      [string.char(0x12)] = { instruc = "rl d", size = 2 },
+      [string.char(0x13)] = { instruc = "rl e", size = 2 },
+      [string.char(0x14)] = { instruc = "rl h", size = 2 },
+      [string.char(0x15)] = { instruc = "rl l", size = 2 },
+      [string.char(0x16)] = { instruc = "rl [hl]", size = 2 },
 
       -- "rr" Instructions --
 
-      -- rr a
-      [string.char(0x1f)] = create_extended_instruction_parser(
-         "rr", op.a_register),
-      -- rr b
-      [string.char(0x18)] = create_extended_instruction_parser(
-         "rr", op.b_register),
-      -- rr c
-      [string.char(0x19)] = create_extended_instruction_parser(
-         "rr", op.c_register),
-      -- rr d
-      [string.char(0x1a)] = create_extended_instruction_parser(
-         "rr", op.d_register),
-      -- rr e
-      [string.char(0x1b)] = create_extended_instruction_parser(
-         "rr", op.e_register),
-      -- rr h
-      [string.char(0x1c)] = create_extended_instruction_parser(
-         "rr", op.h_register),
-      -- rr l
-      [string.char(0x1d)] = create_extended_instruction_parser(
-         "rr", op.l_register),
-      -- rr [hl]
-      [string.char(0x1e)] = create_extended_instruction_parser(
-         "rr", op.hl_register_set_reference),
+      [string.char(0x1f)] = { instruc = "rr a", size = 2 },
+      [string.char(0x18)] = { instruc = "rr b", size = 2 },
+      [string.char(0x19)] = { instruc = "rr c", size = 2 },
+      [string.char(0x1a)] = { instruc = "rr d", size = 2 },
+      [string.char(0x1b)] = { instruc = "rr e", size = 2 },
+      [string.char(0x1c)] = { instruc = "rr h", size = 2 },
+      [string.char(0x1d)] = { instruc = "rr l", size = 2 },
+      [string.char(0x1e)] = { instruc = "rr [hl]", size = 2 },
 
       -- "sla" Instructions --
 
-      -- sla a
-      [string.char(0x27)] = create_extended_instruction_parser(
-         "sla", op.a_register),
-      -- sla b
-      [string.char(0x20)] = create_extended_instruction_parser(
-         "sla", op.b_register),
-      -- sla c
-      [string.char(0x21)] = create_extended_instruction_parser(
-         "sla", op.c_register),
-      -- sla d
-      [string.char(0x22)] = create_extended_instruction_parser(
-         "sla", op.d_register),
-      -- sla e
-      [string.char(0x23)] = create_extended_instruction_parser(
-         "sla", op.e_register),
-      -- sla h
-      [string.char(0x24)] = create_extended_instruction_parser(
-         "sla", op.h_register),
-      -- sla l
-      [string.char(0x25)] = create_extended_instruction_parser(
-         "sla", op.l_register),
-      -- sla [hl]
-      [string.char(0x26)] = create_extended_instruction_parser(
-         "sla", op.hl_register_set_reference),
+      [string.char(0x27)] = { instruc = "sla a", size = 2 },
+      [string.char(0x20)] = { instruc = "sla b", size = 2 },
+      [string.char(0x21)] = { instruc = "sla c", size = 2 },
+      [string.char(0x22)] = { instruc = "sla d", size = 2 },
+      [string.char(0x23)] = { instruc = "sla e", size = 2 },
+      [string.char(0x24)] = { instruc = "sla h", size = 2 },
+      [string.char(0x25)] = { instruc = "sla l", size = 2 },
+      [string.char(0x26)] = { instruc = "sla [hl]", size = 2 },
 
       -- "sra" Instructions --
 
-      -- sra a
-      [string.char(0x2f)] = create_extended_instruction_parser(
-         "sra", op.a_register),
-      -- sra b
-      [string.char(0x28)] = create_extended_instruction_parser(
-         "sra", op.b_register),
-      -- sra c
-      [string.char(0x29)] = create_extended_instruction_parser(
-         "sra", op.c_register),
-      -- sra d
-      [string.char(0x2a)] = create_extended_instruction_parser(
-         "sra", op.d_register),
-      -- sra e
-      [string.char(0x2b)] = create_extended_instruction_parser(
-         "sra", op.e_register),
-      -- sra h
-      [string.char(0x2c)] = create_extended_instruction_parser(
-         "sra", op.h_register),
-      -- sra l
-      [string.char(0x2d)] = create_extended_instruction_parser(
-         "sra", op.l_register),
-      -- sra [hl]
-      [string.char(0x2e)] = create_extended_instruction_parser(
-         "sra", op.hl_register_set_reference),
+      [string.char(0x2f)] = { instruc = "sra a", size = 2 },
+      [string.char(0x28)] = { instruc = "sra b", size = 2 },
+      [string.char(0x29)] = { instruc = "sra c", size = 2 },
+      [string.char(0x2a)] = { instruc = "sra d", size = 2 },
+      [string.char(0x2b)] = { instruc = "sra e", size = 2 },
+      [string.char(0x2c)] = { instruc = "sra h", size = 2 },
+      [string.char(0x2d)] = { instruc = "sra l", size = 2 },
+      [string.char(0x2e)] = { instruc = "sra [hl]", size = 2 },
 
       -- "swap" Instructions --
 
-      -- swap a
-      [string.char(0x37)] = create_extended_instruction_parser(
-         "swap", op.a_register),
-      -- swap b
-      [string.char(0x30)] = create_extended_instruction_parser(
-         "swap", op.b_register),
-      -- swap c
-      [string.char(0x31)] = create_extended_instruction_parser(
-         "swap", op.c_register),
-      -- swap d
-      [string.char(0x32)] = create_extended_instruction_parser(
-         "swap", op.d_register),
-      -- swap e
-      [string.char(0x33)] = create_extended_instruction_parser(
-         "swap", op.e_register),
-      -- swap h
-      [string.char(0x34)] = create_extended_instruction_parser(
-         "swap", op.h_register),
-      -- swap l
-      [string.char(0x35)] = create_extended_instruction_parser(
-         "swap", op.l_register),
-      -- swap [hl]
-      [string.char(0x36)] = create_extended_instruction_parser(
-         "swap", op.hl_register_set_reference),
+      [string.char(0x37)] = { instruc = "swap a", size = 2 },
+      [string.char(0x30)] = { instruc = "swap b", size = 2 },
+      [string.char(0x31)] = { instruc = "swap c", size = 2 },
+      [string.char(0x32)] = { instruc = "swap d", size = 2 },
+      [string.char(0x33)] = { instruc = "swap e", size = 2 },
+      [string.char(0x34)] = { instruc = "swap h", size = 2 },
+      [string.char(0x35)] = { instruc = "swap l", size = 2 },
+      [string.char(0x36)] = { instruc = "swap [hl]", size = 2 },
 
       -- "srl" Instructions --
 
-      -- srl a
-      [string.char(0x3f)] = create_extended_instruction_parser(
-         "srl", op.a_register),
-      -- srl b
-      [string.char(0x38)] = create_extended_instruction_parser(
-         "srl", op.b_register),
-      -- srl c
-      [string.char(0x39)] = create_extended_instruction_parser(
-         "srl", op.c_register),
-      -- srl d
-      [string.char(0x3a)] = create_extended_instruction_parser(
-         "srl", op.d_register),
-      -- srl e
-      [string.char(0x3b)] = create_extended_instruction_parser(
-         "srl", op.e_register),
-      -- srl h
-      [string.char(0x3c)] = create_extended_instruction_parser(
-         "srl", op.h_register),
-      -- srl l
-      [string.char(0x3d)] = create_extended_instruction_parser(
-         "srl", op.l_register),
-      -- srl [hl]
-      [string.char(0x3e)] = create_extended_instruction_parser(
-         "srl", op.hl_register_set_reference),
+      [string.char(0x3f)] = { instruc = "srl a", size = 2 },
+      [string.char(0x38)] = { instruc = "srl b", size = 2 },
+      [string.char(0x39)] = { instruc = "srl c", size = 2 },
+      [string.char(0x3a)] = { instruc = "srl d", size = 2 },
+      [string.char(0x3b)] = { instruc = "srl e", size = 2 },
+      [string.char(0x3c)] = { instruc = "srl h", size = 2 },
+      [string.char(0x3d)] = { instruc = "srl l", size = 2 },
+      [string.char(0x3e)] = { instruc = "srl [hl]", size = 2 },
 
       -- "bit" Instructions --
 
-      -- bit 0, a
-      [string.char(0x47)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(0), op.a_register),
-      -- bit 0, b
-      [string.char(0x40)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(0), op.b_register),
-      -- bit 0, c
-      [string.char(0x41)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(0), op.c_register),
-      -- bit 0, d
-      [string.char(0x42)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(0), op.d_register),
-      -- bit 0, e
-      [string.char(0x43)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(0), op.e_register),
-      -- bit 0, h
-      [string.char(0x44)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(0), op.h_register),
-      -- bit 0, l
-      [string.char(0x45)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(0), op.l_register),
-      -- bit 0, [hl]
-      [string.char(0x46)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(0), op.hl_register_set_reference),
+      [string.char(0x47)] = { instruc = "bit 0, a", size = 2 },
+      [string.char(0x40)] = { instruc = "bit 0, b", size = 2 },
+      [string.char(0x41)] = { instruc = "bit 0, c", size = 2 },
+      [string.char(0x42)] = { instruc = "bit 0, d", size = 2 },
+      [string.char(0x43)] = { instruc = "bit 0, e", size = 2 },
+      [string.char(0x44)] = { instruc = "bit 0, h", size = 2 },
+      [string.char(0x45)] = { instruc = "bit 0, l", size = 2 },
+      [string.char(0x46)] = { instruc = "bit 0, [hl]", size = 2 },
 
-      -- bit 1, a
-      [string.char(0x4f)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(1), op.a_register),
-      -- bit 1, b
-      [string.char(0x48)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(1), op.b_register),
-      -- bit 1, c
-      [string.char(0x49)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(1), op.c_register),
-      -- bit 1, d
-      [string.char(0x4a)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(1), op.d_register),
-      -- bit 1, e
-      [string.char(0x4b)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(1), op.e_register),
-      -- bit 1, h
-      [string.char(0x4c)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(1), op.h_register),
-      -- bit 1, l
-      [string.char(0x4d)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(1), op.l_register),
-      -- bit 1, [hl]
-      [string.char(0x4e)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(1), op.hl_register_set_reference),
+      [string.char(0x4f)] = { instruc = "bit 1, a", size = 2 },
+      [string.char(0x48)] = { instruc = "bit 1, b", size = 2 },
+      [string.char(0x49)] = { instruc = "bit 1, c", size = 2 },
+      [string.char(0x4a)] = { instruc = "bit 1, d", size = 2 },
+      [string.char(0x4b)] = { instruc = "bit 1, e", size = 2 },
+      [string.char(0x4c)] = { instruc = "bit 1, h", size = 2 },
+      [string.char(0x4d)] = { instruc = "bit 1, l", size = 2 },
+      [string.char(0x4e)] = { instruc = "bit 1, [hl]", size = 2 },
 
-      -- bit 2, a
-      [string.char(0x57)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(2), op.a_register),
-      -- bit 2, b
-      [string.char(0x50)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(2), op.b_register),
-      -- bit 2, c
-      [string.char(0x51)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(2), op.c_register),
-      -- bit 2, d
-      [string.char(0x52)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(2), op.d_register),
-      -- bit 2, e
-      [string.char(0x53)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(2), op.e_register),
-      -- bit 2, h
-      [string.char(0x54)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(2), op.h_register),
-      -- bit 2, l
-      [string.char(0x55)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(2), op.l_register),
-      -- bit 2, [hl]
-      [string.char(0x56)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(2), op.hl_register_set_reference),
+      [string.char(0x57)] = { instruc = "bit 2, a", size = 2 },
+      [string.char(0x50)] = { instruc = "bit 2, b", size = 2 },
+      [string.char(0x51)] = { instruc = "bit 2, c", size = 2 },
+      [string.char(0x52)] = { instruc = "bit 2, d", size = 2 },
+      [string.char(0x53)] = { instruc = "bit 2, e", size = 2 },
+      [string.char(0x54)] = { instruc = "bit 2, h", size = 2 },
+      [string.char(0x55)] = { instruc = "bit 2, l", size = 2 },
+      [string.char(0x56)] = { instruc = "bit 2, [hl]", size = 2 },
 
-      -- bit 3, a
-      [string.char(0x5f)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(3), op.a_register),
-      -- bit 3, b
-      [string.char(0x58)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(3), op.b_register),
-      -- bit 3, c
-      [string.char(0x59)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(3), op.c_register),
-      -- bit 3, d
-      [string.char(0x5a)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(3), op.d_register),
-      -- bit 3, e
-      [string.char(0x5b)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(3), op.e_register),
-      -- bit 3, h
-      [string.char(0x5c)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(3), op.h_register),
-      -- bit 3, l
-      [string.char(0x5d)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(3), op.l_register),
-      -- bit 3, [hl]
-      [string.char(0x5e)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(3), op.hl_register_set_reference),
+      [string.char(0x5f)] = { instruc = "bit 3, a", size = 2 },
+      [string.char(0x58)] = { instruc = "bit 3, b", size = 2 },
+      [string.char(0x59)] = { instruc = "bit 3, c", size = 2 },
+      [string.char(0x5a)] = { instruc = "bit 3, d", size = 2 },
+      [string.char(0x5b)] = { instruc = "bit 3, e", size = 2 },
+      [string.char(0x5c)] = { instruc = "bit 3, h", size = 2 },
+      [string.char(0x5d)] = { instruc = "bit 3, l", size = 2 },
+      [string.char(0x5e)] = { instruc = "bit 3, [hl]", size = 2 },
 
-      -- bit 4, a
-      [string.char(0x67)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(4), op.a_register),
-      -- bit 4, b
-      [string.char(0x60)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(4), op.b_register),
-      -- bit 4, c
-      [string.char(0x61)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(4), op.c_register),
-      -- bit 4, d
-      [string.char(0x62)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(4), op.d_register),
-      -- bit 4, e
-      [string.char(0x63)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(4), op.e_register),
-      -- bit 4, h
-      [string.char(0x64)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(4), op.h_register),
-      -- bit 4, l
-      [string.char(0x65)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(4), op.l_register),
-      -- bit 4, [hl]
-      [string.char(0x66)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(4), op.hl_register_set_reference),
+      [string.char(0x67)] = { instruc = "bit 4, a", size = 2 },
+      [string.char(0x60)] = { instruc = "bit 4, b", size = 2 },
+      [string.char(0x61)] = { instruc = "bit 4, c", size = 2 },
+      [string.char(0x62)] = { instruc = "bit 4, d", size = 2 },
+      [string.char(0x63)] = { instruc = "bit 4, e", size = 2 },
+      [string.char(0x64)] = { instruc = "bit 4, h", size = 2 },
+      [string.char(0x65)] = { instruc = "bit 4, l", size = 2 },
+      [string.char(0x66)] = { instruc = "bit 4, [hl]", size = 2 },
 
-      -- bit 5, a
-      [string.char(0x6f)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(5), op.a_register),
-      -- bit 5, b
-      [string.char(0x68)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(5), op.b_register),
-      -- bit 5, c
-      [string.char(0x69)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(5), op.c_register),
-      -- bit 5, d
-      [string.char(0x6a)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(5), op.d_register),
-      -- bit 5, e
-      [string.char(0x6b)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(5), op.e_register),
-      -- bit 5, h
-      [string.char(0x6c)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(5), op.h_register),
-      -- bit 5, l
-      [string.char(0x6d)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(5), op.l_register),
-      -- bit 5, [hl]
-      [string.char(0x6e)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(5), op.hl_register_set_reference),
+      [string.char(0x6f)] = { instruc = "bit 5, a", size = 2 },
+      [string.char(0x68)] = { instruc = "bit 5, b", size = 2 },
+      [string.char(0x69)] = { instruc = "bit 5, c", size = 2 },
+      [string.char(0x6a)] = { instruc = "bit 5, d", size = 2 },
+      [string.char(0x6b)] = { instruc = "bit 5, e", size = 2 },
+      [string.char(0x6c)] = { instruc = "bit 5, h", size = 2 },
+      [string.char(0x6d)] = { instruc = "bit 5, l", size = 2 },
+      [string.char(0x6e)] = { instruc = "bit 5, [hl]", size = 2 },
 
-      -- bit 6, a
-      [string.char(0x77)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(6), op.a_register),
-      -- bit 6, b
-      [string.char(0x70)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(6), op.b_register),
-      -- bit 6, c
-      [string.char(0x71)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(6), op.c_register),
-      -- bit 6, d
-      [string.char(0x72)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(6), op.d_register),
-      -- bit 6, e
-      [string.char(0x73)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(6), op.e_register),
-      -- bit 6, h
-      [string.char(0x74)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(6), op.h_register),
-      -- bit 6, l
-      [string.char(0x75)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(6), op.l_register),
-      -- bit 6, [hl]
-      [string.char(0x76)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(6), op.hl_register_set_reference),
+      [string.char(0x77)] = { instruc = "bit 6, a", size = 2 },
+      [string.char(0x70)] = { instruc = "bit 6, b", size = 2 },
+      [string.char(0x71)] = { instruc = "bit 6, c", size = 2 },
+      [string.char(0x72)] = { instruc = "bit 6, d", size = 2 },
+      [string.char(0x73)] = { instruc = "bit 6, e", size = 2 },
+      [string.char(0x74)] = { instruc = "bit 6, h", size = 2 },
+      [string.char(0x75)] = { instruc = "bit 6, l", size = 2 },
+      [string.char(0x76)] = { instruc = "bit 6, [hl]", size = 2 },
 
-      -- bit 7, a
-      [string.char(0x7f)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(7), op.a_register),
-      -- bit 7, b
-      [string.char(0x78)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(7), op.b_register),
-      -- bit 7, c
-      [string.char(0x79)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(7), op.c_register),
-      -- bit 7, d
-      [string.char(0x7a)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(7), op.d_register),
-      -- bit 7, e
-      [string.char(0x7b)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(7), op.e_register),
-      -- bit 7, h
-      [string.char(0x7c)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(7), op.h_register),
-      -- bit 7, l
-      [string.char(0x7d)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(7), op.l_register),
-      -- bit 7, [hl]
-      [string.char(0x7e)] = create_extended_instruction_parser(
-         "bit", create_dynamic_byte_operand(7), op.hl_register_set_reference),
+      [string.char(0x7f)] = { instruc = "bit 7, a", size = 2 },
+      [string.char(0x78)] = { instruc = "bit 7, b", size = 2 },
+      [string.char(0x79)] = { instruc = "bit 7, c", size = 2 },
+      [string.char(0x7a)] = { instruc = "bit 7, d", size = 2 },
+      [string.char(0x7b)] = { instruc = "bit 7, e", size = 2 },
+      [string.char(0x7c)] = { instruc = "bit 7, h", size = 2 },
+      [string.char(0x7d)] = { instruc = "bit 7, l", size = 2 },
+      [string.char(0x7e)] = { instruc = "bit 7, [hl]", size = 2 },
 
       -- "res" Instructions --
 
-      -- res 0, a
-      [string.char(0x87)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(0), op.a_register),
-      -- res 0, b
-      [string.char(0x80)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(0), op.b_register),
-      -- res 0, c
-      [string.char(0x81)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(0), op.c_register),
-      -- res 0, d
-      [string.char(0x82)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(0), op.d_register),
-      -- res 0, e
-      [string.char(0x83)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(0), op.e_register),
-      -- res 0, h
-      [string.char(0x84)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(0), op.h_register),
-      -- res 0, l
-      [string.char(0x85)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(0), op.l_register),
-      -- res 0, [hl]
-      [string.char(0x86)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(0), op.hl_register_set_reference),
+      [string.char(0x87)] = { instruc = "res 0, a", size = 2 },
+      [string.char(0x80)] = { instruc = "res 0, b", size = 2 },
+      [string.char(0x81)] = { instruc = "res 0, c", size = 2 },
+      [string.char(0x82)] = { instruc = "res 0, d", size = 2 },
+      [string.char(0x83)] = { instruc = "res 0, e", size = 2 },
+      [string.char(0x84)] = { instruc = "res 0, h", size = 2 },
+      [string.char(0x85)] = { instruc = "res 0, l", size = 2 },
+      [string.char(0x86)] = { instruc = "res 0, [hl]", size = 2 },
 
-      -- res 1, a
-      [string.char(0x8f)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(1), op.a_register),
-      -- res 1, b
-      [string.char(0x88)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(1), op.b_register),
-      -- res 1, c
-      [string.char(0x89)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(1), op.c_register),
-      -- res 1, d
-      [string.char(0x8a)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(1), op.d_register),
-      -- res 1, e
-      [string.char(0x8b)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(1), op.e_register),
-      -- res 1, h
-      [string.char(0x8c)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(1), op.h_register),
-      -- res 1, l
-      [string.char(0x8d)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(1), op.l_register),
-      -- res 1, [hl]
-      [string.char(0x8e)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(1), op.hl_register_set_reference),
+      [string.char(0x8f)] = { instruc = "res 1, a", size = 2 },
+      [string.char(0x88)] = { instruc = "res 1, b", size = 2 },
+      [string.char(0x89)] = { instruc = "res 1, c", size = 2 },
+      [string.char(0x8a)] = { instruc = "res 1, d", size = 2 },
+      [string.char(0x8b)] = { instruc = "res 1, e", size = 2 },
+      [string.char(0x8c)] = { instruc = "res 1, h", size = 2 },
+      [string.char(0x8d)] = { instruc = "res 1, l", size = 2 },
+      [string.char(0x8e)] = { instruc = "res 1, [hl]", size = 2 },
 
-      -- res 2, a
-      [string.char(0x97)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(2), op.a_register),
-      -- res 2, b
-      [string.char(0x90)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(2), op.b_register),
-      -- res 2, c
-      [string.char(0x91)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(2), op.c_register),
-      -- res 2, d
-      [string.char(0x92)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(2), op.d_register),
-      -- res 2, e
-      [string.char(0x93)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(2), op.e_register),
-      -- res 2, h
-      [string.char(0x94)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(2), op.h_register),
-      -- res 2, l
-      [string.char(0x95)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(2), op.l_register),
-      -- res 2, [hl]
-      [string.char(0x96)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(2), op.hl_register_set_reference),
+      [string.char(0x97)] = { instruc = "res 2, a", size = 2 },
+      [string.char(0x90)] = { instruc = "res 2, b", size = 2 },
+      [string.char(0x91)] = { instruc = "res 2, c", size = 2 },
+      [string.char(0x92)] = { instruc = "res 2, d", size = 2 },
+      [string.char(0x93)] = { instruc = "res 2, e", size = 2 },
+      [string.char(0x94)] = { instruc = "res 2, h", size = 2 },
+      [string.char(0x95)] = { instruc = "res 2, l", size = 2 },
+      [string.char(0x96)] = { instruc = "res 2, [hl]", size = 2 },
 
-      -- res 3, a
-      [string.char(0x9f)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(3), op.a_register),
-      -- res 3, b
-      [string.char(0x98)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(3), op.b_register),
-      -- res 3, c
-      [string.char(0x99)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(3), op.c_register),
-      -- res 3, d
-      [string.char(0x9a)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(3), op.d_register),
-      -- res 3, e
-      [string.char(0x9b)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(3), op.e_register),
-      -- res 3, h
-      [string.char(0x9c)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(3), op.h_register),
-      -- res 3, l
-      [string.char(0x9d)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(3), op.l_register),
-      -- res 3, [hl]
-      [string.char(0x9e)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(3), op.hl_register_set_reference),
+      [string.char(0x9f)] = { instruc = "res 3, a", size = 2 },
+      [string.char(0x98)] = { instruc = "res 3, b", size = 2 },
+      [string.char(0x99)] = { instruc = "res 3, c", size = 2 },
+      [string.char(0x9a)] = { instruc = "res 3, d", size = 2 },
+      [string.char(0x9b)] = { instruc = "res 3, e", size = 2 },
+      [string.char(0x9c)] = { instruc = "res 3, h", size = 2 },
+      [string.char(0x9d)] = { instruc = "res 3, l", size = 2 },
+      [string.char(0x9e)] = { instruc = "res 3, [hl]", size = 2 },
 
-      -- res 4, a
-      [string.char(0xa7)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(4), op.a_register),
-      -- res 4, b
-      [string.char(0xa0)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(4), op.b_register),
-      -- res 4, c
-      [string.char(0xa1)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(4), op.c_register),
-      -- res 4, d
-      [string.char(0xa2)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(4), op.d_register),
-      -- res 4, e
-      [string.char(0xa3)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(4), op.e_register),
-      -- res 4, h
-      [string.char(0xa4)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(4), op.h_register),
-      -- res 4, l
-      [string.char(0xa5)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(4), op.l_register),
-      -- res 4, [hl]
-      [string.char(0xa6)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(4), op.hl_register_set_reference),
+      [string.char(0xa7)] = { instruc = "res 4, a", size = 2 },
+      [string.char(0xa0)] = { instruc = "res 4, b", size = 2 },
+      [string.char(0xa1)] = { instruc = "res 4, c", size = 2 },
+      [string.char(0xa2)] = { instruc = "res 4, d", size = 2 },
+      [string.char(0xa3)] = { instruc = "res 4, e", size = 2 },
+      [string.char(0xa4)] = { instruc = "res 4, h", size = 2 },
+      [string.char(0xa5)] = { instruc = "res 4, l", size = 2 },
+      [string.char(0xa6)] = { instruc = "res 4, [hl]", size = 2 },
 
-      -- res 5, a
-      [string.char(0xaf)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(5), op.a_register),
-      -- res 5, b
-      [string.char(0xa8)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(5), op.b_register),
-      -- res 5, c
-      [string.char(0xa9)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(5), op.c_register),
-      -- res 5, d
-      [string.char(0xaa)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(5), op.d_register),
-      -- res 5, e
-      [string.char(0xab)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(5), op.e_register),
-      -- res 5, h
-      [string.char(0xac)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(5), op.h_register),
-      -- res 5, l
-      [string.char(0xad)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(5), op.l_register),
-      -- res 5, [hl]
-      [string.char(0xae)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(5), op.hl_register_set_reference),
+      [string.char(0xaf)] = { instruc = "res 5, a", size = 2 },
+      [string.char(0xa8)] = { instruc = "res 5, b", size = 2 },
+      [string.char(0xa9)] = { instruc = "res 5, c", size = 2 },
+      [string.char(0xaa)] = { instruc = "res 5, d", size = 2 },
+      [string.char(0xab)] = { instruc = "res 5, e", size = 2 },
+      [string.char(0xac)] = { instruc = "res 5, h", size = 2 },
+      [string.char(0xad)] = { instruc = "res 5, l", size = 2 },
+      [string.char(0xae)] = { instruc = "res 5, [hl]", size = 2 },
 
-      -- res 6, a
-      [string.char(0xb7)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(6), op.a_register),
-      -- res 6, b
-      [string.char(0xb0)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(6), op.b_register),
-      -- res 6, c
-      [string.char(0xb1)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(6), op.c_register),
-      -- res 6, d
-      [string.char(0xb2)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(6), op.d_register),
-      -- res 6, e
-      [string.char(0xb3)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(6), op.e_register),
-      -- res 6, h
-      [string.char(0xb4)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(6), op.h_register),
-      -- res 6, l
-      [string.char(0xb5)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(6), op.l_register),
-      -- res 6, [hl]
-      [string.char(0xb6)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(6), op.hl_register_set_reference),
+      [string.char(0xb7)] = { instruc = "res 6, a", size = 2 },
+      [string.char(0xb0)] = { instruc = "res 6, b", size = 2 },
+      [string.char(0xb1)] = { instruc = "res 6, c", size = 2 },
+      [string.char(0xb2)] = { instruc = "res 6, d", size = 2 },
+      [string.char(0xb3)] = { instruc = "res 6, e", size = 2 },
+      [string.char(0xb4)] = { instruc = "res 6, h", size = 2 },
+      [string.char(0xb5)] = { instruc = "res 6, l", size = 2 },
+      [string.char(0xb6)] = { instruc = "res 6, [hl]", size = 2 },
 
-      -- res 7, a
-      [string.char(0xbf)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(7), op.a_register),
-      -- res 7, b
-      [string.char(0xb8)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(7), op.b_register),
-      -- res 7, c
-      [string.char(0xb9)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(7), op.c_register),
-      -- res 7, d
-      [string.char(0xba)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(7), op.d_register),
-      -- res 7, e
-      [string.char(0xbb)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(7), op.e_register),
-      -- res 7, h
-      [string.char(0xbc)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(7), op.h_register),
-      -- res 7, l
-      [string.char(0xbd)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(7), op.l_register),
-      -- res 7, [hl]
-      [string.char(0xbe)] = create_extended_instruction_parser(
-         "res", create_dynamic_byte_operand(7), op.hl_register_set_reference),
+      [string.char(0xbf)] = { instruc = "res 7, a", size = 2 },
+      [string.char(0xb8)] = { instruc = "res 7, b", size = 2 },
+      [string.char(0xb9)] = { instruc = "res 7, c", size = 2 },
+      [string.char(0xba)] = { instruc = "res 7, d", size = 2 },
+      [string.char(0xbb)] = { instruc = "res 7, e", size = 2 },
+      [string.char(0xbc)] = { instruc = "res 7, h", size = 2 },
+      [string.char(0xbd)] = { instruc = "res 7, l", size = 2 },
+      [string.char(0xbe)] = { instruc = "res 7, [hl]", size = 2 },
 
       -- "set" Instructions --
 
-      -- set 0, a
-      [string.char(0xc7)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(0), op.a_register),
-      -- set 0, b
-      [string.char(0xc0)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(0), op.b_register),
-      -- set 0, c
-      [string.char(0xc1)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(0), op.c_register),
-      -- set 0, d
-      [string.char(0xc2)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(0), op.d_register),
-      -- set 0, e
-      [string.char(0xc3)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(0), op.e_register),
-      -- set 0, h
-      [string.char(0xc4)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(0), op.h_register),
-      -- set 0, l
-      [string.char(0xc5)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(0), op.l_register),
-      -- set 0, [hl]
-      [string.char(0xc6)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(0), op.hl_register_set_reference),
+      [string.char(0xc7)] = { instruc = "set 0, a", size = 2 },
+      [string.char(0xc0)] = { instruc = "set 0, b", size = 2 },
+      [string.char(0xc1)] = { instruc = "set 0, c", size = 2 },
+      [string.char(0xc2)] = { instruc = "set 0, d", size = 2 },
+      [string.char(0xc3)] = { instruc = "set 0, e", size = 2 },
+      [string.char(0xc4)] = { instruc = "set 0, h", size = 2 },
+      [string.char(0xc5)] = { instruc = "set 0, l", size = 2 },
+      [string.char(0xc6)] = { instruc = "set 0, [hl]", size = 2 },
 
-      -- set 1, a
-      [string.char(0xcf)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(1), op.a_register),
-      -- set 1, b
-      [string.char(0xc8)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(1), op.b_register),
-      -- set 1, c
-      [string.char(0xc9)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(1), op.c_register),
-      -- set 1, d
-      [string.char(0xca)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(1), op.d_register),
-      -- set 1, e
-      [string.char(0xcb)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(1), op.e_register),
-      -- set 1, h
-      [string.char(0xcc)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(1), op.h_register),
-      -- set 1, l
-      [string.char(0xcd)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(1), op.l_register),
-      -- set 1, [hl]
-      [string.char(0xce)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(1), op.hl_register_set_reference),
+      [string.char(0xcf)] = { instruc = "set 1, a", size = 2 },
+      [string.char(0xc8)] = { instruc = "set 1, b", size = 2 },
+      [string.char(0xc9)] = { instruc = "set 1, c", size = 2 },
+      [string.char(0xca)] = { instruc = "set 1, d", size = 2 },
+      [string.char(0xcb)] = { instruc = "set 1, e", size = 2 },
+      [string.char(0xcc)] = { instruc = "set 1, h", size = 2 },
+      [string.char(0xcd)] = { instruc = "set 1, l", size = 2 },
+      [string.char(0xce)] = { instruc = "set 1, [hl]", size = 2 },
 
-      -- set 2, a
-      [string.char(0xd7)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(2), op.a_register),
-      -- set 2, b
-      [string.char(0xd0)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(2), op.b_register),
-      -- set 2, c
-      [string.char(0xd1)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(2), op.c_register),
-      -- set 2, d
-      [string.char(0xd2)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(2), op.d_register),
-      -- set 2, e
-      [string.char(0xd3)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(2), op.e_register),
-      -- set 2, h
-      [string.char(0xd4)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(2), op.h_register),
-      -- set 2, l
-      [string.char(0xd5)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(2), op.l_register),
-      -- set 2, [hl]
-      [string.char(0xd6)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(2), op.hl_register_set_reference),
+      [string.char(0xd7)] = { instruc = "set 2, a", size = 2 },
+      [string.char(0xd0)] = { instruc = "set 2, b", size = 2 },
+      [string.char(0xd1)] = { instruc = "set 2, c", size = 2 },
+      [string.char(0xd2)] = { instruc = "set 2, d", size = 2 },
+      [string.char(0xd3)] = { instruc = "set 2, e", size = 2 },
+      [string.char(0xd4)] = { instruc = "set 2, h", size = 2 },
+      [string.char(0xd5)] = { instruc = "set 2, l", size = 2 },
+      [string.char(0xd6)] = { instruc = "set 2, [hl]", size = 2 },
 
-      -- set 3, a
-      [string.char(0xdf)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(3), op.a_register),
-      -- set 3, b
-      [string.char(0xd8)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(3), op.b_register),
-      -- set 3, c
-      [string.char(0xd9)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(3), op.c_register),
-      -- set 3, d
-      [string.char(0xda)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(3), op.d_register),
-      -- set 3, e
-      [string.char(0xdb)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(3), op.e_register),
-      -- set 3, h
-      [string.char(0xdc)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(3), op.h_register),
-      -- set 3, l
-      [string.char(0xdd)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(3), op.l_register),
-      -- set 3, [hl]
-      [string.char(0xde)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(3), op.hl_register_set_reference),
+      [string.char(0xdf)] = { instruc = "set 3, a", size = 2 },
+      [string.char(0xd8)] = { instruc = "set 3, b", size = 2 },
+      [string.char(0xd9)] = { instruc = "set 3, c", size = 2 },
+      [string.char(0xda)] = { instruc = "set 3, d", size = 2 },
+      [string.char(0xdb)] = { instruc = "set 3, e", size = 2 },
+      [string.char(0xdc)] = { instruc = "set 3, h", size = 2 },
+      [string.char(0xdd)] = { instruc = "set 3, l", size = 2 },
+      [string.char(0xde)] = { instruc = "set 3, [hl]", size = 2 },
 
-      -- set 4, a
-      [string.char(0xe7)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(4), op.a_register),
-      -- set 4, b
-      [string.char(0xe0)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(4), op.b_register),
-      -- set 4, c
-      [string.char(0xe1)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(4), op.c_register),
-      -- set 4, d
-      [string.char(0xe2)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(4), op.d_register),
-      -- set 4, e
-      [string.char(0xe3)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(4), op.e_register),
-      -- set 4, h
-      [string.char(0xe4)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(4), op.h_register),
-      -- set 4, l
-      [string.char(0xe5)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(4), op.l_register),
-      -- set 4, [hl]
-      [string.char(0xe6)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(4), op.hl_register_set_reference),
+      [string.char(0xe7)] = { instruc = "set 4, a", size = 2 },
+      [string.char(0xe0)] = { instruc = "set 4, b", size = 2 },
+      [string.char(0xe1)] = { instruc = "set 4, c", size = 2 },
+      [string.char(0xe2)] = { instruc = "set 4, d", size = 2 },
+      [string.char(0xe3)] = { instruc = "set 4, e", size = 2 },
+      [string.char(0xe4)] = { instruc = "set 4, h", size = 2 },
+      [string.char(0xe5)] = { instruc = "set 4, l", size = 2 },
+      [string.char(0xe6)] = { instruc = "set 4, [hl]", size = 2 },
 
-      -- set 5, a
-      [string.char(0xef)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(5), op.a_register),
-      -- set 5, b
-      [string.char(0xe8)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(5), op.b_register),
-      -- set 5, c
-      [string.char(0xe9)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(5), op.c_register),
-      -- set 5, d
-      [string.char(0xea)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(5), op.d_register),
-      -- set 5, e
-      [string.char(0xeb)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(5), op.e_register),
-      -- set 5, h
-      [string.char(0xec)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(5), op.h_register),
-      -- set 5, l
-      [string.char(0xed)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(5), op.l_register),
-      -- set 5, [hl]
-      [string.char(0xee)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(5), op.hl_register_set_reference),
+      [string.char(0xef)] = { instruc = "set 5, a", size = 2 },
+      [string.char(0xe8)] = { instruc = "set 5, b", size = 2 },
+      [string.char(0xe9)] = { instruc = "set 5, c", size = 2 },
+      [string.char(0xea)] = { instruc = "set 5, d", size = 2 },
+      [string.char(0xeb)] = { instruc = "set 5, e", size = 2 },
+      [string.char(0xec)] = { instruc = "set 5, h", size = 2 },
+      [string.char(0xed)] = { instruc = "set 5, l", size = 2 },
+      [string.char(0xee)] = { instruc = "set 5, [hl]", size = 2 },
 
-      -- set 6, a
-      [string.char(0xf7)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(6), op.a_register),
-      -- set 6, b
-      [string.char(0xf0)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(6), op.b_register),
-      -- set 6, c
-      [string.char(0xf1)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(6), op.c_register),
-      -- set 6, d
-      [string.char(0xf2)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(6), op.d_register),
-      -- set 6, e
-      [string.char(0xf3)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(6), op.e_register),
-      -- set 6, h
-      [string.char(0xf4)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(6), op.h_register),
-      -- set 6, l
-      [string.char(0xf5)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(6), op.l_register),
-      -- set 6, [hl]
-      [string.char(0xf6)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(6), op.hl_register_set_reference),
+      [string.char(0xf7)] = { instruc = "set 6, a", size = 2 },
+      [string.char(0xf0)] = { instruc = "set 6, b", size = 2 },
+      [string.char(0xf1)] = { instruc = "set 6, c", size = 2 },
+      [string.char(0xf2)] = { instruc = "set 6, d", size = 2 },
+      [string.char(0xf3)] = { instruc = "set 6, e", size = 2 },
+      [string.char(0xf4)] = { instruc = "set 6, h", size = 2 },
+      [string.char(0xf5)] = { instruc = "set 6, l", size = 2 },
+      [string.char(0xf6)] = { instruc = "set 6, [hl]", size = 2 },
 
-      -- set 7, a
-      [string.char(0xff)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(7), op.a_register),
-      -- set 7, b
-      [string.char(0xf8)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(7), op.b_register),
-      -- set 7, c
-      [string.char(0xf9)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(7), op.c_register),
-      -- set 7, d
-      [string.char(0xfa)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(7), op.d_register),
-      -- set 7, e
-      [string.char(0xfb)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(7), op.e_register),
-      -- set 7, h
-      [string.char(0xfc)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(7), op.h_register),
-      -- set 7, l
-      [string.char(0xfd)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(7), op.l_register),
-      -- set 7, [hl]
-      [string.char(0xfe)] = create_extended_instruction_parser(
-         "set", create_dynamic_byte_operand(7), op.hl_register_set_reference)
+      [string.char(0xff)] = { instruc = "set 7, a", size = 2 },
+      [string.char(0xf8)] = { instruc = "set 7, b", size = 2 },
+      [string.char(0xf9)] = { instruc = "set 7, c", size = 2 },
+      [string.char(0xfa)] = { instruc = "set 7, d", size = 2 },
+      [string.char(0xfb)] = { instruc = "set 7, e", size = 2 },
+      [string.char(0xfc)] = { instruc = "set 7, h", size = 2 },
+      [string.char(0xfd)] = { instruc = "set 7, l", size = 2 },
+      [string.char(0xfe)] = { instruc = "set 7, [hl]", size = 2 }
    }
+}
+
+local instruction_readers = {
+   -- "ld" Instructions --
+
+   [string.char(0x3e)] = create_byte_op_instruction_reader("ld a, n8"),
+   [string.char(0x06)] = create_byte_op_instruction_reader("ld b, n8"),
+   [string.char(0x0e)] = create_byte_op_instruction_reader("ld c, n8"),
+   [string.char(0x16)] = create_byte_op_instruction_reader("ld d, n8"),
+   [string.char(0x1e)] = create_byte_op_instruction_reader("ld e, n8"),
+   [string.char(0x26)] = create_byte_op_instruction_reader("ld h, n8"),
+   [string.char(0x2e)] = create_byte_op_instruction_reader("ld l, n8"),
+
+   [string.char(0xfa)] = create_octet_op_instruction_reader("ld a, [n16]"),
+   [string.char(0xea)] = create_octet_op_instruction_reader("ld [n16], a"),
+
+   [string.char(0xf0)] = create_byte_op_instruction_reader("ldio a, [$ff00+n8]"),
+   [string.char(0xe0)] = create_byte_op_instruction_reader("ldio [$ff00+n8], a"),
+
+   [string.char(0x36)] = create_byte_op_instruction_reader("ld [hl], n8"),
+
+   [string.char(0x21)] = create_octet_op_instruction_reader("ld hl, n8"),
+   [string.char(0x01)] = create_octet_op_instruction_reader("ld bc, n8"),
+   [string.char(0x11)] = create_octet_op_instruction_reader("ld de, n8"),
+
+   -- Arithmetic Instructions --
+
+   [string.char(0xc6)] = create_byte_op_instruction_reader("add a, n8"),
+   [string.char(0xce)] = create_byte_op_instruction_reader("adc a, n8"),
+   [string.char(0xd6)] = create_byte_op_instruction_reader("sub a, n8"),
+   [string.char(0xde)] = create_byte_op_instruction_reader("sbc a, n8"),
+   [string.char(0xe6)] = create_byte_op_instruction_reader("and a, n8"),
+
+   -- Logical Instructions --
+
+   [string.char(0xee)] = create_byte_op_instruction_reader("xor a, n8"),
+   [string.char(0xf6)] = create_byte_op_instruction_reader("or a, n8"),
+   [string.char(0xfe)] = create_byte_op_instruction_reader("cp a, n8"),
+
+   -- Stack Instructions --
+
+   [string.char(0xe8)] = create_byte_op_instruction_reader("add sp, e8"),
+   [string.char(0xf8)] = create_byte_op_instruction_reader("ld hl, sp+e8"),
+
+   [string.char(0x31)] = create_octet_op_instruction_reader("ld sp, n16"),
+   [string.char(0x08)] = create_octet_op_instruction_reader("ld [n16], sp"),
+
+   -- Jump/Call Instructions --
+
+   [string.char(0xcd)] = create_octet_op_instruction_reader("call n16"),
+   [string.char(0xdc)] = create_octet_op_instruction_reader("call c, n16"),
+   [string.char(0xcc)] = create_octet_op_instruction_reader("call z, n16"),
+   [string.char(0xd4)] = create_octet_op_instruction_reader("call nc, n16"),
+   [string.char(0xc4)] = create_octet_op_instruction_reader("call nz, n16"),
+
+   [string.char(0x18)] = create_byte_op_instruction_reader("jr e8"),
+   [string.char(0x38)] = create_byte_op_instruction_reader("jr c, e8"),
+   [string.char(0x28)] = create_byte_op_instruction_reader("jr z, e8"),
+   [string.char(0x30)] = create_byte_op_instruction_reader("jr nc, e8"),
+   [string.char(0x20)] = create_byte_op_instruction_reader("jr nz, e8"),
+
+   [string.char(0xc3)] = create_octet_op_instruction_reader("jp n16"),
+   [string.char(0xda)] = create_octet_op_instruction_reader("jp c, n16"),
+   [string.char(0xca)] = create_octet_op_instruction_reader("jp z, n16"),
+   [string.char(0xd2)] = create_octet_op_instruction_reader("jp nc, n16"),
+   [string.char(0xc2)] = create_octet_op_instruction_reader("jp nz, n16"),
 }
 
 -- TODO: handle reading over end of bank
@@ -1762,59 +694,48 @@ local function read_next_instruction(file, max)
       return
    end
 
-   local byte = file:read(1)
-   if byte == nil then
+   local char = file:read(1)
+   if char == nil then
       return
    end
 
-   local parser = instructions[byte]
+   local instruction = instructions[char]
    local extra_byte
 
-   if not parser and max > 1 then
-      local extended = extended_instructions[byte]
-      if extended then
-         extra_byte = file:read(1)
+   if not instruction then
+      local reader = instruction_readers[char]
 
-         if extra_byte then
-            parser = extended[extra_byte]
+      if reader then
+         -- Read using instruction reader
+
+         if (reader.size or 2) <= max then
+            extra_byte, instruction = reader.read(file)
+         end
+      elseif max > 1 then
+         -- Find extended instruction
+
+         local byte_extended_instructions = extended_instructions[char]
+
+         if byte_extended_instructions then
+            extra_byte = file:read(1)
+
+            if extra_byte then
+               instruction = byte_extended_instructions[extra_byte]
+            end
          end
       end
    end
 
-   if parser and parser.size > max then
-      parser = nil
-   end
-
-   -- TODO: test data
-   if not parser then
+   if instruction == nil then
       if extra_byte then
          file:seek("cur", -1)
       end
-      return create_data("db", { string.byte(byte) }, 1)
-   end
-
-   local parsed_byte, instruction = parser.read(file)
-
-   -- Could not fully parse an instruction, this is data
-   if not instruction then
-      if extra_byte then
-         file:seek("cur", -1)
-      end
-
-      if parsed_byte then
-         file:seek("cur", -1)
-      end
-
-      return create_data("db", { string.byte(byte) }, 1)
+      return { data = { char } }
    end
 
    return instruction
 end
 
 return {
-   create_instruction = create_instruction,
-   create_data = create_data,
-   instructions = instructions,
-   extended_instructions = extended_instructions,
    read_next_instruction = read_next_instruction
 }
