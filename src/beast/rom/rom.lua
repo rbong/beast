@@ -1,26 +1,32 @@
+local create_symbols = require("beast/symbol").create_symbols
+
 local bank_module = require("beast/rom/bank")
 
 local create_bank = bank_module.create_bank
 local read_bank = bank_module.read_bank
 
-local function create_rom()
+local function create_rom(symbols, options)
    return {
       nbanks = 0,
-      banks = {}
+      banks = {},
+      symbols = symbols or create_symbols(),
+      options = options or {}
    }
 end
 
 local function read_rom(rom, file)
    while true do
-      local bank = create_bank()
+      local bank_num = rom.nbanks
+
+      local bank = create_bank(bank_num, rom.symbols, rom.options)
       read_bank(bank, file)
 
       if bank.size == 0 then
          break
       end
 
-      rom.banks[rom.nbanks] = bank
-      rom.nbanks = rom.nbanks + 1
+      rom.banks[bank_num] = bank
+      rom.nbanks = bank_num + 1
    end
 end
 

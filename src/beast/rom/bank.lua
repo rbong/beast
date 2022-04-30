@@ -1,9 +1,14 @@
+local create_symbols = require("beast/symbol").create_symbols
+
 local read_next_instruction = require("beast/rom/instruction").read_next_instruction
 
-local function create_bank()
+local function create_bank(bank_num, symbols, options)
    return {
+      bank_num = bank_num,
       size = 0,
-      instructions = {}
+      instructions = {},
+      symbols = symbols or create_symbols(),
+      options = options or {}
    }
 end
 
