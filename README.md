@@ -37,6 +37,4 @@ local formatter = beast.format.create_formatter()
 beast.format.create_asm(formatter, "/path/to/output/dir", rom, sym)
 ```
 
-BEAST currently doesn't have an accurate instruction set.
-
-Symbols also aren't currently used while outputting assembly code.
+Symbols aren't currently used while outputting assembly code.
