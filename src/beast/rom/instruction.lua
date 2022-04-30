@@ -80,7 +80,7 @@ local function create_byte_op_instruction_parser(code, l_op, r_op, reference, of
       l_op,
       r_op,
       function (byte)
-         return nil, create_dynamic_byte_operand(string.byte(byte), reference, false, offset, signed)
+         return nil, create_dynamic_byte_operand(string.byte(byte), reference, nil, offset, signed)
       end,
       2,
       1)
@@ -114,7 +114,7 @@ local function create_sp_offset_op_instruction_parser(code, l_op, r_op)
       l_op,
       r_op,
       function (byte)
-         return nil, create_dynamic_byte_operand(string.byte(byte), false, false, "sp", true)
+         return nil, create_dynamic_byte_operand(string.byte(byte), nil, nil, "sp", true)
       end,
       2,
       1)
@@ -821,7 +821,7 @@ local instructions = {
       "ld", op.sp_register),
    -- add sp, e8
    [string.char(0xe8)] = create_byte_op_instruction_parser(
-      "add", op.sp_register, nil, false, false, true),
+      "add", op.sp_register, nil, nil, nil, true),
    -- ld hl, sp+e8
    [string.char(0xf8)] = create_sp_offset_op_instruction_parser(
       "ld", op.hl_register_set),
@@ -863,19 +863,19 @@ local instructions = {
 
    -- jr e8
    [string.char(0x18)] = create_byte_op_instruction_parser(
-      "jr", nil, nil, false, false, true),
+      "jr", nil, nil, nil, nil, true),
    -- jr c, e8
    [string.char(0x38)] = create_byte_op_instruction_parser(
-      "jr", op.c_condition, nil, false, false, true),
+      "jr", op.c_condition, nil, nil, nil, true),
    -- jr z, e8
    [string.char(0x28)] = create_byte_op_instruction_parser(
-      "jr", op.z_condition, nil, false, false, true),
+      "jr", op.z_condition, nil, nil, nil, true),
    -- jr nc, e8
    [string.char(0x30)] = create_byte_op_instruction_parser(
-      "jr", op.nc_condition, nil, false, false, true),
+      "jr", op.nc_condition, nil, nil, nil, true),
    -- jr nz, e8
    [string.char(0x20)] = create_byte_op_instruction_parser(
-      "jr", op.nz_condition, nil, false, false, true),
+      "jr", op.nz_condition, nil, nil, nil, true),
 
    -- jp hl
    [string.char(0xe9)] = create_instruction_parser(

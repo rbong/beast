@@ -3,9 +3,9 @@
 local function create_operand(value, reference, increment, offset, size)
    return {
       value = value,
-      reference = reference or false,
-      increment = increment or 0,
-      offset = offset or 0,
+      reference = reference,
+      increment = increment,
+      offset = offset,
       size = size or 1
    }
 end
@@ -13,9 +13,9 @@ end
 local function create_processor_register_operand(value, reference, increment, offset)
    return {
       value = value,
-      reference = reference or false,
-      increment = increment or 0,
-      offset = offset or 0,
+      reference = reference,
+      increment = increment,
+      offset = offset,
       size = 1,
       is_register = true
    }
@@ -24,22 +24,22 @@ end
 local function create_processor_register_set_operand(value, reference, increment, offset)
    return {
       value = value,
-      reference = reference or false,
-      increment = increment or 0,
-      offset = offset or 0,
+      reference = reference,
+      increment = increment,
+      offset = offset,
       size = 2,
       is_register = true
    }
 end
 
 local function create_processor_register_set_reference_operand(
-      value, increment, offset)
+      value, increment, offset, size)
    return {
       value = value,
       reference = true,
-      increment = increment or 0,
-      offset = offset or 0,
-      size = 2,
+      increment = increment,
+      offset = offset,
+      size = size or 2,
       is_register = true
    }
 end
@@ -63,9 +63,9 @@ end
 local function create_dynamic_octet_operand(value, reference, increment, offset)
    return {
       value = value,
-      reference = reference or false,
-      increment = increment or 0,
-      offset = offset or 0,
+      reference = reference,
+      increment = increment,
+      offset = offset,
       size = 2,
       is_dynamic = true
    }
@@ -74,9 +74,9 @@ end
 local function create_dynamic_byte_operand(value, reference, increment, offset, signed)
    return {
       value = value,
-      reference = reference or false,
-      increment = increment or 0,
-      offset = offset or 0,
+      reference = reference,
+      increment = increment,
+      offset = offset,
       signed = signed,
       size = 1,
       is_dynamic = true
