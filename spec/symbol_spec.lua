@@ -39,8 +39,8 @@ describe("symbols", function()
                [0x0600] = { region_type = "replace", size = 4, value = "Bank 0 replacement body" }
             })
          assert.are.same(sym.rom_banks[0].operands.definitions, {
-               [0x0700] = { left_op = "Bank 0 left operand" },
-               [0x0800] = { left_op = nil, right_op = "Bank 0 right operand" }
+               [0x0700] = { l_op = "Bank 0 left operand" },
+               [0x0800] = { l_op = nil, r_op = "Bank 0 right operand" }
             })
 
          assert.are.same(sym.rom_banks[1].comments.definitions, {
@@ -59,8 +59,8 @@ describe("symbols", function()
                [0x4600] = { region_type = "replace", size = 4, value = "Bank 1 replacement body" }
             })
          assert.are.same(sym.rom_banks[1].operands.definitions, {
-               [0x4700] = { left_op = "Bank 1 left operand" },
-               [0x4800] = { left_op = nil, right_op = "Bank 1 right operand" }
+               [0x4700] = { l_op = "Bank 1 left operand" },
+               [0x4800] = { l_op = nil, r_op = "Bank 1 right operand" }
             })
       end)
 

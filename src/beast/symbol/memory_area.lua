@@ -86,12 +86,12 @@ local function _get_init_rom_area_operands(rom_area, address)
    return get_definition(rom_area.operands, address)
 end
 
-local function set_rom_area_left_op(rom_area, address, left_op)
-   set_left_op_definition(_get_init_rom_area_operands(rom_area, address), left_op)
+local function set_rom_area_left_op(rom_area, address, l_op)
+   set_left_op_definition(_get_init_rom_area_operands(rom_area, address), l_op)
 end
 
-local function set_rom_area_right_op(rom_area, address, right_op)
-   set_right_op_definition(_get_init_rom_area_operands(rom_area, address), right_op)
+local function set_rom_area_right_op(rom_area, address, r_op)
+   set_right_op_definition(_get_init_rom_area_operands(rom_area, address), r_op)
 end
 
 local function create_ram_symbols(bank_num)

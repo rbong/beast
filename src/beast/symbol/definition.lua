@@ -13,19 +13,19 @@ local function create_replacement_definition(size, value)
    }
 end
 
-local function create_operand_definitions(left_op, right_op)
+local function create_operand_definitions(l_op, r_op)
    return {
-      left_op = left_op,
-      right_op = right_op
+      l_op = l_op,
+      r_op = r_op
    }
 end
 
-local function set_left_op_definition(def, left_op)
-   def.left_op = left_op
+local function set_left_op_definition(def, l_op)
+   def.l_op = l_op
 end
 
-local function set_right_op_definition(def, right_op)
-   def.right_op = right_op
+local function set_right_op_definition(def, r_op)
+   def.r_op = r_op
 end
 
 local function create_definition_collection()
