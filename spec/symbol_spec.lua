@@ -101,4 +101,6 @@ describe("symbols", function()
 
       it("handles invalid banked target")
    end)
+
+   it("get_rom_area_regions")
 end)

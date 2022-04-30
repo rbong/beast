@@ -23,6 +23,7 @@ return {
    add_mem_area_label = mem_area.add_mem_area_label,
    add_mem_area_comment = mem_area.add_mem_area_comment,
    create_rom_symbols = mem_area.create_rom_symbols,
+   get_rom_area_regions = mem_area.get_rom_area_regions,
    set_rom_area_region = mem_area.set_rom_area_region,
    add_rom_area_replacement = mem_area.add_rom_area_replacement,
    set_rom_area_left_op = mem_area.set_rom_area_left_op,
