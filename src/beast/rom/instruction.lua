@@ -686,7 +686,6 @@ local instruction_readers = {
    [string.char(0xc2)] = create_octet_op_instruction_reader("jp nz, n16"),
 }
 
--- TODO: handle reading over end of bank
 local function read_next_instruction(file, max)
    max = max or 0x4000
 
