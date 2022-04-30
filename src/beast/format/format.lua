@@ -86,8 +86,10 @@ local instruction_formatters = {
    ["jp nz, n16"] = create_octet_op_instruction_formatter("jp nz, $%02x%02x"),
 }
 
-local function create_formatter()
-   return {}
+local function create_formatter(options)
+   return {
+			options = options
+	 }
 end
 
 local function format_bank_header(formatter, bank_num)
