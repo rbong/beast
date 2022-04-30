@@ -2,14 +2,8 @@ local beast = require("beast")
 
 local create_rom = beast.rom.create_rom
 local read_rom = beast.rom.read_rom
-local create_instruction = beast.rom.create_instruction
-local create_data = beast.rom.create_data
 
 local op = beast.rom.operands
-
-local create_processor_register_operand = beast.rom.create_processor_register_operand
-local create_dynamic_byte_operand = beast.rom.create_dynamic_byte_operand
-local create_dynamic_octet_operand = beast.rom.create_dynamic_octet_operand
 
 describe("Rom", function()
    it("reads a bank", function()
@@ -28,7 +22,7 @@ describe("Rom", function()
       local rom = create_rom()
       read_rom(rom, io.open("./spec/fixtures/ret.gb", "rb"))
       assert.are.same(rom.banks[0].instructions, {
-         create_instruction("ret")
+         { code = "ret", size = 1 }
       })
    end)
 
@@ -37,407 +31,407 @@ describe("Rom", function()
       read_rom(rom, io.open("./spec/fixtures/basic_instructions.gb", "rb"))
       assert.are.same(rom.banks[0].instructions, {
             -- nop
-            create_instruction("nop"),
+            { code = "nop", size = 1 },
             -- halt
-            create_instruction("halt"),
+            { code = "halt", size = 1 },
             -- di
-            create_instruction("di"),
+            { code = "di", size = 1 },
             -- ei
-            create_instruction("ei"),
+            { code = "ei", size = 1 },
             -- ld a, a
-            create_instruction("ld", op.a_register, op.a_register),
+            { code = "ld", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 1 },
             -- ld a, b
-            create_instruction("ld", op.a_register, op.b_register),
+            { code = "ld", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 1 },
             -- ld a, c
-            create_instruction("ld", op.a_register, op.c_register),
+            { code = "ld", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 1 },
             -- ld a, d
-            create_instruction("ld", op.a_register, op.d_register),
+            { code = "ld", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 1 },
             -- ld a, e
-            create_instruction("ld", op.a_register, op.e_register),
+            { code = "ld", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 1 },
             -- ld a, h
-            create_instruction("ld", op.a_register, op.f_register),
+            { code = "ld", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "f", size = 1 }, size = 1 },
             -- ld a, l
-            create_instruction("ld", op.a_register, op.l_register),
+            { code = "ld", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 1 },
             -- ld b, a
-            create_instruction("ld", op.b_register, op.a_register),
+            { code = "ld", l_op = { is_register = true, value = "b", size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 1 },
             -- ld b, b
-            create_instruction("ld", op.b_register, op.b_register),
+            { code = "ld", l_op = { is_register = true, value = "b", size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 1 },
             -- ld b, c
-            create_instruction("ld", op.b_register, op.c_register),
+            { code = "ld", l_op = { is_register = true, value = "b", size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 1 },
             -- ld b, d
-            create_instruction("ld", op.b_register, op.d_register),
+            { code = "ld", l_op = { is_register = true, value = "b", size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 1 },
             -- ld b, e
-            create_instruction("ld", op.b_register, op.e_register),
+            { code = "ld", l_op = { is_register = true, value = "b", size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 1 },
             -- ld b, h
-            create_instruction("ld", op.b_register, op.h_register),
+            { code = "ld", l_op = { is_register = true, value = "b", size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 1 },
             -- ld b, l
-            create_instruction("ld", op.b_register, op.l_register),
+            { code = "ld", l_op = { is_register = true, value = "b", size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 1 },
             -- ld c, a
-            create_instruction("ld", op.c_register, op.a_register),
+            { code = "ld", l_op = { is_register = true, value = "c", size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 1 },
             -- ld c, b
-            create_instruction("ld", op.c_register, op.b_register),
+            { code = "ld", l_op = { is_register = true, value = "c", size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 1 },
             -- ld c, c
-            create_instruction("ld", op.c_register, op.c_register),
+            { code = "ld", l_op = { is_register = true, value = "c", size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 1 },
             -- ld c, d
-            create_instruction("ld", op.c_register, op.d_register),
+            { code = "ld", l_op = { is_register = true, value = "c", size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 1 },
             -- ld c, e
-            create_instruction("ld", op.c_register, op.e_register),
+            { code = "ld", l_op = { is_register = true, value = "c", size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 1 },
             -- ld c, h
-            create_instruction("ld", op.c_register, op.h_register),
+            { code = "ld", l_op = { is_register = true, value = "c", size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 1 },
             -- ld c, l
-            create_instruction("ld", op.c_register, op.l_register),
+            { code = "ld", l_op = { is_register = true, value = "c", size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 1 },
             -- ld d, a
-            create_instruction("ld", op.d_register, op.a_register),
+            { code = "ld", l_op = { is_register = true, value = "d", size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 1 },
             -- ld d, b
-            create_instruction("ld", op.d_register, op.b_register),
+            { code = "ld", l_op = { is_register = true, value = "d", size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 1 },
             -- ld d, c
-            create_instruction("ld", op.d_register, op.c_register),
+            { code = "ld", l_op = { is_register = true, value = "d", size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 1 },
             -- ld d, d
-            create_instruction("ld", op.d_register, op.d_register),
+            { code = "ld", l_op = { is_register = true, value = "d", size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 1 },
             -- ld d, e
-            create_instruction("ld", op.d_register, op.e_register),
+            { code = "ld", l_op = { is_register = true, value = "d", size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 1 },
             -- ld d, h
-            create_instruction("ld", op.d_register, op.h_register),
+            { code = "ld", l_op = { is_register = true, value = "d", size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 1 },
             -- ld d, l
-            create_instruction("ld", op.d_register, op.l_register),
+            { code = "ld", l_op = { is_register = true, value = "d", size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 1 },
             -- ld e, a
-            create_instruction("ld", op.e_register, op.a_register),
+            { code = "ld", l_op = { is_register = true, value = "e", size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 1 },
             -- ld e, b
-            create_instruction("ld", op.e_register, op.b_register),
+            { code = "ld", l_op = { is_register = true, value = "e", size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 1 },
             -- ld e, c
-            create_instruction("ld", op.e_register, op.c_register),
+            { code = "ld", l_op = { is_register = true, value = "e", size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 1 },
             -- ld e, d
-            create_instruction("ld", op.e_register, op.d_register),
+            { code = "ld", l_op = { is_register = true, value = "e", size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 1 },
             -- ld e, e
-            create_instruction("ld", op.e_register, op.e_register),
+            { code = "ld", l_op = { is_register = true, value = "e", size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 1 },
             -- ld e, h
-            create_instruction("ld", op.e_register, op.h_register),
+            { code = "ld", l_op = { is_register = true, value = "e", size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 1 },
             -- ld e, l
-            create_instruction("ld", op.e_register, op.l_register),
+            { code = "ld", l_op = { is_register = true, value = "e", size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 1 },
             -- ld h, a
-            create_instruction("ld", op.h_register, op.a_register),
+            { code = "ld", l_op = { is_register = true, value = "h", size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 1 },
             -- ld h, b
-            create_instruction("ld", op.h_register, op.b_register),
+            { code = "ld", l_op = { is_register = true, value = "h", size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 1 },
             -- ld h, c
-            create_instruction("ld", op.h_register, op.c_register),
+            { code = "ld", l_op = { is_register = true, value = "h", size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 1 },
             -- ld h, d
-            create_instruction("ld", op.h_register, op.d_register),
+            { code = "ld", l_op = { is_register = true, value = "h", size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 1 },
             -- ld h, e
-            create_instruction("ld", op.h_register, op.e_register),
+            { code = "ld", l_op = { is_register = true, value = "h", size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 1 },
             -- ld h, h
-            create_instruction("ld", op.h_register, op.h_register),
+            { code = "ld", l_op = { is_register = true, value = "h", size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 1 },
             -- ld h, l
-            create_instruction("ld", op.h_register, op.l_register),
+            { code = "ld", l_op = { is_register = true, value = "h", size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 1 },
             -- ld l, a
-            create_instruction("ld", op.l_register, op.a_register),
+            { code = "ld", l_op = { is_register = true, value = "l", size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 1 },
             -- ld l, b
-            create_instruction("ld", op.l_register, op.b_register),
+            { code = "ld", l_op = { is_register = true, value = "l", size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 1 },
             -- ld l, c
-            create_instruction("ld", op.l_register, op.c_register),
+            { code = "ld", l_op = { is_register = true, value = "l", size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 1 },
             -- ld l, d
-            create_instruction("ld", op.l_register, op.d_register),
+            { code = "ld", l_op = { is_register = true, value = "l", size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 1 },
             -- ld l, e
-            create_instruction("ld", op.l_register, op.e_register),
+            { code = "ld", l_op = { is_register = true, value = "l", size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 1 },
             -- ld l, h
-            create_instruction("ld", op.l_register, op.h_register),
+            { code = "ld", l_op = { is_register = true, value = "l", size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 1 },
             -- ld l, l
-            create_instruction("ld", op.l_register, op.l_register),
+            { code = "ld", l_op = { is_register = true, value = "l", size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 1 },
             -- ld a, [hl]
-            create_instruction("ld", op.a_register, op.hl_register_set_reference),
+            { code = "ld", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 1 },
             -- ld b, [hl]
-            create_instruction("ld", op.b_register, op.hl_register_set_reference),
+            { code = "ld", l_op = { is_register = true, value = "b", size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 1 },
             -- ld c, [hl]
-            create_instruction("ld", op.c_register, op.hl_register_set_reference),
+            { code = "ld", l_op = { is_register = true, value = "c", size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 1 },
             -- ld d, [hl]
-            create_instruction("ld", op.d_register, op.hl_register_set_reference),
+            { code = "ld", l_op = { is_register = true, value = "d", size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 1 },
             -- ld e, [hl]
-            create_instruction("ld", op.e_register, op.hl_register_set_reference),
+            { code = "ld", l_op = { is_register = true, value = "e", size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 1 },
             -- ld h, [hl]
-            create_instruction("ld", op.h_register, op.hl_register_set_reference),
+            { code = "ld", l_op = { is_register = true, value = "h", size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 1 },
             -- ld l, [hl]
-            create_instruction("ld", op.l_register, op.hl_register_set_reference),
+            { code = "ld", l_op = { is_register = true, value = "l", size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 1 },
             -- ld [hl], a
-            create_instruction("ld", op.hl_register_set_reference, op.a_register),
+            { code = "ld", l_op = { is_register = true, reference = true, value = "hl", size = 2 }, r_op = { is_register = true, value = "a", size = 1 }, size = 1 },
             -- ld [hl], b
-            create_instruction("ld", op.hl_register_set_reference, op.b_register),
+            { code = "ld", l_op = { is_register = true, reference = true, value = "hl", size = 2 }, r_op = { is_register = true, value = "b", size = 1 }, size = 1 },
             -- ld [hl], c
-            create_instruction("ld", op.hl_register_set_reference, op.c_register),
+            { code = "ld", l_op = { is_register = true, reference = true, value = "hl", size = 2 }, r_op = { is_register = true, value = "c", size = 1 }, size = 1 },
             -- ld [hl], d
-            create_instruction("ld", op.hl_register_set_reference, op.d_register),
+            { code = "ld", l_op = { is_register = true, reference = true, value = "hl", size = 2 }, r_op = { is_register = true, value = "d", size = 1 }, size = 1 },
             -- ld [hl], e
-            create_instruction("ld", op.hl_register_set_reference, op.e_register),
+            { code = "ld", l_op = { is_register = true, reference = true, value = "hl", size = 2 }, r_op = { is_register = true, value = "e", size = 1 }, size = 1 },
             -- ld [hl], h
-            create_instruction("ld", op.hl_register_set_reference, op.h_register),
+            { code = "ld", l_op = { is_register = true, reference = true, value = "hl", size = 2 }, r_op = { is_register = true, value = "h", size = 1 }, size = 1 },
             -- ld [hl], l
-            create_instruction("ld", op.hl_register_set_reference, op.l_register),
+            { code = "ld", l_op = { is_register = true, reference = true, value = "hl", size = 2 }, r_op = { is_register = true, value = "l", size = 1 }, size = 1 },
             -- ld a, [$ff00+c]
-            create_instruction("ld", op.a_register, op.c_register_hram_offset_reference),
+            { code = "ld", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, reference = true, offset = 0xff00, value = "c", size = 1 }, size = 1 },
             -- ld [$ff00+c], a
-            create_instruction("ld", op.c_register_hram_offset_reference, op.a_register),
+            { code = "ld", l_op = { is_register = true, reference = true, offset = 0xff00, value = "c", size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 1 },
             -- ld a, [hl+]
-            create_instruction("ld", op.a_register, op.hl_inc_register_set_reference),
+            { code = "ld", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, reference = true, increment = 1, value = "hl", size = 2 }, size = 1 },
             -- ld a, [hl-]
-            create_instruction("ld", op.a_register, op.hl_dec_register_set_reference),
+            { code = "ld", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, reference = true, increment = -1, value = "hl", size = 2 }, size = 1 },
             -- ld a, [bc]
-            create_instruction("ld", op.a_register, op.bc_register_set_reference),
+            { code = "ld", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, reference = true, value = "bc", size = 2 }, size = 1 },
             -- ld a, [de]
-            create_instruction("ld", op.a_register, op.de_register_set_reference),
+            { code = "ld", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, reference = true, value = "de", size = 2 }, size = 1 },
             -- ld [hl+], a
-            create_instruction("ld", op.hl_inc_register_set_reference, op.a_register),
+            { code = "ld", l_op = { is_register = true, reference = true, increment = 1, value = "hl", size = 2 }, r_op = { is_register = true, value = "a", size = 1 }, size = 1 },
             -- ld [hl-], a
-            create_instruction("ld", op.hl_dec_register_set_reference, op.a_register),
+            { code = "ld", l_op = { is_register = true, reference = true, increment = -1, value = "hl", size = 2 }, r_op = { is_register = true, value = "a", size = 1 }, size = 1 },
             -- ld [bc], a
-            create_instruction("ld", op.bc_register_set_reference, op.a_register),
+            { code = "ld", l_op = { is_register = true, reference = true, value = "bc", size = 2 }, r_op = { is_register = true, value = "a", size = 1 }, size = 1 },
             -- ld [de], a
-            create_instruction("ld", op.de_register_set_reference, op.a_register),
+            { code = "ld", l_op = { is_register = true, reference = true, value = "de", size = 2 }, r_op = { is_register = true, value = "a", size = 1 }, size = 1 },
             -- add a, a
-            create_instruction("add", op.a_register, op.a_register),
+            { code = "add", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 1 },
             -- add a, b
-            create_instruction("add", op.a_register, op.b_register),
+            { code = "add", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 1 },
             -- add a, c
-            create_instruction("add", op.a_register, op.c_register),
+            { code = "add", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 1 },
             -- add a, d
-            create_instruction("add", op.a_register, op.d_register),
+            { code = "add", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 1 },
             -- add a, e
-            create_instruction("add", op.a_register, op.e_register),
+            { code = "add", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 1 },
             -- add a, h
-            create_instruction("add", op.a_register, op.h_register),
+            { code = "add", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 1 },
             -- add a, l
-            create_instruction("add", op.a_register, op.l_register),
+            { code = "add", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 1 },
             -- add a, [hl]
-            create_instruction("add", op.a_register, op.hl_register_set_reference),
+            { code = "add", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 1 },
             -- adc a, a
-            create_instruction("adc", op.a_register, op.a_register),
+            { code = "adc", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 1 },
             -- adc a, b
-            create_instruction("adc", op.a_register, op.b_register),
+            { code = "adc", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 1 },
             -- adc a, c
-            create_instruction("adc", op.a_register, op.c_register),
+            { code = "adc", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 1 },
             -- adc a, d
-            create_instruction("adc", op.a_register, op.d_register),
+            { code = "adc", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 1 },
             -- adc a, e
-            create_instruction("adc", op.a_register, op.e_register),
+            { code = "adc", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 1 },
             -- adc a, h
-            create_instruction("adc", op.a_register, op.h_register),
+            { code = "adc", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 1 },
             -- adc a, l
-            create_instruction("adc", op.a_register, op.l_register),
+            { code = "adc", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 1 },
             -- adc a, [hl]
-            create_instruction("adc", op.a_register, op.hl_register_set_reference),
+            { code = "adc", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 1 },
             -- sub a, a
-            create_instruction("sub", op.a_register, op.a_register),
+            { code = "sub", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 1 },
             -- sub a, b
-            create_instruction("sub", op.a_register, op.b_register),
+            { code = "sub", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 1 },
             -- sub a, c
-            create_instruction("sub", op.a_register, op.c_register),
+            { code = "sub", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 1 },
             -- sub a, d
-            create_instruction("sub", op.a_register, op.d_register),
+            { code = "sub", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 1 },
             -- sub a, e
-            create_instruction("sub", op.a_register, op.e_register),
+            { code = "sub", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 1 },
             -- sub a, h
-            create_instruction("sub", op.a_register, op.h_register),
+            { code = "sub", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 1 },
             -- sub a, l
-            create_instruction("sub", op.a_register, op.l_register),
+            { code = "sub", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 1 },
             -- sub a, [hl]
-            create_instruction("sub", op.a_register, op.hl_register_set_reference),
+            { code = "sub", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 1 },
             -- sbc a, a
-            create_instruction("sbc", op.a_register, op.a_register),
+            { code = "sbc", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 1 },
             -- sbc a, b
-            create_instruction("sbc", op.a_register, op.b_register),
+            { code = "sbc", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 1 },
             -- sbc a, c
-            create_instruction("sbc", op.a_register, op.c_register),
+            { code = "sbc", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 1 },
             -- sbc a, d
-            create_instruction("sbc", op.a_register, op.d_register),
+            { code = "sbc", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 1 },
             -- sbc a, e
-            create_instruction("sbc", op.a_register, op.e_register),
+            { code = "sbc", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 1 },
             -- sbc a, h
-            create_instruction("sbc", op.a_register, op.h_register),
+            { code = "sbc", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 1 },
             -- sbc a, l
-            create_instruction("sbc", op.a_register, op.l_register),
+            { code = "sbc", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 1 },
             -- sbc a, [hl]
-            create_instruction("sbc", op.a_register, op.hl_register_set_reference),
+            { code = "sbc", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 1 },
             -- sbc a, n8
-            create_instruction("sbc", op.hl_register_set, op.hl_register_set),
+            { code = "sbc", l_op = { is_register = true, value = "hl", size = 2 }, r_op = { is_register = true, value = "hl", size = 2 }, size = 1 },
             -- add hl, hl
-            create_instruction("sbc", op.hl_register_set, op.bc_register_set),
+            { code = "sbc", l_op = { is_register = true, value = "hl", size = 2 }, r_op = { is_register = true, value = "bc", size = 2 }, size = 1 },
             -- add hl, bc
-            create_instruction("sbc", op.hl_register_set, op.de_register_set),
+            { code = "sbc", l_op = { is_register = true, value = "hl", size = 2 }, r_op = { is_register = true, value = "de", size = 2 }, size = 1 },
             -- daa
-            create_instruction("daa"),
+            { code = "daa", size = 1 },
             -- scf
-            create_instruction("scf"),
+            { code = "scf", size = 1 },
             -- and a, a
-            create_instruction("and", op.a_register, op.a_register),
+            { code = "and", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 1 },
             -- and a, b
-            create_instruction("and", op.a_register, op.b_register),
+            { code = "and", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 1 },
             -- and a, c
-            create_instruction("and", op.a_register, op.c_register),
+            { code = "and", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 1 },
             -- and a, d
-            create_instruction("and", op.a_register, op.d_register),
+            { code = "and", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 1 },
             -- and a, e
-            create_instruction("and", op.a_register, op.e_register),
+            { code = "and", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 1 },
             -- and a, h
-            create_instruction("and", op.a_register, op.h_register),
+            { code = "and", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 1 },
             -- and a, l
-            create_instruction("and", op.a_register, op.l_register),
+            { code = "and", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 1 },
             -- and a, [hl]
-            create_instruction("and", op.a_register, op.hl_register_set_reference),
+            { code = "and", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 1 },
             -- xor a, a
-            create_instruction("xor", op.a_register, op.a_register),
+            { code = "xor", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 1 },
             -- xor a, b
-            create_instruction("xor", op.a_register, op.b_register),
+            { code = "xor", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 1 },
             -- xor a, c
-            create_instruction("xor", op.a_register, op.c_register),
+            { code = "xor", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 1 },
             -- xor a, d
-            create_instruction("xor", op.a_register, op.d_register),
+            { code = "xor", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 1 },
             -- xor a, e
-            create_instruction("xor", op.a_register, op.e_register),
+            { code = "xor", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 1 },
             -- xor a, h
-            create_instruction("xor", op.a_register, op.h_register),
+            { code = "xor", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 1 },
             -- xor a, l
-            create_instruction("xor", op.a_register, op.l_register),
+            { code = "xor", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 1 },
             -- xor a, [hl]
-            create_instruction("xor", op.a_register, op.hl_register_set_reference),
+            { code = "xor", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 1 },
             -- or a, a
-            create_instruction("or", op.a_register, op.a_register),
+            { code = "or", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 1 },
             -- or a, b
-            create_instruction("or", op.a_register, op.b_register),
+            { code = "or", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 1 },
             -- or a, c
-            create_instruction("or", op.a_register, op.c_register),
+            { code = "or", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 1 },
             -- or a, d
-            create_instruction("or", op.a_register, op.d_register),
+            { code = "or", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 1 },
             -- or a, e
-            create_instruction("or", op.a_register, op.e_register),
+            { code = "or", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 1 },
             -- or a, h
-            create_instruction("or", op.a_register, op.h_register),
+            { code = "or", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 1 },
             -- or a, l
-            create_instruction("or", op.a_register, op.l_register),
+            { code = "or", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 1 },
             -- or a, [hl]
-            create_instruction("or", op.a_register, op.hl_register_set_reference),
+            { code = "or", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 1 },
             -- cp a, a
-            create_instruction("cp", op.a_register, op.a_register),
+            { code = "cp", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 1 },
             -- cp a, b
-            create_instruction("cp", op.a_register, op.b_register),
+            { code = "cp", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 1 },
             -- cp a, c
-            create_instruction("cp", op.a_register, op.c_register),
+            { code = "cp", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 1 },
             -- cp a, d
-            create_instruction("cp", op.a_register, op.d_register),
+            { code = "cp", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 1 },
             -- cp a, e
-            create_instruction("cp", op.a_register, op.e_register),
+            { code = "cp", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 1 },
             -- cp a, h
-            create_instruction("cp", op.a_register, op.h_register),
+            { code = "cp", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 1 },
             -- cp a, l
-            create_instruction("cp", op.a_register, op.l_register),
+            { code = "cp", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 1 },
             -- cp a, [hl]
-            create_instruction("cp", op.a_register, op.hl_register_set_reference),
+            { code = "cp", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 1 },
             -- cpl
-            create_instruction("cpl"),
+            { code = "cpl", size = 1 },
             -- ccf
-            create_instruction("ccf"),
+            { code = "ccf", size = 1 },
             -- rlca
-            create_instruction("rlca"),
+            { code = "rlca", size = 1 },
             -- rla
-            create_instruction("rla"),
+            { code = "rla", size = 1 },
             -- rrca
-            create_instruction("rrca"),
+            { code = "rrca", size = 1 },
             -- rra
-            create_instruction("rra"),
+            { code = "rra", size = 1 },
             -- inc a
-            create_instruction("inc", op.a_register),
+            { code = "inc", l_op = { is_register = true, value = "a", size = 1 }, size = 1 },
             -- inc b
-            create_instruction("inc", op.b_register),
+            { code = "inc", l_op = { is_register = true, value = "b", size = 1 }, size = 1 },
             -- inc c
-            create_instruction("inc", op.c_register),
+            { code = "inc", l_op = { is_register = true, value = "c", size = 1 }, size = 1 },
             -- inc d
-            create_instruction("inc", op.d_register),
+            { code = "inc", l_op = { is_register = true, value = "d", size = 1 }, size = 1 },
             -- inc e
-            create_instruction("inc", op.e_register),
+            { code = "inc", l_op = { is_register = true, value = "e", size = 1 }, size = 1 },
             -- inc h
-            create_instruction("inc", op.h_register),
+            { code = "inc", l_op = { is_register = true, value = "h", size = 1 }, size = 1 },
             -- inc l
-            create_instruction("inc", op.l_register),
+            { code = "inc", l_op = { is_register = true, value = "l", size = 1 }, size = 1 },
             -- inc hl
-            create_instruction("inc", op.hl_register_set),
+            { code = "inc", l_op = { is_register = true, value = "hl", size = 2 }, size = 1 },
             -- inc bc
-            create_instruction("inc", op.bc_register_set),
+            { code = "inc", l_op = { is_register = true, value = "bc", size = 2 }, size = 1 },
             -- inc de
-            create_instruction("inc", op.de_register_set),
+            { code = "inc", l_op = { is_register = true, value = "de", size = 2 }, size = 1 },
             -- inc [hl]
-            create_instruction("inc", op.hl_register_set_reference),
+            { code = "inc", l_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 1 },
             -- dec a
-            create_instruction("dec", op.a_register),
+            { code = "dec", l_op = { is_register = true, value = "a", size = 1 }, size = 1 },
             -- dec b
-            create_instruction("dec", op.b_register),
+            { code = "dec", l_op = { is_register = true, value = "b", size = 1 }, size = 1 },
             -- dec c
-            create_instruction("dec", op.c_register),
+            { code = "dec", l_op = { is_register = true, value = "c", size = 1 }, size = 1 },
             -- dec d
-            create_instruction("dec", op.d_register),
+            { code = "dec", l_op = { is_register = true, value = "d", size = 1 }, size = 1 },
             -- dec e
-            create_instruction("dec", op.e_register),
+            { code = "dec", l_op = { is_register = true, value = "e", size = 1 }, size = 1 },
             -- dec h
-            create_instruction("dec", op.h_register),
+            { code = "dec", l_op = { is_register = true, value = "h", size = 1 }, size = 1 },
             -- dec l
-            create_instruction("dec", op.l_register),
+            { code = "dec", l_op = { is_register = true, value = "l", size = 1 }, size = 1 },
             -- dec hl
-            create_instruction("dec", op.hl_register_set),
+            { code = "dec", l_op = { is_register = true, value = "hl", size = 2 }, size = 1 },
             -- dec bc
-            create_instruction("dec", op.bc_register_set),
+            { code = "dec", l_op = { is_register = true, value = "bc", size = 2 }, size = 1 },
             -- dec de
-            create_instruction("dec", op.de_register_set),
+            { code = "dec", l_op = { is_register = true, value = "de", size = 2 }, size = 1 },
             -- dec [hl]
-            create_instruction("dec", op.hl_register_set_reference),
+            { code = "dec", l_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 1 },
             -- push af
-            create_instruction("push", op.af_register_set),
+            { code = "push", l_op = { is_register = true, value = "af", size = 2 }, size = 1 },
             -- push bc
-            create_instruction("push", op.bc_register_set),
+            { code = "push", l_op = { is_register = true, value = "bc", size = 2 }, size = 1 },
             -- push de
-            create_instruction("push", op.de_register_set),
+            { code = "push", l_op = { is_register = true, value = "de", size = 2 }, size = 1 },
             -- push hl
-            create_instruction("push", op.hl_register_set),
+            { code = "push", l_op = { is_register = true, value = "hl", size = 2 }, size = 1 },
             -- pop af
-            create_instruction("pop", op.af_register_set),
+            { code = "pop", l_op = { is_register = true, value = "af", size = 2 }, size = 1 },
             -- pop bc
-            create_instruction("pop", op.bc_register_set),
+            { code = "pop", l_op = { is_register = true, value = "bc", size = 2 }, size = 1 },
             -- pop de
-            create_instruction("pop", op.de_register_set),
+            { code = "pop", l_op = { is_register = true, value = "de", size = 2 }, size = 1 },
             -- pop hl
-            create_instruction("pop", op.hl_register_set),
+            { code = "pop", l_op = { is_register = true, value = "hl", size = 2 }, size = 1 },
             -- inc sp
-            create_instruction("inc", op.sp_register),
+            { code = "inc", l_op = { is_register = true, value = "sp", size = 1 }, size = 1 },
             -- dec sp
-            create_instruction("dec", op.sp_register),
+            { code = "dec", l_op = { is_register = true, value = "sp", size = 1 }, size = 1 },
             -- ld sp, hl
-            create_instruction("ld", op.sp_register, op.hl_register_set),
+            { code = "ld", l_op = { is_register = true, value = "sp", size = 1 }, r_op = { is_register = true, value = "hl", size = 2 }, size = 1 },
             -- add hl, sp
-            create_instruction("add", op.hl_register_set, op.sp_register),
+            { code = "add", l_op = { is_register = true, value = "hl", size = 2 }, r_op = { is_register = true, value = "sp", size = 1 }, size = 1 },
             -- jp n16
-            create_instruction("jp", op.hl_register_set_reference),
+            { code = "jp", l_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 1 },
             -- rst 00h
-            create_instruction("rst", op.vector_00h),
+            { code = "rst", l_op = { is_vector = true, value = 0x00, size = 1 }, size = 1 },
             -- rst 08h
-            create_instruction("rst", op.vector_08h),
+            { code = "rst", l_op = { is_vector = true, value = 0x08, size = 1 }, size = 1 },
             -- rst 10h
-            create_instruction("rst", op.vector_10h),
+            { code = "rst", l_op = { is_vector = true, value = 0x10, size = 1 }, size = 1 },
             -- rst 18h
-            create_instruction("rst", op.vector_18h),
+            { code = "rst", l_op = { is_vector = true, value = 0x18, size = 1 }, size = 1 },
             -- rst 20h
-            create_instruction("rst", op.vector_20h),
+            { code = "rst", l_op = { is_vector = true, value = 0x20, size = 1 }, size = 1 },
             -- rst 28h
-            create_instruction("rst", op.vector_28h),
+            { code = "rst", l_op = { is_vector = true, value = 0x28, size = 1 }, size = 1 },
             -- rst 30h
-            create_instruction("rst", op.vector_30h),
+            { code = "rst", l_op = { is_vector = true, value = 0x30, size = 1 }, size = 1 },
             -- rst 38h
-            create_instruction("rst", op.vector_38h),
+            { code = "rst", l_op = { is_vector = true, value = 0x38, size = 1 }, size = 1 },
             -- ret
-            create_instruction("ret"),
+            { code = "ret", size = 1 },
             -- reti
-            create_instruction("reti"),
+            { code = "reti", size = 1 },
             -- ret c
-            create_instruction("ret", op.c_condition),
+            { code = "ret", l_op = { is_condition = true, value = "c", size = 1 }, size = 1 },
             -- ret z
-            create_instruction("ret", op.z_condition),
+            { code = "ret", l_op = { is_condition = true, value = "z", size = 1 }, size = 1 },
             -- ret nc
-            create_instruction("ret", op.nc_condition),
+            { code = "ret", l_op = { is_condition = true, value = "nc", size = 1 }, size = 1 },
             -- ret nz
-            create_instruction("ret", op.nz_condition)
+            { code = "ret", l_op = { is_condition = true, value = "nz", size = 1 }, size = 1 }
       })
    end)
 
@@ -446,55 +440,55 @@ describe("Rom", function()
       read_rom(rom, io.open("./spec/fixtures/byte_op_instructions.gb", "rb"))
       assert.are.same(rom.banks[0].instructions, {
             -- ld a, n8
-            create_instruction("ld", op.a_register, create_dynamic_byte_operand(0x00), 2),
+            { code = "ld", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_dynamic = true, value = 0x00, size = 1 }, size = 2 },
             -- ld b, n8
-            create_instruction("ld", op.b_register, create_dynamic_byte_operand(0x10), 2),
+            { code = "ld", l_op = { is_register = true, value = "b", size = 1 }, r_op = { is_dynamic = true, value = 0x10, size = 1 }, size = 2 },
             -- ld c, n8
-            create_instruction("ld", op.c_register, create_dynamic_byte_operand(0x20), 2),
+            { code = "ld", l_op = { is_register = true, value = "c", size = 1 }, r_op = { is_dynamic = true, value = 0x20, size = 1 }, size = 2 },
             -- ld d, n8
-            create_instruction("ld", op.d_register, create_dynamic_byte_operand(0x30), 2),
+            { code = "ld", l_op = { is_register = true, value = "d", size = 1 }, r_op = { is_dynamic = true, value = 0x30, size = 1 }, size = 2 },
             -- ld e, n8
-            create_instruction("ld", op.e_register, create_dynamic_byte_operand(0x40), 2),
+            { code = "ld", l_op = { is_register = true, value = "e", size = 1 }, r_op = { is_dynamic = true, value = 0x40, size = 1 }, size = 2 },
             -- ld h, n8
-            create_instruction("ld", op.h_register, create_dynamic_byte_operand(0x50), 2),
+            { code = "ld", l_op = { is_register = true, value = "h", size = 1 }, r_op = { is_dynamic = true, value = 0x50, size = 1 }, size = 2 },
             -- ld l, n8
-            create_instruction("ld", op.l_register, create_dynamic_byte_operand(0x60), 2),
+            { code = "ld", l_op = { is_register = true, value = "l", size = 1 }, r_op = { is_dynamic = true, value = 0x60, size = 1 }, size = 2 },
             -- ldio a, [$ff00+n8]
-            create_instruction("ldio", op.a_register, create_dynamic_byte_operand(0x70, true, false, 0xff00), 2),
+            { code = "ldio", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_dynamic = true, reference = true, value= 0x70, offset = 0xff00, size = 1 }, size = 2 },
             -- ldio [$ff00+n8], a
-            create_instruction("ldio", create_dynamic_byte_operand(0x80, true, false, 0xff00), op.a_register, 2),
+            { code = "ldio", l_op = { is_dynamic = true, reference = true, value= 0x80, offset = 0xff00, size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 2 },
             -- ld [hl], n8
-            create_instruction("ld", op.hl_register_set_reference, create_dynamic_byte_operand(0x90), 2),
+            { code = "ld", l_op = { is_register = true, reference = true, value = "hl", size = 2 }, r_op = { is_dynamic = true, value = 0x90, size = 1 }, size = 2 },
             -- add a, n8
-            create_instruction("add", op.a_register, create_dynamic_byte_operand(0xa0), 2),
+            { code = "add", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_dynamic = true, value = 0xa0, size = 1 }, size = 2 },
             -- adc a, n8
-            create_instruction("adc", op.a_register, create_dynamic_byte_operand(0xb0), 2),
+            { code = "adc", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_dynamic = true, value = 0xb0, size = 1 }, size = 2 },
             -- sub a, n8
-            create_instruction("sub", op.a_register, create_dynamic_byte_operand(0xc0), 2),
+            { code = "sub", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_dynamic = true, value = 0xc0, size = 1 }, size = 2 },
             -- sbc a, n8
-            create_instruction("sbc", op.a_register, create_dynamic_byte_operand(0xd0), 2),
+            { code = "sbc", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_dynamic = true, value = 0xd0, size = 1 }, size = 2 },
             -- and a, n8
-            create_instruction("and", op.a_register, create_dynamic_byte_operand(0xe0), 2),
+            { code = "and", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_dynamic = true, value = 0xe0, size = 1 }, size = 2 },
             -- xor a, n8
-            create_instruction("xor", op.a_register, create_dynamic_byte_operand(0xf0), 2),
+            { code = "xor", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_dynamic = true, value = 0xf0, size = 1 }, size = 2 },
             -- or a, n8
-            create_instruction("or", op.a_register, create_dynamic_byte_operand(0x01), 2),
+            { code = "or", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_dynamic = true, value = 0x01, size = 1 }, size = 2 },
             -- cp a, n8
-            create_instruction("cp", op.a_register, create_dynamic_byte_operand(0x11), 2),
+            { code = "cp", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_dynamic = true, value = 0x11, size = 1 }, size = 2 },
             -- add sp, e8
-            create_instruction("add", op.sp_register, create_dynamic_byte_operand(0x21, false, false, false, true), 2),
+            { code = "add", l_op = { is_register = true, value = "sp", size = 1 }, r_op = { is_dynamic = true, signed = true, value = 0x21, size = 1 }, size = 2 },
             -- ld hl, sp+e8
-            create_instruction("ld", op.hl_register_set, create_dynamic_byte_operand(0x31, false, false, "sp", true), 2),
+            { code = "ld", l_op = { is_register = true, value = "hl", size = 2 }, r_op = { is_dynamic = true, signed = true, offset = "sp", value = 0x31, size = 1 }, size = 2 },
             -- jr e8
-            create_instruction("jr", create_dynamic_byte_operand(0xfe, false, false, false, true), nil, 2),
+            { code = "jr", l_op = { is_dynamic = true, signed = true, value = 0xfe, size = 1 }, r_op = nil, size = 2 },
             -- jr c, e8
-            create_instruction("jr", op.c_condition, create_dynamic_byte_operand(0xfc, false, false, false, true), 2),
+            { code = "jr", l_op = { is_condition = true, value = "c", size = 1 }, r_op = { is_dynamic = true, signed = true, value = 0xfc, size = 1 }, size = 2 },
             -- jr z, e8
-            create_instruction("jr", op.z_condition, create_dynamic_byte_operand(0xfa, false, false, false, true), 2),
+            { code = "jr", l_op = { is_condition = true, value = "z", size = 1 }, r_op = { is_dynamic = true, signed = true, value = 0xfa, size = 1 }, size = 2 },
             -- jr nc, e8
-            create_instruction("jr", op.nc_condition, create_dynamic_byte_operand(0xf8, false, false, false, true), 2),
+            { code = "jr", l_op = { is_condition = true, value = "nc", size = 1 }, r_op = { is_dynamic = true, signed = true, value = 0xf8, size = 1 }, size = 2 },
             -- jr nz, e8
-            create_instruction("jr", op.nz_condition, create_dynamic_byte_operand(0xf6, false, false, false, true), 2)
+            { code = "jr", l_op = { is_condition = true, value = "nz", size = 1 }, r_op = { is_dynamic = true, signed = true, value = 0xf6, size = 1 }, size = 2 }
       })
    end)
 
@@ -503,39 +497,39 @@ describe("Rom", function()
       read_rom(rom, io.open("./spec/fixtures/octet_op_instructions.gb", "rb"))
       assert.are.same(rom.banks[0].instructions, {
             -- ld a, [n16]
-            create_instruction("ld", op.a_register, create_dynamic_octet_operand(0x0000, true), 3),
+            { code = "ld", l_op = { is_register = true, value = "a", size = 1 }, r_op = { is_dynamic = true, reference = true, value = 0x0000, size = 2 }, size = 3 },
             -- ld [n16], a
-            create_instruction("ld", create_dynamic_octet_operand(0x0100, true), op.a_register, 3),
+            { code = "ld", l_op = { is_dynamic = true, reference = true, value = 0x0100, size = 2 }, r_op = { is_register = true, value = "a", size = 1 }, size = 3 },
             -- ld hl, n8
-            create_instruction("ld", op.hl_register_set, create_dynamic_octet_operand(0x0200), 3),
+            { code = "ld", l_op = { is_register = true, value = "hl", size = 2 }, r_op = { is_dynamic = true, value = 0x0200, size = 2 }, size = 3 },
             -- ld bc, n8
-            create_instruction("ld", op.bc_register_set, create_dynamic_octet_operand(0x0300), 3),
+            { code = "ld", l_op = { is_register = true, value = "bc", size = 2 }, r_op = { is_dynamic = true, value = 0x0300, size = 2 }, size = 3 },
             -- ld de, n8
-            create_instruction("ld", op.de_register_set, create_dynamic_octet_operand(0x0400), 3),
+            { code = "ld", l_op = { is_register = true, value = "de", size = 2 }, r_op = { is_dynamic = true, value = 0x0400, size = 2 }, size = 3 },
             -- ld sp, n16
-            create_instruction("ld", op.sp_register, create_dynamic_octet_operand(0x0500), 3),
+            { code = "ld", l_op = { is_register = true, value = "sp", size = 1 }, r_op = { is_dynamic = true, value = 0x0500, size = 2 }, size = 3 },
             -- ld [n16], sp
-            create_instruction("ld", create_dynamic_octet_operand(0x0600, true), op.sp_register, 3),
+            { code = "ld", l_op = { is_dynamic = true, reference = true, value = 0x0600, size = 2 }, r_op = { is_register = true, value = "sp", size = 1 }, size = 3 },
             -- call n16
-            create_instruction("call", create_dynamic_octet_operand(0x0700), nil, 3),
+            { code = "call", l_op = { is_dynamic = true, value = 0x0700, size = 2 }, r_op = nil, size = 3 },
             -- call c, n16
-            create_instruction("call", op.c_condition, create_dynamic_octet_operand(0x0800), 3),
+            { code = "call", l_op = { is_condition = true, value = "c", size = 1 }, r_op = { is_dynamic = true, value = 0x0800, size = 2 }, size = 3 },
             -- call z, n16
-            create_instruction("call", op.z_condition, create_dynamic_octet_operand(0x0900), 3),
+            { code = "call", l_op = { is_condition = true, value = "z", size = 1 }, r_op = { is_dynamic = true, value = 0x0900, size = 2 }, size = 3 },
             -- call nc, n16
-            create_instruction("call", op.nc_condition, create_dynamic_octet_operand(0x0a00), 3),
+            { code = "call", l_op = { is_condition = true, value = "nc", size = 1 }, r_op = { is_dynamic = true, value = 0x0a00, size = 2 }, size = 3 },
             -- call nz, n16
-            create_instruction("call", op.nz_condition, create_dynamic_octet_operand(0x0b00), 3),
+            { code = "call", l_op = { is_condition = true, value = "nz", size = 1 }, r_op = { is_dynamic = true, value = 0x0b00, size = 2 }, size = 3 },
             -- jp n16
-            create_instruction("jp", create_dynamic_octet_operand(0x0c00), nil, 3),
+            { code = "jp", l_op = { is_dynamic = true, value = 0x0c00, size = 2 }, r_op = nil, size = 3 },
             -- jp c, n16
-            create_instruction("jp", op.c_condition, create_dynamic_octet_operand(0x0f00), 3),
+            { code = "jp", l_op = { is_condition = true, value = "c", size = 1 }, r_op = { is_dynamic = true, value = 0x0f00, size = 2 }, size = 3 },
             -- jp z, n16
-            create_instruction("jp", op.z_condition, create_dynamic_octet_operand(0x1000), 3),
+            { code = "jp", l_op = { is_condition = true, value = "z", size = 1 }, r_op = { is_dynamic = true, value = 0x1000, size = 2 }, size = 3 },
             -- jp nc, n16
-            create_instruction("jp", op.nc_condition, create_dynamic_octet_operand(0x1100), 3),
+            { code = "jp", l_op = { is_condition = true, value = "nc", size = 1 }, r_op = { is_dynamic = true, value = 0x1100, size = 2 }, size = 3 },
             -- jp nz, n16
-            create_instruction("jp", op.nz_condition, create_dynamic_octet_operand(0x1200), 3)
+            { code = "jp", l_op = { is_condition = true, value = "nz", size = 1 }, r_op = { is_dynamic = true, value = 0x1200, size = 2 }, size = 3 }
       })
    end)
 
@@ -544,519 +538,519 @@ describe("Rom", function()
       read_rom(rom, io.open("./spec/fixtures/extended_instructions.gb", "rb"))
       assert.are.same(rom.banks[0].instructions, {
             -- stop
-            create_instruction("stop", create_dynamic_byte_operand(0), nil, 2),
+            { code = "stop", l_op = { is_dynamic = true, value = 0, size = 1 }, r_op = nil, size = 2 },
             -- rlc a
-            create_instruction("rlc", op.a_register, nil, 2),
+            { code = "rlc", l_op = { is_register = true, value = "a", size = 1 }, r_op = nil, size = 2 },
             -- rlc b
-            create_instruction("rlc", op.b_register, nil, 2),
+            { code = "rlc", l_op = { is_register = true, value = "b", size = 1 }, r_op = nil, size = 2 },
             -- rlc c
-            create_instruction("rlc", op.c_register, nil, 2),
+            { code = "rlc", l_op = { is_register = true, value = "c", size = 1 }, r_op = nil, size = 2 },
             -- rlc d
-            create_instruction("rlc", op.d_register, nil, 2),
+            { code = "rlc", l_op = { is_register = true, value = "d", size = 1 }, r_op = nil, size = 2 },
             -- rlc e
-            create_instruction("rlc", op.e_register, nil, 2),
+            { code = "rlc", l_op = { is_register = true, value = "e", size = 1 }, r_op = nil, size = 2 },
             -- rlc h
-            create_instruction("rlc", op.h_register, nil, 2),
+            { code = "rlc", l_op = { is_register = true, value = "h", size = 1 }, r_op = nil, size = 2 },
             -- rlc l
-            create_instruction("rlc", op.l_register, nil, 2),
+            { code = "rlc", l_op = { is_register = true, value = "l", size = 1 }, r_op = nil, size = 2 },
             -- rlc [hl]
-            create_instruction("rlc", op.hl_register_set_reference, nil, 2),
+            { code = "rlc", l_op = { is_register = true, reference = true, value = "hl", size = 2 }, r_op = nil, size = 2 },
             -- rrc a
-            create_instruction("rrc", op.a_register, nil, 2),
+            { code = "rrc", l_op = { is_register = true, value = "a", size = 1 }, r_op = nil, size = 2 },
             -- rrc b
-            create_instruction("rrc", op.b_register, nil, 2),
+            { code = "rrc", l_op = { is_register = true, value = "b", size = 1 }, r_op = nil, size = 2 },
             -- rrc c
-            create_instruction("rrc", op.c_register, nil, 2),
+            { code = "rrc", l_op = { is_register = true, value = "c", size = 1 }, r_op = nil, size = 2 },
             -- rrc d
-            create_instruction("rrc", op.d_register, nil, 2),
+            { code = "rrc", l_op = { is_register = true, value = "d", size = 1 }, r_op = nil, size = 2 },
             -- rrc e
-            create_instruction("rrc", op.e_register, nil, 2),
+            { code = "rrc", l_op = { is_register = true, value = "e", size = 1 }, r_op = nil, size = 2 },
             -- rrc h
-            create_instruction("rrc", op.h_register, nil, 2),
+            { code = "rrc", l_op = { is_register = true, value = "h", size = 1 }, r_op = nil, size = 2 },
             -- rrc l
-            create_instruction("rrc", op.l_register, nil, 2),
+            { code = "rrc", l_op = { is_register = true, value = "l", size = 1 }, r_op = nil, size = 2 },
             -- rrc [hl]
-            create_instruction("rrc", op.hl_register_set_reference, nil, 2),
+            { code = "rrc", l_op = { is_register = true, reference = true, value = "hl", size = 2 }, r_op = nil, size = 2 },
             -- rl a
-            create_instruction("rl", op.a_register, nil, 2),
+            { code = "rl", l_op = { is_register = true, value = "a", size = 1 }, r_op = nil, size = 2 },
             -- rl b
-            create_instruction("rl", op.b_register, nil, 2),
+            { code = "rl", l_op = { is_register = true, value = "b", size = 1 }, r_op = nil, size = 2 },
             -- rl c
-            create_instruction("rl", op.c_register, nil, 2),
+            { code = "rl", l_op = { is_register = true, value = "c", size = 1 }, r_op = nil, size = 2 },
             -- rl d
-            create_instruction("rl", op.d_register, nil, 2),
+            { code = "rl", l_op = { is_register = true, value = "d", size = 1 }, r_op = nil, size = 2 },
             -- rl e
-            create_instruction("rl", op.e_register, nil, 2),
+            { code = "rl", l_op = { is_register = true, value = "e", size = 1 }, r_op = nil, size = 2 },
             -- rl h
-            create_instruction("rl", op.h_register, nil, 2),
+            { code = "rl", l_op = { is_register = true, value = "h", size = 1 }, r_op = nil, size = 2 },
             -- rl l
-            create_instruction("rl", op.l_register, nil, 2),
+            { code = "rl", l_op = { is_register = true, value = "l", size = 1 }, r_op = nil, size = 2 },
             -- rl [hl]
-            create_instruction("rl", op.hl_register_set_reference, nil, 2),
+            { code = "rl", l_op = { is_register = true, reference = true, value = "hl", size = 2 }, r_op = nil, size = 2 },
             -- rr a
-            create_instruction("rr", op.a_register, nil, 2),
+            { code = "rr", l_op = { is_register = true, value = "a", size = 1 }, r_op = nil, size = 2 },
             -- rr b
-            create_instruction("rr", op.b_register, nil, 2),
+            { code = "rr", l_op = { is_register = true, value = "b", size = 1 }, r_op = nil, size = 2 },
             -- rr c
-            create_instruction("rr", op.c_register, nil, 2),
+            { code = "rr", l_op = { is_register = true, value = "c", size = 1 }, r_op = nil, size = 2 },
             -- rr d
-            create_instruction("rr", op.d_register, nil, 2),
+            { code = "rr", l_op = { is_register = true, value = "d", size = 1 }, r_op = nil, size = 2 },
             -- rr e
-            create_instruction("rr", op.e_register, nil, 2),
+            { code = "rr", l_op = { is_register = true, value = "e", size = 1 }, r_op = nil, size = 2 },
             -- rr h
-            create_instruction("rr", op.h_register, nil, 2),
+            { code = "rr", l_op = { is_register = true, value = "h", size = 1 }, r_op = nil, size = 2 },
             -- rr l
-            create_instruction("rr", op.l_register, nil, 2),
+            { code = "rr", l_op = { is_register = true, value = "l", size = 1 }, r_op = nil, size = 2 },
             -- rr [hl]
-            create_instruction("rr", op.hl_register_set_reference, nil, 2),
+            { code = "rr", l_op = { is_register = true, reference = true, value = "hl", size = 2 }, r_op = nil, size = 2 },
             -- sla a
-            create_instruction("sla", op.a_register, nil, 2),
+            { code = "sla", l_op = { is_register = true, value = "a", size = 1 }, r_op = nil, size = 2 },
             -- sla b
-            create_instruction("sla", op.b_register, nil, 2),
+            { code = "sla", l_op = { is_register = true, value = "b", size = 1 }, r_op = nil, size = 2 },
             -- sla c
-            create_instruction("sla", op.c_register, nil, 2),
+            { code = "sla", l_op = { is_register = true, value = "c", size = 1 }, r_op = nil, size = 2 },
             -- sla d
-            create_instruction("sla", op.d_register, nil, 2),
+            { code = "sla", l_op = { is_register = true, value = "d", size = 1 }, r_op = nil, size = 2 },
             -- sla e
-            create_instruction("sla", op.e_register, nil, 2),
+            { code = "sla", l_op = { is_register = true, value = "e", size = 1 }, r_op = nil, size = 2 },
             -- sla h
-            create_instruction("sla", op.h_register, nil, 2),
+            { code = "sla", l_op = { is_register = true, value = "h", size = 1 }, r_op = nil, size = 2 },
             -- sla l
-            create_instruction("sla", op.l_register, nil, 2),
+            { code = "sla", l_op = { is_register = true, value = "l", size = 1 }, r_op = nil, size = 2 },
             -- sla [hl]
-            create_instruction("sla", op.hl_register_set_reference, nil, 2),
+            { code = "sla", l_op = { is_register = true, reference = true, value = "hl", size = 2 }, r_op = nil, size = 2 },
             -- sra a
-            create_instruction("sra", op.a_register, nil, 2),
+            { code = "sra", l_op = { is_register = true, value = "a", size = 1 }, r_op = nil, size = 2 },
             -- sra b
-            create_instruction("sra", op.b_register, nil, 2),
+            { code = "sra", l_op = { is_register = true, value = "b", size = 1 }, r_op = nil, size = 2 },
             -- sra c
-            create_instruction("sra", op.c_register, nil, 2),
+            { code = "sra", l_op = { is_register = true, value = "c", size = 1 }, r_op = nil, size = 2 },
             -- sra d
-            create_instruction("sra", op.d_register, nil, 2),
+            { code = "sra", l_op = { is_register = true, value = "d", size = 1 }, r_op = nil, size = 2 },
             -- sra e
-            create_instruction("sra", op.e_register, nil, 2),
+            { code = "sra", l_op = { is_register = true, value = "e", size = 1 }, r_op = nil, size = 2 },
             -- sra h
-            create_instruction("sra", op.h_register, nil, 2),
+            { code = "sra", l_op = { is_register = true, value = "h", size = 1 }, r_op = nil, size = 2 },
             -- sra l
-            create_instruction("sra", op.l_register, nil, 2),
+            { code = "sra", l_op = { is_register = true, value = "l", size = 1 }, r_op = nil, size = 2 },
             -- sra [hl]
-            create_instruction("sra", op.hl_register_set_reference, nil, 2),
+            { code = "sra", l_op = { is_register = true, reference = true, value = "hl", size = 2 }, r_op = nil, size = 2 },
             -- swap a
-            create_instruction("swap", op.a_register, nil, 2),
+            { code = "swap", l_op = { is_register = true, value = "a", size = 1 }, r_op = nil, size = 2 },
             -- swap b
-            create_instruction("swap", op.b_register, nil, 2),
+            { code = "swap", l_op = { is_register = true, value = "b", size = 1 }, r_op = nil, size = 2 },
             -- swap c
-            create_instruction("swap", op.c_register, nil, 2),
+            { code = "swap", l_op = { is_register = true, value = "c", size = 1 }, r_op = nil, size = 2 },
             -- swap d
-            create_instruction("swap", op.d_register, nil, 2),
+            { code = "swap", l_op = { is_register = true, value = "d", size = 1 }, r_op = nil, size = 2 },
             -- swap e
-            create_instruction("swap", op.e_register, nil, 2),
+            { code = "swap", l_op = { is_register = true, value = "e", size = 1 }, r_op = nil, size = 2 },
             -- swap h
-            create_instruction("swap", op.h_register, nil, 2),
+            { code = "swap", l_op = { is_register = true, value = "h", size = 1 }, r_op = nil, size = 2 },
             -- swap l
-            create_instruction("swap", op.l_register, nil, 2),
+            { code = "swap", l_op = { is_register = true, value = "l", size = 1 }, r_op = nil, size = 2 },
             -- swap [hl]
-            create_instruction("swap", op.hl_register_set_reference, nil, 2),
+            { code = "swap", l_op = { is_register = true, reference = true, value = "hl", size = 2 }, r_op = nil, size = 2 },
             -- srl a
-            create_instruction("srl", op.a_register, nil, 2),
+            { code = "srl", l_op = { is_register = true, value = "a", size = 1 }, r_op = nil, size = 2 },
             -- srl b
-            create_instruction("srl", op.b_register, nil, 2),
+            { code = "srl", l_op = { is_register = true, value = "b", size = 1 }, r_op = nil, size = 2 },
             -- srl c
-            create_instruction("srl", op.c_register, nil, 2),
+            { code = "srl", l_op = { is_register = true, value = "c", size = 1 }, r_op = nil, size = 2 },
             -- srl d
-            create_instruction("srl", op.d_register, nil, 2),
+            { code = "srl", l_op = { is_register = true, value = "d", size = 1 }, r_op = nil, size = 2 },
             -- srl e
-            create_instruction("srl", op.e_register, nil, 2),
+            { code = "srl", l_op = { is_register = true, value = "e", size = 1 }, r_op = nil, size = 2 },
             -- srl h
-            create_instruction("srl", op.h_register, nil, 2),
+            { code = "srl", l_op = { is_register = true, value = "h", size = 1 }, r_op = nil, size = 2 },
             -- srl l
-            create_instruction("srl", op.l_register, nil, 2),
+            { code = "srl", l_op = { is_register = true, value = "l", size = 1 }, r_op = nil, size = 2 },
             -- srl [hl]
-            create_instruction("srl", op.hl_register_set_reference, nil, 2),
+            { code = "srl", l_op = { is_register = true, reference = true, value = "hl", size = 2 }, r_op = nil, size = 2 },
             -- bit 0, a
-            create_instruction("bit", create_dynamic_byte_operand(0), op.a_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 0, size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 2 },
             -- bit 0, b
-            create_instruction("bit", create_dynamic_byte_operand(0), op.b_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 0, size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 2 },
             -- bit 0, c
-            create_instruction("bit", create_dynamic_byte_operand(0), op.c_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 0, size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 2 },
             -- bit 0, d
-            create_instruction("bit", create_dynamic_byte_operand(0), op.d_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 0, size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 2 },
             -- bit 0, e
-            create_instruction("bit", create_dynamic_byte_operand(0), op.e_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 0, size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 2 },
             -- bit 0, h
-            create_instruction("bit", create_dynamic_byte_operand(0), op.h_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 0, size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 2 },
             -- bit 0, l
-            create_instruction("bit", create_dynamic_byte_operand(0), op.l_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 0, size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 2 },
             -- bit 0, [hl]
-            create_instruction("bit", create_dynamic_byte_operand(0), op.hl_register_set_reference, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 0, size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 2 },
             -- bit 1, a
-            create_instruction("bit", create_dynamic_byte_operand(1), op.a_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 1, size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 2 },
             -- bit 1, b
-            create_instruction("bit", create_dynamic_byte_operand(1), op.b_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 1, size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 2 },
             -- bit 1, c
-            create_instruction("bit", create_dynamic_byte_operand(1), op.c_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 1, size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 2 },
             -- bit 1, d
-            create_instruction("bit", create_dynamic_byte_operand(1), op.d_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 1, size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 2 },
             -- bit 1, e
-            create_instruction("bit", create_dynamic_byte_operand(1), op.e_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 1, size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 2 },
             -- bit 1, h
-            create_instruction("bit", create_dynamic_byte_operand(1), op.h_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 1, size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 2 },
             -- bit 1, l
-            create_instruction("bit", create_dynamic_byte_operand(1), op.l_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 1, size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 2 },
             -- bit 1, [hl]
-            create_instruction("bit", create_dynamic_byte_operand(1), op.hl_register_set_reference, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 1, size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 2 },
             -- bit 2, a
-            create_instruction("bit", create_dynamic_byte_operand(2), op.a_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 2, size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 2 },
             -- bit 2, b
-            create_instruction("bit", create_dynamic_byte_operand(2), op.b_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 2, size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 2 },
             -- bit 2, c
-            create_instruction("bit", create_dynamic_byte_operand(2), op.c_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 2, size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 2 },
             -- bit 2, d
-            create_instruction("bit", create_dynamic_byte_operand(2), op.d_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 2, size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 2 },
             -- bit 2, e
-            create_instruction("bit", create_dynamic_byte_operand(2), op.e_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 2, size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 2 },
             -- bit 2, h
-            create_instruction("bit", create_dynamic_byte_operand(2), op.h_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 2, size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 2 },
             -- bit 2, l
-            create_instruction("bit", create_dynamic_byte_operand(2), op.l_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 2, size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 2 },
             -- bit 2, [hl]
-            create_instruction("bit", create_dynamic_byte_operand(2), op.hl_register_set_reference, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 2, size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 2 },
             -- bit 3, a
-            create_instruction("bit", create_dynamic_byte_operand(3), op.a_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 3, size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 2 },
             -- bit 3, b
-            create_instruction("bit", create_dynamic_byte_operand(3), op.b_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 3, size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 2 },
             -- bit 3, c
-            create_instruction("bit", create_dynamic_byte_operand(3), op.c_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 3, size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 2 },
             -- bit 3, d
-            create_instruction("bit", create_dynamic_byte_operand(3), op.d_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 3, size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 2 },
             -- bit 3, e
-            create_instruction("bit", create_dynamic_byte_operand(3), op.e_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 3, size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 2 },
             -- bit 3, h
-            create_instruction("bit", create_dynamic_byte_operand(3), op.h_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 3, size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 2 },
             -- bit 3, l
-            create_instruction("bit", create_dynamic_byte_operand(3), op.l_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 3, size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 2 },
             -- bit 3, [hl]
-            create_instruction("bit", create_dynamic_byte_operand(3), op.hl_register_set_reference, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 3, size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 2 },
             -- bit 4, a
-            create_instruction("bit", create_dynamic_byte_operand(4), op.a_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 4, size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 2 },
             -- bit 4, b
-            create_instruction("bit", create_dynamic_byte_operand(4), op.b_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 4, size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 2 },
             -- bit 4, c
-            create_instruction("bit", create_dynamic_byte_operand(4), op.c_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 4, size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 2 },
             -- bit 4, d
-            create_instruction("bit", create_dynamic_byte_operand(4), op.d_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 4, size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 2 },
             -- bit 4, e
-            create_instruction("bit", create_dynamic_byte_operand(4), op.e_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 4, size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 2 },
             -- bit 4, h
-            create_instruction("bit", create_dynamic_byte_operand(4), op.h_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 4, size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 2 },
             -- bit 4, l
-            create_instruction("bit", create_dynamic_byte_operand(4), op.l_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 4, size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 2 },
             -- bit 4, [hl]
-            create_instruction("bit", create_dynamic_byte_operand(4), op.hl_register_set_reference, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 4, size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 2 },
             -- bit 5, a
-            create_instruction("bit", create_dynamic_byte_operand(5), op.a_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 5, size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 2 },
             -- bit 5, b
-            create_instruction("bit", create_dynamic_byte_operand(5), op.b_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 5, size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 2 },
             -- bit 5, c
-            create_instruction("bit", create_dynamic_byte_operand(5), op.c_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 5, size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 2 },
             -- bit 5, d
-            create_instruction("bit", create_dynamic_byte_operand(5), op.d_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 5, size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 2 },
             -- bit 5, e
-            create_instruction("bit", create_dynamic_byte_operand(5), op.e_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 5, size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 2 },
             -- bit 5, h
-            create_instruction("bit", create_dynamic_byte_operand(5), op.h_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 5, size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 2 },
             -- bit 5, l
-            create_instruction("bit", create_dynamic_byte_operand(5), op.l_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 5, size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 2 },
             -- bit 5, [hl]
-            create_instruction("bit", create_dynamic_byte_operand(5), op.hl_register_set_reference, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 5, size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 2 },
             -- bit 6, a
-            create_instruction("bit", create_dynamic_byte_operand(6), op.a_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 6, size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 2 },
             -- bit 6, b
-            create_instruction("bit", create_dynamic_byte_operand(6), op.b_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 6, size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 2 },
             -- bit 6, c
-            create_instruction("bit", create_dynamic_byte_operand(6), op.c_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 6, size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 2 },
             -- bit 6, d
-            create_instruction("bit", create_dynamic_byte_operand(6), op.d_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 6, size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 2 },
             -- bit 6, e
-            create_instruction("bit", create_dynamic_byte_operand(6), op.e_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 6, size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 2 },
             -- bit 6, h
-            create_instruction("bit", create_dynamic_byte_operand(6), op.h_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 6, size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 2 },
             -- bit 6, l
-            create_instruction("bit", create_dynamic_byte_operand(6), op.l_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 6, size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 2 },
             -- bit 6, [hl]
-            create_instruction("bit", create_dynamic_byte_operand(6), op.hl_register_set_reference, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 6, size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 2 },
             -- bit 7, a
-            create_instruction("bit", create_dynamic_byte_operand(7), op.a_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 7, size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 2 },
             -- bit 7, b
-            create_instruction("bit", create_dynamic_byte_operand(7), op.b_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 7, size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 2 },
             -- bit 7, c
-            create_instruction("bit", create_dynamic_byte_operand(7), op.c_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 7, size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 2 },
             -- bit 7, d
-            create_instruction("bit", create_dynamic_byte_operand(7), op.d_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 7, size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 2 },
             -- bit 7, e
-            create_instruction("bit", create_dynamic_byte_operand(7), op.e_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 7, size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 2 },
             -- bit 7, h
-            create_instruction("bit", create_dynamic_byte_operand(7), op.h_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 7, size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 2 },
             -- bit 7, l
-            create_instruction("bit", create_dynamic_byte_operand(7), op.l_register, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 7, size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 2 },
             -- bit 7, [hl]
-            create_instruction("bit", create_dynamic_byte_operand(7), op.hl_register_set_reference, 2),
+            { code = "bit", l_op = { is_dynamic = true, value = 7, size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 2 },
             -- res 0, a
-            create_instruction("res", create_dynamic_byte_operand(0), op.a_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 0, size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 2 },
             -- res 0, b
-            create_instruction("res", create_dynamic_byte_operand(0), op.b_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 0, size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 2 },
             -- res 0, c
-            create_instruction("res", create_dynamic_byte_operand(0), op.c_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 0, size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 2 },
             -- res 0, d
-            create_instruction("res", create_dynamic_byte_operand(0), op.d_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 0, size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 2 },
             -- res 0, e
-            create_instruction("res", create_dynamic_byte_operand(0), op.e_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 0, size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 2 },
             -- res 0, h
-            create_instruction("res", create_dynamic_byte_operand(0), op.h_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 0, size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 2 },
             -- res 0, l
-            create_instruction("res", create_dynamic_byte_operand(0), op.l_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 0, size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 2 },
             -- res 0, [hl]
-            create_instruction("res", create_dynamic_byte_operand(0), op.hl_register_set_reference, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 0, size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 2 },
             -- res 1, a
-            create_instruction("res", create_dynamic_byte_operand(1), op.a_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 1, size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 2 },
             -- res 1, b
-            create_instruction("res", create_dynamic_byte_operand(1), op.b_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 1, size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 2 },
             -- res 1, c
-            create_instruction("res", create_dynamic_byte_operand(1), op.c_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 1, size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 2 },
             -- res 1, d
-            create_instruction("res", create_dynamic_byte_operand(1), op.d_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 1, size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 2 },
             -- res 1, e
-            create_instruction("res", create_dynamic_byte_operand(1), op.e_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 1, size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 2 },
             -- res 1, h
-            create_instruction("res", create_dynamic_byte_operand(1), op.h_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 1, size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 2 },
             -- res 1, l
-            create_instruction("res", create_dynamic_byte_operand(1), op.l_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 1, size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 2 },
             -- res 1, [hl]
-            create_instruction("res", create_dynamic_byte_operand(1), op.hl_register_set_reference, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 1, size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 2 },
             -- res 2, a
-            create_instruction("res", create_dynamic_byte_operand(2), op.a_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 2, size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 2 },
             -- res 2, b
-            create_instruction("res", create_dynamic_byte_operand(2), op.b_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 2, size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 2 },
             -- res 2, c
-            create_instruction("res", create_dynamic_byte_operand(2), op.c_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 2, size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 2 },
             -- res 2, d
-            create_instruction("res", create_dynamic_byte_operand(2), op.d_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 2, size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 2 },
             -- res 2, e
-            create_instruction("res", create_dynamic_byte_operand(2), op.e_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 2, size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 2 },
             -- res 2, h
-            create_instruction("res", create_dynamic_byte_operand(2), op.h_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 2, size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 2 },
             -- res 2, l
-            create_instruction("res", create_dynamic_byte_operand(2), op.l_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 2, size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 2 },
             -- res 2, [hl]
-            create_instruction("res", create_dynamic_byte_operand(2), op.hl_register_set_reference, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 2, size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 2 },
             -- res 3, a
-            create_instruction("res", create_dynamic_byte_operand(3), op.a_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 3, size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 2 },
             -- res 3, b
-            create_instruction("res", create_dynamic_byte_operand(3), op.b_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 3, size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 2 },
             -- res 3, c
-            create_instruction("res", create_dynamic_byte_operand(3), op.c_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 3, size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 2 },
             -- res 3, d
-            create_instruction("res", create_dynamic_byte_operand(3), op.d_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 3, size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 2 },
             -- res 3, e
-            create_instruction("res", create_dynamic_byte_operand(3), op.e_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 3, size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 2 },
             -- res 3, h
-            create_instruction("res", create_dynamic_byte_operand(3), op.h_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 3, size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 2 },
             -- res 3, l
-            create_instruction("res", create_dynamic_byte_operand(3), op.l_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 3, size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 2 },
             -- res 3, [hl]
-            create_instruction("res", create_dynamic_byte_operand(3), op.hl_register_set_reference, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 3, size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 2 },
             -- res 4, a
-            create_instruction("res", create_dynamic_byte_operand(4), op.a_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 4, size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 2 },
             -- res 4, b
-            create_instruction("res", create_dynamic_byte_operand(4), op.b_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 4, size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 2 },
             -- res 4, c
-            create_instruction("res", create_dynamic_byte_operand(4), op.c_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 4, size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 2 },
             -- res 4, d
-            create_instruction("res", create_dynamic_byte_operand(4), op.d_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 4, size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 2 },
             -- res 4, e
-            create_instruction("res", create_dynamic_byte_operand(4), op.e_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 4, size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 2 },
             -- res 4, h
-            create_instruction("res", create_dynamic_byte_operand(4), op.h_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 4, size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 2 },
             -- res 4, l
-            create_instruction("res", create_dynamic_byte_operand(4), op.l_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 4, size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 2 },
             -- res 4, [hl]
-            create_instruction("res", create_dynamic_byte_operand(4), op.hl_register_set_reference, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 4, size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 2 },
             -- res 5, a
-            create_instruction("res", create_dynamic_byte_operand(5), op.a_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 5, size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 2 },
             -- res 5, b
-            create_instruction("res", create_dynamic_byte_operand(5), op.b_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 5, size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 2 },
             -- res 5, c
-            create_instruction("res", create_dynamic_byte_operand(5), op.c_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 5, size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 2 },
             -- res 5, d
-            create_instruction("res", create_dynamic_byte_operand(5), op.d_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 5, size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 2 },
             -- res 5, e
-            create_instruction("res", create_dynamic_byte_operand(5), op.e_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 5, size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 2 },
             -- res 5, h
-            create_instruction("res", create_dynamic_byte_operand(5), op.h_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 5, size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 2 },
             -- res 5, l
-            create_instruction("res", create_dynamic_byte_operand(5), op.l_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 5, size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 2 },
             -- res 5, [hl]
-            create_instruction("res", create_dynamic_byte_operand(5), op.hl_register_set_reference, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 5, size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 2 },
             -- res 6, a
-            create_instruction("res", create_dynamic_byte_operand(6), op.a_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 6, size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 2 },
             -- res 6, b
-            create_instruction("res", create_dynamic_byte_operand(6), op.b_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 6, size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 2 },
             -- res 6, c
-            create_instruction("res", create_dynamic_byte_operand(6), op.c_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 6, size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 2 },
             -- res 6, d
-            create_instruction("res", create_dynamic_byte_operand(6), op.d_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 6, size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 2 },
             -- res 6, e
-            create_instruction("res", create_dynamic_byte_operand(6), op.e_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 6, size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 2 },
             -- res 6, h
-            create_instruction("res", create_dynamic_byte_operand(6), op.h_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 6, size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 2 },
             -- res 6, l
-            create_instruction("res", create_dynamic_byte_operand(6), op.l_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 6, size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 2 },
             -- res 6, [hl]
-            create_instruction("res", create_dynamic_byte_operand(6), op.hl_register_set_reference, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 6, size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 2 },
             -- res 7, a
-            create_instruction("res", create_dynamic_byte_operand(7), op.a_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 7, size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 2 },
             -- res 7, b
-            create_instruction("res", create_dynamic_byte_operand(7), op.b_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 7, size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 2 },
             -- res 7, c
-            create_instruction("res", create_dynamic_byte_operand(7), op.c_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 7, size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 2 },
             -- res 7, d
-            create_instruction("res", create_dynamic_byte_operand(7), op.d_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 7, size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 2 },
             -- res 7, e
-            create_instruction("res", create_dynamic_byte_operand(7), op.e_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 7, size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 2 },
             -- res 7, h
-            create_instruction("res", create_dynamic_byte_operand(7), op.h_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 7, size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 2 },
             -- res 7, l
-            create_instruction("res", create_dynamic_byte_operand(7), op.l_register, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 7, size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 2 },
             -- res 7, [hl]
-            create_instruction("res", create_dynamic_byte_operand(7), op.hl_register_set_reference, 2),
+            { code = "res", l_op = { is_dynamic = true, value = 7, size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 2 },
             -- set 0, a
-            create_instruction("set", create_dynamic_byte_operand(0), op.a_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 0, size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 2 },
             -- set 0, b
-            create_instruction("set", create_dynamic_byte_operand(0), op.b_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 0, size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 2 },
             -- set 0, c
-            create_instruction("set", create_dynamic_byte_operand(0), op.c_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 0, size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 2 },
             -- set 0, d
-            create_instruction("set", create_dynamic_byte_operand(0), op.d_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 0, size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 2 },
             -- set 0, e
-            create_instruction("set", create_dynamic_byte_operand(0), op.e_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 0, size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 2 },
             -- set 0, h
-            create_instruction("set", create_dynamic_byte_operand(0), op.h_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 0, size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 2 },
             -- set 0, l
-            create_instruction("set", create_dynamic_byte_operand(0), op.l_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 0, size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 2 },
             -- set 0, [hl]
-            create_instruction("set", create_dynamic_byte_operand(0), op.hl_register_set_reference, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 0, size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 2 },
             -- set 1, a
-            create_instruction("set", create_dynamic_byte_operand(1), op.a_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 1, size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 2 },
             -- set 1, b
-            create_instruction("set", create_dynamic_byte_operand(1), op.b_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 1, size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 2 },
             -- set 1, c
-            create_instruction("set", create_dynamic_byte_operand(1), op.c_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 1, size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 2 },
             -- set 1, d
-            create_instruction("set", create_dynamic_byte_operand(1), op.d_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 1, size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 2 },
             -- set 1, e
-            create_instruction("set", create_dynamic_byte_operand(1), op.e_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 1, size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 2 },
             -- set 1, h
-            create_instruction("set", create_dynamic_byte_operand(1), op.h_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 1, size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 2 },
             -- set 1, l
-            create_instruction("set", create_dynamic_byte_operand(1), op.l_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 1, size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 2 },
             -- set 1, [hl]
-            create_instruction("set", create_dynamic_byte_operand(1), op.hl_register_set_reference, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 1, size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 2 },
             -- set 2, a
-            create_instruction("set", create_dynamic_byte_operand(2), op.a_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 2, size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 2 },
             -- set 2, b
-            create_instruction("set", create_dynamic_byte_operand(2), op.b_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 2, size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 2 },
             -- set 2, c
-            create_instruction("set", create_dynamic_byte_operand(2), op.c_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 2, size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 2 },
             -- set 2, d
-            create_instruction("set", create_dynamic_byte_operand(2), op.d_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 2, size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 2 },
             -- set 2, e
-            create_instruction("set", create_dynamic_byte_operand(2), op.e_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 2, size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 2 },
             -- set 2, h
-            create_instruction("set", create_dynamic_byte_operand(2), op.h_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 2, size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 2 },
             -- set 2, l
-            create_instruction("set", create_dynamic_byte_operand(2), op.l_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 2, size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 2 },
             -- set 2, [hl]
-            create_instruction("set", create_dynamic_byte_operand(2), op.hl_register_set_reference, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 2, size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 2 },
             -- set 3, a
-            create_instruction("set", create_dynamic_byte_operand(3), op.a_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 3, size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 2 },
             -- set 3, b
-            create_instruction("set", create_dynamic_byte_operand(3), op.b_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 3, size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 2 },
             -- set 3, c
-            create_instruction("set", create_dynamic_byte_operand(3), op.c_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 3, size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 2 },
             -- set 3, d
-            create_instruction("set", create_dynamic_byte_operand(3), op.d_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 3, size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 2 },
             -- set 3, e
-            create_instruction("set", create_dynamic_byte_operand(3), op.e_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 3, size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 2 },
             -- set 3, h
-            create_instruction("set", create_dynamic_byte_operand(3), op.h_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 3, size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 2 },
             -- set 3, l
-            create_instruction("set", create_dynamic_byte_operand(3), op.l_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 3, size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 2 },
             -- set 3, [hl]
-            create_instruction("set", create_dynamic_byte_operand(3), op.hl_register_set_reference, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 3, size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 2 },
             -- set 4, a
-            create_instruction("set", create_dynamic_byte_operand(4), op.a_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 4, size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 2 },
             -- set 4, b
-            create_instruction("set", create_dynamic_byte_operand(4), op.b_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 4, size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 2 },
             -- set 4, c
-            create_instruction("set", create_dynamic_byte_operand(4), op.c_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 4, size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 2 },
             -- set 4, d
-            create_instruction("set", create_dynamic_byte_operand(4), op.d_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 4, size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 2 },
             -- set 4, e
-            create_instruction("set", create_dynamic_byte_operand(4), op.e_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 4, size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 2 },
             -- set 4, h
-            create_instruction("set", create_dynamic_byte_operand(4), op.h_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 4, size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 2 },
             -- set 4, l
-            create_instruction("set", create_dynamic_byte_operand(4), op.l_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 4, size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 2 },
             -- set 4, [hl]
-            create_instruction("set", create_dynamic_byte_operand(4), op.hl_register_set_reference, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 4, size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 2 },
             -- set 5, a
-            create_instruction("set", create_dynamic_byte_operand(5), op.a_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 5, size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 2 },
             -- set 5, b
-            create_instruction("set", create_dynamic_byte_operand(5), op.b_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 5, size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 2 },
             -- set 5, c
-            create_instruction("set", create_dynamic_byte_operand(5), op.c_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 5, size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 2 },
             -- set 5, d
-            create_instruction("set", create_dynamic_byte_operand(5), op.d_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 5, size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 2 },
             -- set 5, e
-            create_instruction("set", create_dynamic_byte_operand(5), op.e_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 5, size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 2 },
             -- set 5, h
-            create_instruction("set", create_dynamic_byte_operand(5), op.h_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 5, size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 2 },
             -- set 5, l
-            create_instruction("set", create_dynamic_byte_operand(5), op.l_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 5, size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 2 },
             -- set 5, [hl]
-            create_instruction("set", create_dynamic_byte_operand(5), op.hl_register_set_reference, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 5, size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 2 },
             -- set 6, a
-            create_instruction("set", create_dynamic_byte_operand(6), op.a_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 6, size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 2 },
             -- set 6, b
-            create_instruction("set", create_dynamic_byte_operand(6), op.b_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 6, size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 2 },
             -- set 6, c
-            create_instruction("set", create_dynamic_byte_operand(6), op.c_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 6, size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 2 },
             -- set 6, d
-            create_instruction("set", create_dynamic_byte_operand(6), op.d_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 6, size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 2 },
             -- set 6, e
-            create_instruction("set", create_dynamic_byte_operand(6), op.e_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 6, size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 2 },
             -- set 6, h
-            create_instruction("set", create_dynamic_byte_operand(6), op.h_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 6, size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 2 },
             -- set 6, l
-            create_instruction("set", create_dynamic_byte_operand(6), op.l_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 6, size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 2 },
             -- set 6, [hl]
-            create_instruction("set", create_dynamic_byte_operand(6), op.hl_register_set_reference, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 6, size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 2 },
             -- set 7, a
-            create_instruction("set", create_dynamic_byte_operand(7), op.a_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 7, size = 1 }, r_op = { is_register = true, value = "a", size = 1 }, size = 2 },
             -- set 7, b
-            create_instruction("set", create_dynamic_byte_operand(7), op.b_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 7, size = 1 }, r_op = { is_register = true, value = "b", size = 1 }, size = 2 },
             -- set 7, c
-            create_instruction("set", create_dynamic_byte_operand(7), op.c_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 7, size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 2 },
             -- set 7, d
-            create_instruction("set", create_dynamic_byte_operand(7), op.d_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 7, size = 1 }, r_op = { is_register = true, value = "d", size = 1 }, size = 2 },
             -- set 7, e
-            create_instruction("set", create_dynamic_byte_operand(7), op.e_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 7, size = 1 }, r_op = { is_register = true, value = "e", size = 1 }, size = 2 },
             -- set 7, h
-            create_instruction("set", create_dynamic_byte_operand(7), op.h_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 7, size = 1 }, r_op = { is_register = true, value = "h", size = 1 }, size = 2 },
             -- set 7, l
-            create_instruction("set", create_dynamic_byte_operand(7), op.l_register, 2),
+            { code = "set", l_op = { is_dynamic = true, value = 7, size = 1 }, r_op = { is_register = true, value = "l", size = 1 }, size = 2 },
             -- set 7, [hl]
-            create_instruction("set", create_dynamic_byte_operand(7), op.hl_register_set_reference, 2)
+            { code = "set", l_op = { is_dynamic = true, value = 7, size = 1 }, r_op = { is_register = true, reference = true, value = "hl", size = 2 }, size = 2 }
       })
    end)
 
@@ -1065,16 +1059,16 @@ describe("Rom", function()
       read_rom(rom, io.open("./spec/fixtures/non_instructions.gb", "rb"))
       assert.are.same(rom.banks[0].instructions, {
             -- All non-instruction bytes
-            create_data("db", { 0xd3 }),
-            create_data("db", { 0xe3 }),
-            create_data("db", { 0xe4 }),
-            create_data("db", { 0xf4 }),
-            create_data("db", { 0xdb }),
-            create_data("db", { 0xeb }),
-            create_data("db", { 0xec }),
-            create_data("db", { 0xfc }),
-            create_data("db", { 0xed }),
-            create_data("db", { 0xdd })
+            { code = "db", data = { 0xd3 }, is_data = true, size = 1 },
+            { code = "db", data = { 0xe3 }, is_data = true, size = 1 },
+            { code = "db", data = { 0xe4 }, is_data = true, size = 1 },
+            { code = "db", data = { 0xf4 }, is_data = true, size = 1 },
+            { code = "db", data = { 0xdb }, is_data = true, size = 1 },
+            { code = "db", data = { 0xeb }, is_data = true, size = 1 },
+            { code = "db", data = { 0xec }, is_data = true, size = 1 },
+            { code = "db", data = { 0xfc }, is_data = true, size = 1 },
+            { code = "db", data = { 0xed }, is_data = true, size = 1 },
+            { code = "db", data = { 0xdd }, is_data = true, size = 1 }
       })
    end)
 
@@ -1082,7 +1076,7 @@ describe("Rom", function()
       local rom = create_rom()
       read_rom(rom, io.open("./spec/fixtures/cut_off_instruction.gb", "rb"))
       assert.are.same(rom.banks[0].instructions, {
-            create_data("db", { 0xcb })
+            { code = "db", data = { 0xcb }, is_data = true, size = 1 }
       })
    end)
 end)

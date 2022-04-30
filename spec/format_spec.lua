@@ -3,14 +3,6 @@ local beast = require("beast")
 -- TODO: flip all assert.are.same arguments
 
 local format = beast.format
-local create_instruction = beast.rom.create_instruction
-local create_data = beast.rom.create_data
-
-local op = beast.rom.operands
-
-local create_processor_register_operand = beast.rom.create_processor_register_operand
-local create_dynamic_byte_operand = beast.rom.create_dynamic_byte_operand
-local create_dynamic_octet_operand = beast.rom.create_dynamic_octet_operand
 
 describe("format", function()
    it("formats bank 0 header", function()
@@ -37,42 +29,72 @@ describe("format", function()
    it("formats instruction with register operand", function()
       local formatter = format.create_formatter()
       assert.are.same(
-         { format.format_instructions(formatter, { create_instruction("inc", op.a_register) }, 1) },
+         {
+            format.format_instructions(
+               formatter,
+               { { code = "inc", l_op = { is_register = true, value = "a", size = 1 }, size = 1 } },
+               1)
+         },
          { 1, "inc a" })
    end)
 
    it("formats instruction with SP register operand", function()
       local formatter = format.create_formatter()
       assert.are.same(
-         { format.format_instructions(formatter, { create_instruction("dec", op.sp_register) }, 1) },
+         {
+            format.format_instructions(
+               formatter,
+               { { code = "dec", l_op = { is_register = true, value = "sp", size = 1 }, size = 1 } },
+               1)
+         },
          { 1, "dec sp" })
    end)
 
    it("formats instruction with register set operand", function()
       local formatter = format.create_formatter()
       assert.are.same(
-         { format.format_instructions(formatter, { create_instruction("inc", op.hl_register_set) }, 1) },
+         {
+            format.format_instructions(
+               formatter,
+               { { code = "inc", l_op = { is_register = true, value = "hl", size = 2 }, size = 1 } },
+               1)
+         },
          { 1, "inc hl" })
    end)
 
    it("formats instruction with two register operands", function()
       local formatter = format.create_formatter()
       assert.are.same(
-         { format.format_instructions(formatter, { create_instruction("ld", op.b_register, op.c_register) }, 1) },
+         {
+            format.format_instructions(
+               formatter,
+               { { code = "ld", l_op = { is_register = true, value = "b", size = 1 }, r_op = { is_register = true, value = "c", size = 1 }, size = 1 } },
+               1)
+         },
          { 1, "ld b, c" })
    end)
 
    it("formats instruction with condition operand", function()
       local formatter = format.create_formatter()
       assert.are.same(
-         { format.format_instructions(formatter, { create_instruction("ret", op.z_condition) }, 1) },
+         {
+            format.format_instructions(
+               formatter,
+               { { code = "ret", l_op = { is_condition = true, value = "z", size = 1 }, size = 1 } },
+               1)
+         },
          { 1, "ret z" })
    end)
 
    it("formats instruction with vector operand", function()
       local formatter = format.create_formatter()
       assert.are.same(
-         { format.format_instructions(formatter, { create_instruction("rst", op.vector_18h) }, 1) },
+         {
+            format.format_instructions(
+               formatter,
+               { { code = "rst", l_op = { is_vector = true, value = 0x18, size = 1 }, size = 1 } },
+               1)
+         },
          { 1, "rst $18" })
    end)
 
@@ -82,7 +104,7 @@ describe("format", function()
          {
             format.format_instructions(
                formatter,
-               { create_instruction("ld", op.b_register, create_dynamic_byte_operand(0x0b), 2) },
+               { { code = "ld", l_op = { is_register = true, value = "b", size = 1 }, r_op = { is_dynamic = true, value = 0x0b, size = 1 }, size = 2 } },
                1)
          },
          { 1, "ld b, $0b" })
@@ -94,7 +116,7 @@ describe("format", function()
          {
             format.format_instructions(
                formatter,
-               { create_instruction("jp", create_dynamic_octet_operand(0x0eef), nil, 3) },
+               { { code = "jp", l_op = { is_dynamic = true, value = 0x0eef, size = 2 }, size = 3 } },
                1)
          },
          { 1, "jp $0eef" })
@@ -106,7 +128,7 @@ describe("format", function()
          {
             format.format_instructions(
                formatter,
-               { create_data("db", { 0xcb }) },
+               { { code = "db", data = { 0xcb }, is_data = true, size = 1 } },
                1)
          },
          { 1, "db $cb" })

@@ -3,10 +3,6 @@ local beast = require("beast")
 local create_symbols = beast.symbol.create_symbols
 local read_symbols = beast.symbol.read_symbols
 
-local create_region_definition = beast.symbol.create_region_definition
-local create_replacement_definition = beast.symbol.create_replacement_definition
-local create_operand_definitions = beast.symbol.create_operand_definitions
-
 describe("symbols", function()
    it("handles non-definitions")
 
@@ -35,16 +31,16 @@ describe("symbols", function()
                [0x0200] = { ".bank_0_local_label_value" }
             })
          assert.are.same(sym.rom_banks[0].regions.definitions, {
-               [0x0300] = create_region_definition("code", 4),
-               [0x0400] = create_region_definition("data", 4),
-               [0x0500] = create_region_definition("text", 4)
+               [0x0300] = { region_type = "code", size = 4 },
+               [0x0400] = { region_type = "data", size = 4 },
+               [0x0500] = { region_type = "text", size = 4 }
             })
          assert.are.same(sym.rom_banks[0].replacements.definitions, {
-               [0x0600] = create_replacement_definition(4, "Bank 0 replacement body")
+               [0x0600] = { region_type = "replace", size = 4, value = "Bank 0 replacement body" }
             })
          assert.are.same(sym.rom_banks[0].operands.definitions, {
-               [0x0700] = create_operand_definitions("Bank 0 left operand"),
-               [0x0800] = create_operand_definitions(nil, "Bank 0 right operand")
+               [0x0700] = { left_op = "Bank 0 left operand" },
+               [0x0800] = { left_op = nil, right_op = "Bank 0 right operand" }
             })
 
          assert.are.same(sym.rom_banks[1].comments.definitions, {
@@ -55,16 +51,16 @@ describe("symbols", function()
                [0x4200] = { ".bank_1_local_label_value" }
             })
          assert.are.same(sym.rom_banks[1].regions.definitions, {
-               [0x4300] = create_region_definition("code", 4),
-               [0x4400] = create_region_definition("data", 4),
-               [0x4500] = create_region_definition("text", 4)
+               [0x4300] = { region_type = "code", size = 4 },
+               [0x4400] = { region_type = "data", size = 4 },
+               [0x4500] = { region_type = "text", size = 4 }
             })
          assert.are.same(sym.rom_banks[1].replacements.definitions, {
-               [0x4600] = create_replacement_definition(4, "Bank 1 replacement body")
+               [0x4600] = { region_type = "replace", size = 4, value = "Bank 1 replacement body" }
             })
          assert.are.same(sym.rom_banks[1].operands.definitions, {
-               [0x4700] = create_operand_definitions("Bank 1 left operand"),
-               [0x4800] = create_operand_definitions(nil, "Bank 1 right operand")
+               [0x4700] = { left_op = "Bank 1 left operand" },
+               [0x4800] = { left_op = nil, right_op = "Bank 1 right operand" }
             })
       end)
 
