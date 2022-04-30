@@ -16,12 +16,13 @@ local read_hex_pattern = line_reader.read_hex_pattern
 local read_rest = line_reader.read_rest
 local has_remaining = line_reader.has_remaining
 
-local function create_symbols()
+local function create_symbols(options)
    return {
       rom_banks = {},
       sram = create_ram_symbols(),
       wram_banks = {},
-      hram = create_ram_symbols()
+      hram = create_ram_symbols(),
+      options = options or {}
    }
 end
 
@@ -263,6 +264,33 @@ end
 local function read_symbols(sym, file)
    for line in file:lines() do
       _read_line(sym, line)
+   end
+
+   -- Check regions for overlapping
+   if not sym.options.no_warn_overlaps then
+      for bank_num, bank in pairs(sym.rom_banks) do
+         local definitions = bank.regions.definitions
+
+         for address, definition in pairs(definitions) do
+            for i = address + 1, address + definition.size - 1 do
+               local conflict = definitions[i]
+
+               if conflict then
+                  io.stderr:write(string.format(
+                        "Warning: detected region overlap between %02x:%04x:%04x .%s and %02x:%04x:%04x .%s\n",
+                        bank_num,
+                        address,
+                        definition.size,
+                        definition.region_type,
+                        bank_num,
+                        i,
+                        conflict.size,
+                        conflict.region_type
+                     ))
+               end
+            end
+         end
+      end
    end
 end
 

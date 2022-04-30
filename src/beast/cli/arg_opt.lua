@@ -24,6 +24,8 @@ add_arg_opt("-v", "--version")
 
 add_arg_opt("-s", "--symbols")
 
+add_arg_opt("-nwo", "--no-warn-overlaps", { opt_name = "no_warn_overlaps" })
+
 return {
    arg_opts = arg_opts
 }
