@@ -639,9 +639,9 @@ local instruction_readers = {
 
    [string.char(0x36)] = create_byte_op_instruction_reader("ld [hl], n8"),
 
-   [string.char(0x21)] = create_octet_op_instruction_reader("ld hl, n8"),
-   [string.char(0x01)] = create_octet_op_instruction_reader("ld bc, n8"),
-   [string.char(0x11)] = create_octet_op_instruction_reader("ld de, n8"),
+   [string.char(0x21)] = create_octet_op_instruction_reader("ld hl, n16"),
+   [string.char(0x01)] = create_octet_op_instruction_reader("ld bc, n16"),
+   [string.char(0x11)] = create_octet_op_instruction_reader("ld de, n16"),
 
    -- Arithmetic Instructions --
 

@@ -270,9 +270,9 @@ describe("Rom", function()
       assert.are.same(rom.banks[0].instructions, {
             { instruc = "ld a, [n16]", data = { string.char(0x00), string.char(0x00) }, size = 3 },
             { instruc = "ld [n16], a", data = { string.char(0x00), string.char(0x01) }, size = 3 },
-            { instruc = "ld hl, n8", data = { string.char(0x00), string.char(0x02) }, size = 3 },
-            { instruc = "ld bc, n8", data = { string.char(0x00), string.char(0x03) }, size = 3 },
-            { instruc = "ld de, n8", data = { string.char(0x00), string.char(0x04) }, size = 3 },
+            { instruc = "ld hl, n16", data = { string.char(0x00), string.char(0x02) }, size = 3 },
+            { instruc = "ld bc, n16", data = { string.char(0x00), string.char(0x03) }, size = 3 },
+            { instruc = "ld de, n16", data = { string.char(0x00), string.char(0x04) }, size = 3 },
             { instruc = "ld sp, n16", data = { string.char(0x00), string.char(0x05) }, size = 3 },
             { instruc = "ld [n16], sp", data = { string.char(0x00), string.char(0x06) }, size = 3 },
             { instruc = "call n16", data = { string.char(0x00), string.char(0x07) }, size = 3 },
