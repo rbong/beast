@@ -133,10 +133,14 @@ local function create_asm(formatter, base_path, rom, sym)
          local instruction = instructions[address]
 
          if instruction then
+            -- TODO: configurable indentation
+            file:write("    ")
             file:write(format_instruction(formatter, instruction))
             address = address + (instruction.size or 1)
          else
             local data_size, formatted_data = format_data(formatter, data, address)
+            -- TODO: configurable indentation
+            file:write("    ")
             file:write(formatted_data)
             address = address + data_size
          end
