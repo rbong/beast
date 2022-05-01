@@ -108,7 +108,7 @@ local function format_data(formatter, data, address)
 end
 
 -- TODO: rename
-local function create_asm(formatter, base_path, rom, sym)
+local function create_asm(formatter, base_path, rom)
    -- TODO: create base if it does not exist
 
    -- TODO: better error handling
@@ -116,6 +116,7 @@ local function create_asm(formatter, base_path, rom, sym)
       error("No base path")
    end
 
+   local sym = rom.symbols
    local rom_banks = sym.rom_banks
 
    for bank_num, bank in pairs(rom.banks) do
