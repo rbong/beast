@@ -238,13 +238,13 @@ local function get_region_symbols(sym, bank_num)
       repeat
          region = regions_list[i]
          i = i + 1
-      until not region or regions[region[1]]
+      until not region or regions[region.address]
 
       if not region then
          return
       end
 
-      return region[1], region[2]
+      return region
    end
 end
 
