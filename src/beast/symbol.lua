@@ -160,30 +160,13 @@ local function add_replacement_symbol(sym, bank_num, address, size, body)
    mem.replacements[address] = { size = size, body = body }
 end
 
-local function set_left_op_symbol(sym, bank_num, address, value)
+local function set_op_symbol(sym, bank_num, address, value)
    local mem = get_memory_area(sym, bank_num, address)
    if mem.is_ram then
-      error(string.format("Attempted to add left operand at RAM target: %x:%x", bank_num, address))
+      error(string.format("Attempted to add operand at RAM target: %x:%x", bank_num, address))
    end
 
-   if mem.operands[address] then
-      mem.operands[address].l_op = value
-   else
-      mem.operands[address] = { l_op = value }
-   end
-end
-
-local function set_right_op_symbol(sym, bank_num, address, value)
-   local mem = get_memory_area(sym, bank_num, address)
-   if mem.is_ram then
-      error(string.format("Attempted to add right operand at RAM target: %x:%x", bank_num, address))
-   end
-
-   if mem.operands[address] then
-      mem.operands[address].r_op = value
-   else
-      mem.operands[address] = { r_op = value }
-   end
+   mem.operands[address] = value
 end
 
 local function add_comment_symbol(sym, bank_num, address, body)
@@ -265,7 +248,7 @@ local function _read_replacement(sym, reader, bank_num, address)
    add_replacement_symbol(sym, bank_num, address, size, body or "")
 end
 
-local function _read_left_op(sym, reader, bank_num, address)
+local function _read_op(sym, reader, bank_num, address)
    local space_end = read_pattern(reader, "^%s+")
    if not space_end and reader_has_remaining(reader) then
       -- Unrecognized data after l_op
@@ -273,18 +256,7 @@ local function _read_left_op(sym, reader, bank_num, address)
    end
 
    local _, body = read_rest(reader)
-   set_left_op_symbol(sym, bank_num, address, body or "")
-end
-
-local function _read_right_op(sym, reader, bank_num, address)
-   local space_end = read_pattern(reader, "^%s+")
-   if not space_end and reader_has_remaining(reader) then
-      -- Unrecognized data after l_op
-      return
-   end
-
-   local _, body = read_rest(reader)
-   set_right_op_symbol(sym, bank_num, address, body or "")
+   set_op_symbol(sym, bank_num, address, body or "")
 end
 
 local function _read_comment(sym, reader, bank_num, address)
@@ -327,10 +299,8 @@ local function _read_line(sym, line)
 
       if comment_type == "replace" then
          _read_replacement(sym, reader, bank_num, address)
-      elseif comment_type == "l_op" then
-         _read_left_op(sym, reader, bank_num, address)
-      elseif comment_type == "r_op" then
-         _read_right_op(sym, reader, bank_num, address)
+      elseif comment_type == "op" then
+         _read_op(sym, reader, bank_num, address)
       elseif comment_type_end then
          -- Unknown comment type
          return
@@ -397,8 +367,7 @@ return {
    create_symbols = create_symbols,
    get_memory_area = get_memory_area,
    add_replacement_symbol = add_replacement_symbol,
-   set_left_op_symbol = set_left_op_symbol,
-   set_right_op_symbol = set_right_op_symbol,
+   set_op_symbol = set_op_symbol,
    add_comment_symbol = add_comment_symbol,
    add_label_symbol = add_label_symbol,
    add_region_symbol = add_region_symbol,

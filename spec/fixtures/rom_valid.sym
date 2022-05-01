@@ -5,8 +5,7 @@
 00:0400 .data:0004
 00:0500 .text:0004
 ;; 00:0600:replace:0004 Bank 0 replacement body
-;; 00:0700:l_op Bank 0 left operand
-;; 00:0800:r_op Bank 0 right operand
+;; 00:0700:op Bank 0 operand
 ;; 01:4000 Bank 1 comment body
 01:4100 bank_1_label_value
 01:4200 .bank_1_local_label_value
@@ -14,5 +13,4 @@
 01:4400 .data:0004
 01:4500 .text:0004
 ;; 01:4600:replace:0004 Bank 1 replacement body
-;; 01:4700:l_op Bank 1 left operand
-;; 01:4800:r_op Bank 1 right operand
+;; 01:4700:op Bank 1 operand
