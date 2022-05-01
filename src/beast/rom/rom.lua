@@ -1,11 +1,89 @@
-local create_symbols = require("beast/symbol").create_symbols
+local symbol = require("beast/symbol")
 
-local bank_module = require("beast/rom/bank")
+local create_symbols = symbol.create_symbols
+local get_region_symbols = symbol.get_region_symbols
 
-local create_bank = bank_module.create_bank
-local read_bank = bank_module.read_bank
-local parse_bank_code_regions = bank_module.parse_bank_code_regions
-local parse_bank_code_location = bank_module.parse_bank_code_location
+local parse_next_instruction = require("beast/rom/instruction").parse_next_instruction
+
+local function create_bank(bank_num, symbols, options)
+   return {
+      bank_num = bank_num,
+      size = 0,
+      data = "",
+      instructions = {},
+      symbols = symbols or create_symbols(),
+      options = options or {}
+   }
+end
+
+local function read_bank(bank, file)
+   bank.data = file:read(0x4000)
+   bank.size = bank.data and #bank.data or 0
+end
+
+local function parse_bank_code_regions(bank)
+   -- TODO: detect new code locaions
+   local code_locations = {}
+
+   for region in get_region_symbols(bank.symbols, bank.bank_num) do
+      if region.region_type == "code" then
+         local address = region.address
+         local remaining = region.size
+
+         while remaining > 0 do
+            local instruction = parse_next_instruction(bank.data, address, remaining)
+
+            if instruction then
+               local size = region.size
+               remaining = remaining - size
+               address = address + size
+            else
+               remaining = remaining - 1
+               address = address + 1
+            end
+         end
+      end
+   end
+
+   return code_locations
+end
+
+local function parse_bank_code_location(bank, address, max)
+   local instructions = bank.instructions
+   local nread = 0
+
+   max = max or bank.size
+
+   while max > 0 do
+      local instruction = parse_next_instruction(bank.data, address, max)
+
+      -- TODO: return on data
+      -- if not instruction then
+      --    return nread
+      -- end
+
+      -- TODO: read jump locations
+      -- TODO: end on unconditional jump/return
+
+      local size = 1
+
+      if instruction then
+         instructions[address] = instruction
+         size = instruction.size or 1
+      end
+
+      address = address + size
+      max = max - size
+      nread = nread + 1
+
+      -- TODO: return on code end
+      -- if instruction.code_end then
+      --    return nread
+      -- end
+   end
+
+   return nread
+end
 
 local function create_rom(symbols, options)
    return {

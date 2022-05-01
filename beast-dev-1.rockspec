@@ -32,7 +32,6 @@ build = {
       ["beast/option"] = "src/beast/option.lua",
       ["beast/option/option"] = "src/beast/option/option.lua",
       ["beast/rom"] = "src/beast/rom.lua",
-      ["beast/rom/bank"] = "src/beast/rom/bank.lua",
       ["beast/rom/instruction"] = "src/beast/rom/instruction.lua",
       ["beast/rom/rom"] = "src/beast/rom/rom.lua",
       ["beast/symbol"] = "src/beast/symbol.lua",
