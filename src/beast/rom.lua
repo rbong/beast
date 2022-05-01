@@ -9,53 +9,53 @@ local parse_next_instruction = require("beast/instruction").parse_next_instructi
 
 -- TODO: add option to disable auto code detection
 
-function get_rst_instruction_handler(address)
+function get_rst_instruction_handler(target_address)
    return function (bank, jump_call_locations, context)
       -- TODO: add RST symbol
 
-      if context[0x00][address] then
+      if context[0x00][target_address] then
          return
       end
-      jump_call_locations[0x00][address] = true
+      jump_call_locations[0x00][target_address] = true
    end
 end
 
 function call_instruction_handler(bank, jump_call_locations, context, instruction)
-   local address = instruction.data
+   local target_address = instruction.data
 
    -- TODO: detect ROM location
-   if address >= 0x4000 and bank.bank_num == 0 then
+   if target_address >= 0x4000 and bank.bank_num == 0 then
       return
    end
 
-   local bank_num = address < 0x4000 and 0 or bank.bank_num
+   local bank_num = target_address < 0x4000 and 0 or bank.bank_num
 
    -- TODO: add call symbol
 
-   if context[bank_num][address] then
+   if context[bank_num][target_address] then
       return
    end
 
-   jump_call_locations[bank_num][address] = true
+   jump_call_locations[bank_num][target_address] = true
 end
 
 function jump_instruction_handler(bank, jump_call_locations, context, instruction)
-   local address = instruction.data
+   local target_address = instruction.data
 
    -- TODO: detect ROM location
-   if address >= 0x4000 and bank.bank_num == 0 then
+   if target_address >= 0x4000 and bank.bank_num == 0 then
       return
    end
 
-   local bank_num = address < 0x4000 and 0 or bank.bank_num
+   local bank_num = target_address < 0x4000 and 0 or bank.bank_num
 
    -- TODO: add jump symbol
 
-   if context[bank_num][address] then
+   if context[bank_num][target_address] then
       return
    end
 
-   jump_call_locations[bank_num][address] = true
+   jump_call_locations[bank_num][target_address] = true
 end
 
 local instruction_handlers = {
@@ -97,18 +97,18 @@ local function read_bank(bank, file)
 end
 
 local function parse_bank_code_regions(bank, jump_call_locations, context)
+   local bank_num = bank.bank_num
    local instructions = bank.instructions
-   local bank_context = context[bank.bank_num]
+   local bank_context = context[bank_num]
 
-   for region in get_region_symbols(bank.symbols, bank.bank_num) do
+   for region in get_region_symbols(bank.symbols, bank_num) do
       if region.region_type == "code" then
          local address = region.address
          local remaining = region.size
 
          -- Don't parse regions that have already been parsed
          if not bank_context[address] then
-            local address_context = {}
-            bank_context[address] = address_context
+            bank_context[address] = {}
 
             while remaining > 0 do
                -- Parse instruction
@@ -127,7 +127,7 @@ local function parse_bank_code_regions(bank, jump_call_locations, context)
                   -- Run instruction handler if available
                   local instruction_handler = instruction_handlers[instruction.instruc]
                   if instruction_handler then
-                     instruction_handler(bank, jump_call_locations, context, instruction)
+                     instruction_handler(bank, jump_call_locations, context, instruction, address)
                   end
                else
                   -- Handle data
@@ -144,12 +144,11 @@ local function parse_bank_code_regions(bank, jump_call_locations, context)
 end
 
 local function parse_bank_jump_call_location(bank, jump_call_locations, context, address)
+   local bank_num = bank.bank_num
    local instructions = bank.instructions
-   local regions = bank.symbols.rom_banks[bank.bank_num].regions
+   local regions = bank.symbols.rom_banks[bank_num].regions
 
-   local bank_context = context[bank.bank_num]
-   local address_context = {}
-   bank_context[address] = address_context
+   context[bank_num][address] = {}
 
    while true do
       -- Check for data region - terminates call/jump location
@@ -174,7 +173,7 @@ local function parse_bank_jump_call_location(bank, jump_call_locations, context,
       -- Run instruction handler if available
       local instruction_handler = instruction_handlers[instruction.instruc]
       if instruction_handler then
-         instruction_handler(bank, jump_call_locations, context, instruction)
+         instruction_handler(bank, jump_call_locations, context, instruction, adddress)
       end
 
       -- End parsing if instruction ends code
