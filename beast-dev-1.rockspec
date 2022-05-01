@@ -26,7 +26,6 @@ build = {
       ["beast"] = "src/beast.lua",
       ["beast/cli"] = "src/beast/cli.lua",
       ["beast/cli/arg"] = "src/beast/cli/arg.lua",
-      ["beast/cli/arg_opt"] = "src/beast/cli/arg_opt.lua",
       ["beast/format"] = "src/beast/format.lua",
       ["beast/format/format"] = "src/beast/format/format.lua",
       ["beast/option"] = "src/beast/option.lua",

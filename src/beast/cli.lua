@@ -1,4 +1,6 @@
+local arg = require("beast/cli/arg")
+
 return {
-   parse_args = require("beast/cli/arg").parse_args,
-   arg_opts = require("beast/cli/arg_opt").arg_opts
+   parse_args = arg.parse_args,
+   arg_opts = arg.arg_opts
 }
