@@ -392,6 +392,8 @@ local function read_symbols(sym, file)
 end
 
 return {
+   create_rom_symbols = create_rom_symbols,
+   create_ram_symbols = create_ram_symbols,
    create_symbols = create_symbols,
    get_memory_area = get_memory_area,
    add_replacement_symbol = add_replacement_symbol,

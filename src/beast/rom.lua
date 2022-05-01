@@ -1,24 +1,26 @@
 local symbol = require("beast/symbol")
 
 local create_symbols = symbol.create_symbols
+local create_rom_symbols = symbol.create_rom_symbols
+local create_ram_symbols = symbol.create_ram_symbols
 local get_region_symbols = symbol.get_region_symbols
 
 local parse_next_instruction = require("beast/instruction").parse_next_instruction
 
 -- TODO: add option to disable auto code detection
 
-function get_rst_updater(address)
-   return function (bank, code_locations, parsed)
+function get_rst_instruction_handler(address)
+   return function (bank, jump_call_locations, context)
       -- TODO: add RST symbol
 
-      if parsed[0][address] then
+      if context[0x00][address] then
          return
       end
-      code_locations[0][address] = true
+      jump_call_locations[0x00][address] = true
    end
 end
 
-function call_updater(bank, code_locations, parsed, instruction)
+function call_instruction_handler(bank, jump_call_locations, context, instruction)
    local address = instruction.data
 
    -- TODO: detect ROM location
@@ -30,14 +32,14 @@ function call_updater(bank, code_locations, parsed, instruction)
 
    -- TODO: add call symbol
 
-   if parsed[bank_num][address] then
+   if context[bank_num][address] then
       return
    end
 
-   code_locations[bank_num][address] = true
+   jump_call_locations[bank_num][address] = true
 end
 
-function jump_updater(bank, code_locations, parsed, instruction)
+function jump_instruction_handler(bank, jump_call_locations, context, instruction)
    local address = instruction.data
 
    -- TODO: detect ROM location
@@ -49,32 +51,32 @@ function jump_updater(bank, code_locations, parsed, instruction)
 
    -- TODO: add jump symbol
 
-   if parsed[bank_num][address] then
+   if context[bank_num][address] then
       return
    end
 
-   code_locations[bank_num][address] = true
+   jump_call_locations[bank_num][address] = true
 end
 
-local instruction_updaters = {
-   ["rst $00"] = get_rst_updater(0x0000),
-   ["rst $08"] = get_rst_updater(0x0008),
-   ["rst $10"] = get_rst_updater(0x0010),
-   ["rst $18"] = get_rst_updater(0x0018),
-   ["rst $20"] = get_rst_updater(0x0020),
-   ["rst $28"] = get_rst_updater(0x0028),
-   ["rst $30"] = get_rst_updater(0x0030),
-   ["rst $38"] = get_rst_updater(0x0038),
-   ["call n16"] = call_updater,
-   ["call c, n16"] = call_updater,
-   ["call z, n16"] = call_updater,
-   ["call nc, n16"] = call_updater,
-   ["call nz, n16"] = call_updater,
-   ["jp n16"] = jump_updater,
-   ["jp c, n16"] = jump_updater,
-   ["jp z, n16"] = jump_updater,
-   ["jp nc, n16"] = jump_updater,
-   ["jp nz, n16"] = jump_updater,
+local instruction_handlers = {
+   ["rst $00"] = get_rst_instruction_handler(0x0000),
+   ["rst $08"] = get_rst_instruction_handler(0x0008),
+   ["rst $10"] = get_rst_instruction_handler(0x0010),
+   ["rst $18"] = get_rst_instruction_handler(0x0018),
+   ["rst $20"] = get_rst_instruction_handler(0x0020),
+   ["rst $28"] = get_rst_instruction_handler(0x0028),
+   ["rst $30"] = get_rst_instruction_handler(0x0030),
+   ["rst $38"] = get_rst_instruction_handler(0x0038),
+   ["call n16"] = call_instruction_handler,
+   ["call c, n16"] = call_instruction_handler,
+   ["call z, n16"] = call_instruction_handler,
+   ["call nc, n16"] = call_instruction_handler,
+   ["call nz, n16"] = call_instruction_handler,
+   ["jp n16"] = jump_instruction_handler,
+   ["jp c, n16"] = jump_instruction_handler,
+   ["jp z, n16"] = jump_instruction_handler,
+   ["jp nc, n16"] = jump_instruction_handler,
+   ["jp nz, n16"] = jump_instruction_handler,
    -- TODO: relative jumps
 }
 
@@ -94,9 +96,9 @@ local function read_bank(bank, file)
    bank.size = bank.data and #bank.data or 0
 end
 
-local function parse_bank_code_regions(bank, code_locations, parsed)
-   local bank_parsed = parsed[bank.bank_num]
+local function parse_bank_code_regions(bank, jump_call_locations, context)
    local instructions = bank.instructions
+   local bank_context = context[bank.bank_num]
 
    for region in get_region_symbols(bank.symbols, bank.bank_num) do
       if region.region_type == "code" then
@@ -104,11 +106,13 @@ local function parse_bank_code_regions(bank, code_locations, parsed)
          local remaining = region.size
 
          -- Don't parse regions that have already been parsed
-         if not bank_parsed[address] then
+         if not bank_context[address] then
+            local address_context = {}
+            bank_context[address] = address_context
+
             while remaining > 0 do
                -- Parse instruction
                local instruction = parse_next_instruction(bank.data, address, remaining)
-               bank_parsed[address] = true
 
                if instruction then
                   -- Handle instruction
@@ -120,10 +124,10 @@ local function parse_bank_code_regions(bank, code_locations, parsed)
                   remaining = remaining - size
                   address = address + size
 
-                  -- Run updater if available
-                  local updater = instruction_updaters[instruction.instruc]
-                  if updater then
-                     updater(bank, code_locations, parsed, instruction)
+                  -- Run instruction handler if available
+                  local instruction_handler = instruction_handlers[instruction.instruc]
+                  if instruction_handler then
+                     instruction_handler(bank, jump_call_locations, context, instruction)
                   end
                else
                   -- Handle data
@@ -139,15 +143,27 @@ local function parse_bank_code_regions(bank, code_locations, parsed)
    end
 end
 
-local function parse_bank_code_location(bank, code_locations, parsed, address)
-   local bank_parsed = parsed[bank.bank_num]
+local function parse_bank_jump_call_location(bank, jump_call_locations, context, address)
    local instructions = bank.instructions
-   local regions = (bank.symbols.rom_banks[bank.bank_num] or {}).regions or {}
+   local regions = bank.symbols.rom_banks[bank.bank_num].regions
 
-   while not regions[address] do
+   local bank_context = context[bank.bank_num]
+   local address_context = {}
+   bank_context[address] = address_context
+
+   while true do
+      -- Check for data region - terminates call/jump location
+      -- TODO: optional warn
+      local region = regions[address]
+      if region then
+         local region_type = region.region_type
+         if region_type == "data" or region_type == "text" then
+            break
+         end
+      end
+
       -- Parse address
       local instruction = parse_next_instruction(bank.data, address)
-      bank_parsed[address] = true
       if not instruction then
          return
       end
@@ -155,10 +171,10 @@ local function parse_bank_code_location(bank, code_locations, parsed, address)
       -- Record instruction
       instructions[address] = instruction
 
-      -- Run updater if available
-      local updater = instruction_updaters[instruction.instruc]
-      if updater then
-         updater(bank, code_locations, parsed, instruction)
+      -- Run instruction handler if available
+      local instruction_handler = instruction_handlers[instruction.instruc]
+      if instruction_handler then
+         instruction_handler(bank, jump_call_locations, context, instruction)
       end
 
       -- End parsing if instruction ends code
@@ -181,52 +197,73 @@ local function create_rom(symbols, options)
 end
 
 local function read_rom(rom, file)
-   -- Initialize call/jump locations
-   local code_locations = {
-      [0x00] = {
-         -- TODO: interrupts?
-         -- Entrypoint
-         [0x0150] = true
-      }
-   }
-
-   -- Previously parsed addresses
-   local parsed = {}
-
+   -- Read bank data
    while true do
       local bank_num = rom.nbanks
 
-      -- Read bank
       local bank = create_bank(bank_num, rom.symbols, rom.options)
       read_bank(bank, file)
       if bank.size == 0 then
          break
       end
+
       rom.banks[bank_num] = bank
-
-      -- Initialize parsing data
-      if bank_num > 0 then
-         code_locations[bank_num] = {}
-      end
-      parsed[bank_num] = {}
-
-      parse_bank_code_regions(bank, code_locations, parsed)
-
       rom.nbanks = bank_num + 1
    end
 
-   local new_code_locations = 1
+   -- Call/jump locations
+   local jump_call_locations = {
+      [0x00] = {
+         -- TODO: interrupts?
+         -- 00:0150 - Entrypoint
+         [0x0150] = true
+      }
+   }
 
-   -- Parse ROM call/jump locations
-   while new_code_locations > 0 do
-      new_code_locations = 0
+   -- Code execution metadata
+   local context = {
+      [0x00] = {}
+   }
 
-      for bank_num, addresses in pairs(code_locations) do
-         code_locations[bank_num] = {}
+   -- Initialize bank 0 symbols
+   local rom_banks = rom.symbols.rom_banks
+   local wram_banks = rom.symbols.wram_banks
+   if not rom_banks[0x00] then
+      rom_banks[0x00] = create_rom_symbols()
+   end
+   if not wram_banks[0x00] then
+      wram_banks[0x00] = create_ram_symbols()
+   end
 
-         for address in pairs(addresses) do
-            parse_bank_code_location(rom.banks[bank_num], code_locations, parsed, address)
-            new_code_locations = new_code_locations + 1
+   -- Initialize metadata
+   for bank_num = 1, rom.nbanks - 1 do
+      jump_call_locations[bank_num] = {}
+      context[bank_num] = {}
+      if not rom_banks[bank_num] then
+         rom_banks[bank_num] = create_rom_symbols()
+      end
+      if not wram_banks[bank_num] then
+         wram_banks[bank_num] = create_ram_symbols()
+      end
+   end
+
+   -- Parse code regions
+   for bank_num = 0, rom.nbanks - 1 do
+      parse_bank_code_regions(rom.banks[bank_num], jump_call_locations, context)
+   end
+
+   -- Parse call/jump locations
+   local has_new_code_locations = true
+   while has_new_code_locations do
+      has_new_code_locations = false
+
+      for bank_num, bank_jump_call_locations in pairs(jump_call_locations) do
+         -- Clear call/jump locations for next loop
+         jump_call_locations[bank_num] = {}
+
+         for address in pairs(bank_jump_call_locations) do
+            parse_bank_jump_call_location(rom.banks[bank_num], jump_call_locations, context, address)
+            has_new_code_locations = true
          end
       end
    end
