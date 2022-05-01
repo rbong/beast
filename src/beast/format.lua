@@ -103,7 +103,7 @@ local function format_instruction(formatter, instruction)
 end
 
 local function format_data(formatter, data, address)
-   local index = address + 1
+   local index = (address % 0x4000) + 1
    return 1, string.format("db $%02x", string.byte(data:sub(index, index)))
 end
 
@@ -116,28 +116,59 @@ local function create_asm(formatter, base_path, rom, sym)
       error("No base path")
    end
 
+   local rom_banks = sym.rom_banks
+
    for bank_num, bank in pairs(rom.banks) do
+      -- Get bank ASM file
       local path = string.format("%s/bank_%03x.asm", base_path, bank_num)
       local file = io.open(path, "wb")
 
+      -- Write bank header
       file:write(format_bank_header(formatter, bank_num))
       file:write("\n\n")
 
-      local size = bank.size
       local instructions = bank.instructions
       local data = bank.data
 
-      local address = 0
+      local rom_bank = rom_banks[bank_num]
+      local labels = rom_bank.labels
 
-      while address < size do
+      local address
+      local next_bank_start
+
+      if bank_num == 0 then
+         address = 0
+         next_bank_start = 0x4000
+      else
+         address = 0x4000
+         next_bank_start = 0x8000
+      end
+
+      while address < next_bank_start do
+         -- Write labels
+         local labels = labels[address]
+         if labels then
+            if address % 0x4000 ~= 0x0000 then
+               file:write("\n")
+            end
+
+            for _, label in pairs(labels) do
+               file:write(label)
+               file:write(":\n")
+            end
+         end
+
+         -- Get instruction, if any
          local instruction = instructions[address]
 
          if instruction then
+            -- Write instruction
             -- TODO: configurable indentation
             file:write("    ")
             file:write(format_instruction(formatter, instruction))
             address = address + (instruction.size or 1)
          else
+            -- Write data
             local data_size, formatted_data = format_data(formatter, data, address)
             -- TODO: configurable indentation
             file:write("    ")
@@ -145,6 +176,7 @@ local function create_asm(formatter, base_path, rom, sym)
             address = address + data_size
          end
 
+         -- Write newline
          file:write("\n")
       end
 
