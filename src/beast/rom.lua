@@ -8,6 +8,7 @@ local get_region_symbols = symbol.get_region_symbols
 local parse_next_instruction = require("beast/instruction").parse_next_instruction
 
 -- TODO: add option to disable auto code detection
+-- TODO: code regions being treated as entrypoints means region overlapping is desirable, disable overlap warnings and account for this
 
 function get_rst_instruction_handler(target_address)
    return function (bank, jump_call_locations, context)
