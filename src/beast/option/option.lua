@@ -1,7 +1,5 @@
 local function create_options()
-   return {
-      no_warn_overlaps = false,
-   }
+   return {}
 end
 
 return {
