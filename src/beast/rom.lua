@@ -112,8 +112,10 @@ local function parse_bank_code_regions(bank, jump_call_locations, context)
             bank_context[address] = {}
 
             while remaining > 0 do
+               local index = address % 0x4000
+
                -- Parse instruction
-               local instruction = parse_next_instruction(bank.data, address, remaining)
+               local instruction = parse_next_instruction(bank.data, index, remaining)
 
                if instruction then
                   -- Handle instruction
@@ -152,6 +154,8 @@ local function parse_bank_jump_call_location(bank, jump_call_locations, context,
    context[bank_num][address] = {}
 
    while true do
+      local index = address % 0x4000
+
       -- Check for data region - terminates call/jump location
       -- TODO: optional warn
       local region = regions[address]
@@ -163,7 +167,7 @@ local function parse_bank_jump_call_location(bank, jump_call_locations, context,
       end
 
       -- Parse address
-      local instruction = parse_next_instruction(bank.data, address)
+      local instruction = parse_next_instruction(bank.data, index)
       if not instruction then
          return
       end
