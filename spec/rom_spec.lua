@@ -608,6 +608,6 @@ describe("Rom", function()
    end)
 
    -- TODO: test auto code mapping
-   -- TODO: test auto symbols
+   -- TODO: test auto labels
    -- TODO: test auto comments
 end)

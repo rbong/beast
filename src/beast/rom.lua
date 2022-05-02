@@ -12,11 +12,15 @@ local parse_next_instruction = require("beast/instruction").parse_next_instructi
 
 function get_rst_instruction_handler(target_address)
    return function (bank, jump_call_locations, context)
-      -- TODO: add RST symbol
+      local labels = bank.symbols.rom_banks[0x0000].labels
+      if not labels[target_address] then
+         labels[target_address] = string.format("rst_%02x", target_address)
+      end
 
       if context[0x00][target_address] then
          return
       end
+
       jump_call_locations[0x00][target_address] = true
    end
 end
@@ -31,7 +35,10 @@ function call_instruction_handler(bank, jump_call_locations, context, instructio
 
    local bank_num = target_address < 0x4000 and 0 or bank.bank_num
 
-   -- TODO: add call symbol
+   local labels = bank.symbols.rom_banks[bank_num].labels
+   if not labels[target_address] then
+      labels[target_address] = { string.format("call_%02x_%04x", bank_num, target_address) }
+   end
 
    if context[bank_num][target_address] then
       return
@@ -50,7 +57,13 @@ function jump_instruction_handler(bank, jump_call_locations, context, instructio
 
    local bank_num = target_address < 0x4000 and 0 or bank.bank_num
 
-   -- TODO: add jump symbol
+   local rom_symbols = bank.symbols.rom_banks[bank_num]
+   if rom_symbols then
+      local labels = rom_symbols.labels
+      if not labels[target_address] then
+         labels[target_address] = { string.format("jump_%02x_%04x", bank_num, target_address) }
+      end
+   end
 
    if context[bank_num][target_address] then
       return
