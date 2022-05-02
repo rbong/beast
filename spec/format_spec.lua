@@ -33,7 +33,8 @@ describe("format", function()
          format.format_instruction(
             formatter,
             create_bank(),
-            { instruc = "inc a" }),
+            { instruc = "inc a" },
+            0x0000),
          "inc a")
    end)
 
@@ -55,7 +56,8 @@ describe("format", function()
          format.format_instruction(
             formatter,
             create_bank(),
-            { instruc = "ld a, n8", data = 0xbf }),
+            { instruc = "ld a, n8", data = 0xbf },
+            0x0000),
          "ld a, $bf")
    end)
 
@@ -65,7 +67,8 @@ describe("format", function()
          format.format_instruction(
             formatter,
             create_bank(),
-            { instruc = "ld a, [n16]", data = 0xbeef }),
+            { instruc = "ld a, [n16]", data = 0xbeef },
+            0x0000),
          "ld a, [$beef]")
    end)
 
@@ -75,7 +78,8 @@ describe("format", function()
          format.format_instruction(
             formatter,
             create_bank(),
-            { instruc = "add sp, e8", data = 1 }),
+            { instruc = "add sp, e8", data = 1 },
+            0x0000),
          "add sp, 1")
    end)
 
@@ -85,7 +89,8 @@ describe("format", function()
          format.format_instruction(
             formatter,
             create_bank(),
-            { instruc = "add sp, e8", data = -1 }),
+            { instruc = "add sp, e8", data = -1 },
+            0x0000),
          "add sp, -1")
    end)
 end)
