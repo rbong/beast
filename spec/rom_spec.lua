@@ -271,11 +271,11 @@ describe("Rom", function()
             [0x0022] = { instruc = "cp a, n8", data = 0x11, size = 2 },
             [0x0024] = { instruc = "add sp, e8", data = 0x21, size = 2 },
             [0x0026] = { instruc = "ld hl, sp+e8", data = 0x31, size = 2 },
-            [0x0028] = { instruc = "jr e8", data = -2, size = 2 },
-            [0x002a] = { instruc = "jr c, e8", data = -4, size = 2 },
-            [0x002c] = { instruc = "jr z, e8", data = -6, size = 2 },
-            [0x002e] = { instruc = "jr nc, e8", data = -8, size = 2 },
-            [0x0030] = { instruc = "jr nz, e8", data = -10, size = 2 },
+            [0x0028] = { instruc = "jr e8", data = 0, size = 2 },
+            [0x002a] = { instruc = "jr c, e8", data = -2, size = 2 },
+            [0x002c] = { instruc = "jr z, e8", data = -4, size = 2 },
+            [0x002e] = { instruc = "jr nc, e8", data = -6, size = 2 },
+            [0x0030] = { instruc = "jr nz, e8", data = -8, size = 2 },
       })
    end)
 
