@@ -3,6 +3,7 @@ local beast = require("beast")
 -- TODO: flip all assert.are.same arguments
 
 local format = beast.format
+local create_bank = beast.rom.create_bank
 
 describe("format", function()
    it("formats bank 0 header", function()
@@ -31,6 +32,7 @@ describe("format", function()
       assert.are.same(
          format.format_instruction(
             formatter,
+            create_bank(),
             { instruc = "inc a" }),
          "inc a")
    end)
@@ -52,6 +54,7 @@ describe("format", function()
       assert.are.same(
          format.format_instruction(
             formatter,
+            create_bank(),
             { instruc = "ld a, n8", data = 0xbf }),
          "ld a, $bf")
    end)
@@ -61,6 +64,7 @@ describe("format", function()
       assert.are.same(
          format.format_instruction(
             formatter,
+            create_bank(),
             { instruc = "ld a, [n16]", data = 0xbeef }),
          "ld a, [$beef]")
    end)
@@ -70,6 +74,7 @@ describe("format", function()
       assert.are.same(
          format.format_instruction(
             formatter,
+            create_bank(),
             { instruc = "add sp, e8", data = 1 }),
          "add sp, 1")
    end)
@@ -79,6 +84,7 @@ describe("format", function()
       assert.are.same(
          format.format_instruction(
             formatter,
+            create_bank(),
             { instruc = "add sp, e8", data = -1 }),
          "add sp, -1")
    end)

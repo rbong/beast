@@ -274,6 +274,7 @@ local function read_rom(rom, file)
 end
 
 return {
+   create_bank = create_bank,
    create_rom = create_rom,
    read_rom = read_rom
 }

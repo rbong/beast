@@ -1,70 +1,97 @@
--- TODO: add support for all instructions
+-- TODO: support instruction labels
 
-local instruction_formats = {
+function get_byte_op_instruction_formatter(byte_format, string_format)
+   return function (bank, instruction)
+      return string.format(byte_format, instruction.data)
+   end
+end
+
+function get_hram_op_instruction_formatter(byte_format, string_format)
+   return function (bank, instruction)
+      return string.format(byte_format, instruction.data)
+   end
+end
+
+function get_octet_op_instruction_formatter(octet_format, string_format)
+   return function (bank, instruction)
+      return string.format(octet_format, instruction.data)
+   end
+end
+
+function get_signed_op_instruction_formatter(signed_format, string_format, is_relative)
+   return function (bank, instruction)
+      if is_relative then
+         return string.format(signed_format, instruction.data + 2)
+      else
+         return string.format(signed_format, instruction.data)
+      end
+   end
+end
+
+local instruction_formatters = {
    -- "ld" Instructions --
 
-   ["ld a, n8"] = "ld a, $%02x",
-   ["ld b, n8"] = "ld b, $%02x",
-   ["ld c, n8"] = "ld c, $%02x",
-   ["ld d, n8"] = "ld d, $%02x",
-   ["ld e, n8"] = "ld e, $%02x",
-   ["ld h, n8"] = "ld h, $%02x",
-   ["ld l, n8"] = "ld l, $%02x",
+   ["ld a, n8"] = get_byte_op_instruction_formatter("ld a, $%02x", "ld a, %s"),
+   ["ld b, n8"] = get_byte_op_instruction_formatter("ld b, $%02x", "ld a, %s"),
+   ["ld c, n8"] = get_byte_op_instruction_formatter("ld c, $%02x", "ld a, %s"),
+   ["ld d, n8"] = get_byte_op_instruction_formatter("ld d, $%02x", "ld a, %s"),
+   ["ld e, n8"] = get_byte_op_instruction_formatter("ld e, $%02x", "ld e, %s"),
+   ["ld h, n8"] = get_byte_op_instruction_formatter("ld h, $%02x", "ld h, %s"),
+   ["ld l, n8"] = get_byte_op_instruction_formatter("ld l, $%02x", "ld l, %s"),
 
-   ["ld a, [n16]"] = "ld a, [$%04x]",
-   ["ld [n16], a"] = "ld [$%04x], a",
+   ["ld a, [n16]"] = get_octet_op_instruction_formatter("ld a, [$%04x]", "ld a, %s"),
+   ["ld [n16], a"] = get_octet_op_instruction_formatter("ld [$%04x], a", "ld %s, a"),
 
-   ["ldio a, [$ff00+n8]"] = "ldio a, [$ff00+$%02x]",
-   ["ldio [$ff00+n8], a"] = "ldio [$ff00+$%02x], a",
+   ["ldio a, [$ff00+n8]"] = get_hram_op_instruction_formatter("ldio a, [$ff00+$%02x]", "ldio a, %s"),
+   ["ldio [$ff00+n8], a"] = get_hram_op_instruction_formatter("ldio [$ff00+$%02x], a", "ldio %s, a"),
 
-   ["ld [hl], n8"] = "ld [hl], $%02x",
+   ["ld [hl], n8"] = get_octet_op_instruction_formatter("ld [hl], $%02x", "ld [hl], %s"),
 
-   ["ld hl, n16"] = "ld hl, $%04x",
-   ["ld bc, n16"] = "ld bc, $%04x",
-   ["ld de, n16"] = "ld de, $%04x",
+   ["ld hl, n16"] = get_octet_op_instruction_formatter("ld hl, $%04x", "ld hl, %s"),
+   ["ld bc, n16"] = get_octet_op_instruction_formatter("ld bc, $%04x", "ld bc, %s"),
+   ["ld de, n16"] = get_octet_op_instruction_formatter("ld de, $%04x", "ld de, %s"),
 
    -- Arithmetic Instructions --
 
-   ["add a, n8"] = "add a, $%02x",
-   ["adc a, n8"] = "adc a, $%02x",
-   ["sub a, n8"] = "sub a, $%02x",
-   ["sbc a, n8"] = "sbc a, $%02x",
-   ["and a, n8"] = "and a, $%02x",
+   ["add a, n8"] = get_byte_op_instruction_formatter("add a, $%02x", "add a, %s"),
+   ["adc a, n8"] = get_byte_op_instruction_formatter("adc a, $%02x", "adc a, %s"),
+   ["sub a, n8"] = get_byte_op_instruction_formatter("sub a, $%02x", "sub a, %s"),
+   ["sbc a, n8"] = get_byte_op_instruction_formatter("sbc a, $%02x", "sbc a, %s"),
+   ["and a, n8"] = get_byte_op_instruction_formatter("and a, $%02x", "and a, %s"),
 
    -- Logical Instructions --
 
-   ["xor a, n8"] = "xor a, $%02x",
-   ["or a, n8"] = "or a, $%02x",
-   ["cp a, n8"] = "cp a, $%02x",
+   ["xor a, n8"] = get_byte_op_instruction_formatter("xor a, $%02x", "xor a, %s"),
+   ["or a, n8"] = get_byte_op_instruction_formatter("or a, $%02x", "or a, %s"),
+   ["cp a, n8"] = get_byte_op_instruction_formatter("cp a, $%02x", "cp a, %s"),
 
    -- Stack Instructions --
 
-   ["add sp, e8"] = "add sp, %d",
-   ["ld hl, sp+e8"] = "ld hl, sp%+d",
+   ["add sp, e8"] = get_signed_op_instruction_formatter("add sp, %d", "add sp, %s"),
+   ["ld hl, sp+e8"] = get_signed_op_instruction_formatter("ld hl, sp%+d", "ld hl, %s"),
 
-   ["ld sp, n16"] = "ld sp, $%04x",
-   ["ld [n16], sp"] = "ld [$%04x], sp",
+   ["ld sp, n16"] = get_octet_op_instruction_formatter("ld sp, $%04x", "ld sp, %s"),
+   ["ld [n16], sp"] = get_octet_op_instruction_formatter("ld [$%04x], sp", "ld %s, sp"),
 
    -- Jump/Call Instructions --
 
-   ["call n16"] = "call $%04x",
-   ["call c, n16"] = "call c, $%04x",
-   ["call z, n16"] = "call z, $%04x",
-   ["call nc, n16"] = "call nc, $%04x",
-   ["call nz, n16"] = "call nz, $%04x",
+   ["call n16"] = get_octet_op_instruction_formatter("call $%04x", "call %s"),
+   ["call c, n16"] = get_octet_op_instruction_formatter("call c, $%04x", "call c, %s"),
+   ["call z, n16"] = get_octet_op_instruction_formatter("call z, $%04x", "call z, %s"),
+   ["call nc, n16"] = get_octet_op_instruction_formatter("call nc, $%04x", "call nc, %s"),
+   ["call nz, n16"] = get_octet_op_instruction_formatter("call nz, $%04x", "call nz, %s"),
 
-	 -- TODO: use labels for these instructions
-   ["jr e8"] = "jr @%+d+2",
-   ["jr c, e8"] = "jr c, @%+d+2",
-   ["jr z, e8"] = "jr z, @%+d+2",
-   ["jr nc, e8"] = "jr nc, @%+d+2",
-   ["jr nz, e8"] = "jr nz, @%+d+2",
+   ["jr e8"] = get_signed_op_instruction_formatter("jr @%+d", "jr %s", true),
+   ["jr c, e8"] = get_signed_op_instruction_formatter("jr c, @%+d", "jr c, %s", true),
+   ["jr z, e8"] = get_signed_op_instruction_formatter("jr z, @%+d", "jr z, %s", true),
+   ["jr nc, e8"] = get_signed_op_instruction_formatter("jr nc, @%+d", "jr nc, %s", true),
+   ["jr nz, e8"] = get_signed_op_instruction_formatter("jr nz, @%+d", "jr nz, %s", true),
 
-   ["jp n16"] = "jp $%04x",
-   ["jp c, n16"] = "jp c, $%04x",
-   ["jp z, n16"] = "jp z, $%04x",
-   ["jp nc, n16"] = "jp nc, $%04x",
-   ["jp nz, n16"] = "jp nz, $%04x",
+   ["jp n16"] = get_octet_op_instruction_formatter("jp $%04x", "jp %s"),
+   ["jp c, n16"] = get_octet_op_instruction_formatter("jp c, $%04x", "jp c, %s"),
+   ["jp z, n16"] = get_octet_op_instruction_formatter("jp z, $%04x", "jp z, %s"),
+   ["jp nc, n16"] = get_octet_op_instruction_formatter("jp nc, $%04x", "jp nc, %s"),
+   ["jp nz, n16"] = get_octet_op_instruction_formatter("jp nz, $%04x", "jp nz, %s"),
 }
 
 local function create_formatter(options)
@@ -84,15 +111,15 @@ local function format_bank_header(formatter, bank_num)
       bank_num)
 end
 
-local function format_instruction(formatter, instruction)
+local function format_instruction(formatter, bank, instruction, address)
    local instruction_type = instruction.instruc
 
    if instruction_type then
-			local instruction_format = instruction_formats[instruction_type]
+			local instruction_formatter = instruction_formatters[instruction_type]
 
 			-- Format complex instruction
-			if instruction_format then
-				 return string.format(instruction_format, instruction.data)
+			if instruction_formatter then
+				 return instruction_formatter(bank, instruction, address)
 			end
 
       -- Format basic instruction
@@ -166,7 +193,7 @@ local function create_asm(formatter, base_path, rom)
             -- Write instruction
             -- TODO: configurable indentation
             file:write("    ")
-            file:write(format_instruction(formatter, instruction))
+            file:write(format_instruction(formatter, bank, instruction, address))
             address = address + (instruction.size or 1)
          else
             -- Write data
