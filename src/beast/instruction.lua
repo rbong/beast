@@ -41,7 +41,7 @@ local function create_octet_op_instruction_parser(instruc)
    }
 end
 
-local function create_signed_op_instruction_parser(instruc)
+local function create_signed_op_instruction_parser(instruc, is_relative)
    return {
       size = 2,
       parse = function (data, index)
@@ -52,6 +52,13 @@ local function create_signed_op_instruction_parser(instruc)
 
          local byte = string.byte(char)
          local value = (byte >= 0x80) and (byte - 256) or byte
+
+         -- Relative addresses are relative to the beginning of the instruction
+         -- The "@" symbol is relative to the end of the instruction
+         -- Correct the value so it is relative to the end
+         if is_relative then
+            value = value + 2
+         end
 
          return { instruc = instruc, data = value, size = 2 }
       end
@@ -694,11 +701,11 @@ local instruction_parsers = {
    [string.char(0xd4)] = create_octet_op_instruction_parser("call nc, n16"),
    [string.char(0xc4)] = create_octet_op_instruction_parser("call nz, n16"),
 
-   [string.char(0x18)] = create_signed_op_instruction_parser("jr e8"),
-   [string.char(0x38)] = create_signed_op_instruction_parser("jr c, e8"),
-   [string.char(0x28)] = create_signed_op_instruction_parser("jr z, e8"),
-   [string.char(0x30)] = create_signed_op_instruction_parser("jr nc, e8"),
-   [string.char(0x20)] = create_signed_op_instruction_parser("jr nz, e8"),
+   [string.char(0x18)] = create_signed_op_instruction_parser("jr e8", true),
+   [string.char(0x38)] = create_signed_op_instruction_parser("jr c, e8", true),
+   [string.char(0x28)] = create_signed_op_instruction_parser("jr z, e8", true),
+   [string.char(0x30)] = create_signed_op_instruction_parser("jr nc, e8", true),
+   [string.char(0x20)] = create_signed_op_instruction_parser("jr nz, e8", true),
 
    [string.char(0xc3)] = create_octet_op_instruction_parser("jp n16"),
    [string.char(0xda)] = create_octet_op_instruction_parser("jp c, n16"),

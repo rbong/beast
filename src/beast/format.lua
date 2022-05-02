@@ -54,11 +54,11 @@ local instruction_formats = {
    ["call nz, n16"] = "call nz, $%04x",
 
 	 -- TODO: use labels for these instructions
-   ["jr e8"] = "jr @%+d+2",
-   ["jr c, e8"] = "jr c, @%+d+2",
-   ["jr z, e8"] = "jr z, @%+d+2",
-   ["jr nc, e8"] = "jr nc, @%+d+2",
-   ["jr nz, e8"] = "jr nz, @%+d+2",
+   ["jr e8"] = "jr @%+d",
+   ["jr c, e8"] = "jr c, @%+d",
+   ["jr z, e8"] = "jr z, @%+d",
+   ["jr nc, e8"] = "jr nc, @%+d",
+   ["jr nz, e8"] = "jr nz, @%+d",
 
    ["jp n16"] = "jp $%04x",
    ["jp c, n16"] = "jp c, $%04x",
