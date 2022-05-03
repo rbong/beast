@@ -135,7 +135,7 @@ local function format_data(formatter, data, address)
 end
 
 -- TODO: rename
-local function create_asm(formatter, base_path, rom)
+local function write_asm(formatter, base_path, rom)
    -- TODO: create base if it does not exist
 
    -- TODO: better error handling
@@ -217,5 +217,5 @@ return {
    format_bank_header = format_bank_header,
    format_instruction = format_instruction,
    format_data = format_data,
-   create_asm = create_asm
+   write_asm = write_asm
 }
