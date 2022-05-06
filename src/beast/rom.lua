@@ -10,7 +10,6 @@ local parse_next_instruction = require("beast/instruction").parse_next_instructi
 local add_jump_call_location
 
 -- TODO: add option to disable auto code detection
--- TODO: code regions being treated as entrypoints means region overlapping is desirable, disable overlap warnings and account for this
 -- TODO: stop adding labels directly and let the formatter handle it
 
 function get_rst_instruction_handler(target_address)

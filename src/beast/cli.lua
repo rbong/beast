@@ -36,10 +36,6 @@ add_arg_opt("-s", "--symbols", {
    opt_name = "symbols_path"
 })
 
-add_arg_opt("-nwo", "--no-warn-overlaps", {
-   opt_name = "no_warn_overlaps"
-})
-
 add_positional_arg_opt({
    opt_name = "rom_path",
    required = true
