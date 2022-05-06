@@ -27,8 +27,6 @@ beast -s /path/to/symbols.sym /path/to/rom.gb /path/to/output/dir
 
 **Module**
 
-BEAST can't run in CLI mode yet, but you can use the BEAST module:
-
 ```lua
 local beast = require("beast")
 
