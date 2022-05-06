@@ -2,4 +2,18 @@
 
 local beast = require("beast")
 
-beast.cli.parse_args(arg)
+local options = beast.cli.parse_args(arg)
+
+-- Parse a symbols file
+local sym = beast.symbol.create_symbols(options)
+if options.symbols_path then
+   beast.symbol.read_symbols(sym, io.open(options.symbols_path, "rb"))
+end
+
+-- Parse a ROM file
+local rom = beast.rom.create_rom(sym, options)
+beast.rom.read_rom(rom, io.open(options.rom_path, "rb"))
+
+-- Output assembly code
+local formatter = beast.format.create_formatter(options)
+beast.format.write_asm(formatter, options.out_path, rom, sym)

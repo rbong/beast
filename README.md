@@ -19,6 +19,14 @@ luarocks make ./beast-dev-1.rockspec
 
 ## Running
 
+**CLI**
+
+```bash
+beast -s /path/to/symbols.sym /path/to/rom.gb /path/to/output/dir
+```
+
+**Module**
+
 BEAST can't run in CLI mode yet, but you can use the BEAST module:
 
 ```lua
@@ -36,5 +44,3 @@ beast.rom.read_rom(rom, io.open("/path/to/rom.gb", "rb"))
 local formatter = beast.format.create_formatter()
 beast.format.write_asm(formatter, "/path/to/output/dir", rom, sym)
 ```
-
-Symbols aren't currently used while outputting assembly code.

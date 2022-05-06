@@ -26,7 +26,6 @@ build = {
       ["beast"] = "src/beast.lua",
       ["beast/cli"] = "src/beast/cli.lua",
       ["beast/format"] = "src/beast/format.lua",
-      ["beast/option"] = "src/beast/option.lua",
       ["beast/rom"] = "src/beast/rom.lua",
       ["beast/instruction"] = "src/beast/instruction.lua",
       ["beast/symbol"] = "src/beast/symbol.lua"
