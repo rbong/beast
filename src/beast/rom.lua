@@ -7,17 +7,7 @@ local get_region_symbols = symbol.get_region_symbols
 
 local parse_next_instruction = require("beast/instruction").parse_next_instruction
 
-local function add_jump_call_location(
-      rom, target_bank_num, target_address, source_bank_num, source_address)
-   local bank_jump_call_locations = rom.jump_call_locations[target_bank_num]
-   if bank_jump_call_locations[target_address] then
-      return
-   end
-
-   local source = { source_bank_num, source_address }
-   bank_jump_call_locations[target_address] = source
-   rom.unparsed_jump_call_locations[target_bank_num][target_address] = source
-end
+local add_jump_call_location
 
 -- TODO: add option to disable auto code detection
 -- TODO: code regions being treated as entrypoints means region overlapping is desirable, disable overlap warnings and account for this
@@ -136,6 +126,18 @@ local function create_rom(symbols, options)
    add_jump_call_location(rom, 0x00, 0x0150)
 
    return rom
+end
+
+function add_jump_call_location(
+      rom, target_bank_num, target_address, source_bank_num, source_address)
+   local bank_jump_call_locations = rom.jump_call_locations[target_bank_num]
+   if bank_jump_call_locations[target_address] then
+      return
+   end
+
+   local source = { source_bank_num, source_address }
+   bank_jump_call_locations[target_address] = source
+   rom.unparsed_jump_call_locations[target_bank_num][target_address] = source
 end
 
 local function read_rom_bank(rom, file)
