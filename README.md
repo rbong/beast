@@ -17,6 +17,13 @@ cd beast
 luarocks make ./beast-dev-1.rockspec
 ```
 
+Or, add BEAST to your system paths, ex.:
+
+```sh
+export PATH="$PATH:/path/to/beast/bin"
+export LUA_PATH="$LUA_PATH;/path/to/beast/src/?.lua"
+```
+
 ## Running
 
 **CLI**
