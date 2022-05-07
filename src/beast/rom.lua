@@ -63,6 +63,22 @@ function jump_instruction_handler(rom, bank_num, address, instruction)
    add_jump_call_location(rom, target_bank_num, target_address, bank_num, address)
 end
 
+function relative_jump_instruction_handler(rom, bank_num, address, instruction)
+   local target_address = address + instruction.data
+
+   -- TODO: detect ROM location
+   if target_address >= 0x4000 and bank_num == 0 then
+      return
+   end
+
+   local labels = rom.symbols.rom_banks[bank_num].labels
+   if not labels[target_address] then
+      labels[target_address] = { string.format("jr_%02x_%04x", bank_num, target_address) }
+   end
+
+   add_jump_call_location(rom, bank_num, target_address, bank_num, address)
+end
+
 local instruction_handlers = {
    ["rst $00"] = get_rst_instruction_handler(0x0000),
    ["rst $08"] = get_rst_instruction_handler(0x0008),
@@ -82,7 +98,11 @@ local instruction_handlers = {
    ["jp z, n16"] = jump_instruction_handler,
    ["jp nc, n16"] = jump_instruction_handler,
    ["jp nz, n16"] = jump_instruction_handler,
-   -- TODO: relative jumps
+   ["jr e8"] = relative_jump_instruction_handler,
+   ["jr c, e8"] = relative_jump_instruction_handler,
+   ["jr z, e8"] = relative_jump_instruction_handler,
+   ["jr nc, e8"] = relative_jump_instruction_handler,
+   ["jr nz, e8"] = relative_jump_instruction_handler,
 }
 
 local function create_bank(bank_num, symbols, options)
