@@ -195,6 +195,8 @@ local function parse_code_regions(rom, symbols, bank_num)
    local instructions = bank.instructions
    local data = bank.data
 
+   local regions = (symbols.rom_banks[bank_num] or {}).regions
+
    for region in get_region_symbols(symbols, bank_num) do
       if region.region_type == "code" then
          local address = region.address
@@ -207,31 +209,40 @@ local function parse_code_regions(rom, symbols, bank_num)
             while remaining > 0 do
                local index = address % 0x4000
 
-               -- Parse instruction
-               local instruction = parse_next_instruction(data, index, remaining)
+               local region = regions[address]
 
-               if instruction then
-                  -- Handle instruction
-
-                  instructions[address] = instruction
-
-                  -- Iterate loop variables
-                  local size = instruction.size or 1
+               if region and (region.region_type == "data" or region.region_type == "text") then
+                  -- Handle data region
+                  local size = region.size or 1
                   remaining = remaining - size
                   address = address + size
-
-                  -- Run instruction handler if available
-                  local instruction_handler = instruction_handlers[instruction.instruc]
-                  if instruction_handler then
-                     instruction_handler(rom, bank_num, address, instruction)
-                  end
                else
-                  -- Handle data
+                  -- Parse instruction
+                  local instruction = parse_next_instruction(data, index, remaining)
 
-                  -- Iterate loop variables
-                  -- Data inside of code regions is treated as 1 byte large
-                  remaining = remaining - 1
-                  address = address + 1
+                  if instruction then
+                     -- Handle instruction
+
+                     instructions[address] = instruction
+
+                     -- Iterate loop variables
+                     local size = instruction.size or 1
+                     remaining = remaining - size
+                     address = address + size
+
+                     -- Run instruction handler if available
+                     local instruction_handler = instruction_handlers[instruction.instruc]
+                     if instruction_handler then
+                        instruction_handler(rom, bank_num, address, instruction)
+                     end
+                  else
+                     -- Handle data
+
+                     -- Iterate loop variables
+                     -- Data inside of code regions is treated as 1 byte large
+                     remaining = remaining - 1
+                     address = address + 1
+                  end
                end
             end
          end
