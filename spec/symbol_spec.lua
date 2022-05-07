@@ -23,43 +23,63 @@ describe("symbols", function()
          local sym = create_symbols()
          read_symbols(sym, io.open("./spec/fixtures/rom_valid.sym"))
 
-         assert.are.same(sym.rom_banks[0].comments, {
+         assert.are.same(
+            {
                [0x0000] = { "Bank 0 comment body" }
-            })
-         assert.are.same(sym.rom_banks[0].labels, {
+            },
+            sym.rom_banks[0].comments)
+         assert.are.same(
+            {
                [0x0100] = { "bank_0_label_value" },
                [0x0200] = { ".bank_0_local_label_value" }
-            })
-         assert.are.same(sym.rom_banks[0].regions, {
+            },
+            sym.rom_banks[0].labels)
+         assert.are.same(
+            {
                [0x0300] = { region_type = "code", address = 0x0300, size = 4 },
                [0x0400] = { region_type = "data", address = 0x0400, size = 4 },
                [0x0500] = { region_type = "text", address = 0x0500, size = 4 }
-            })
-         assert.are.same(sym.rom_banks[0].replacements, {
+            },
+            sym.rom_banks[0].regions)
+         assert.are.same(
+            {
                [0x0600] = { size = 4, body = "Bank 0 replacement body" }
-            })
-         assert.are.same(sym.rom_banks[0].operands, {
+            },
+            sym.rom_banks[0].replacements)
+         assert.are.same(
+            {
                [0x0700] = "Bank 0 operand"
-            })
+            },
+            sym.rom_banks[0].operands)
 
-         assert.are.same(sym.rom_banks[1].comments, {
+         assert.are.same(
+            {
                [0x4000] = { "Bank 1 comment body" }
-            })
-         assert.are.same(sym.rom_banks[1].labels, {
+            },
+            sym.rom_banks[1].comments)
+         assert.are.same(
+            {
                [0x4100] = { "bank_1_label_value" },
                [0x4200] = { ".bank_1_local_label_value" }
-            })
-         assert.are.same(sym.rom_banks[1].regions, {
+            },
+            sym.rom_banks[1].labels)
+         assert.are.same(
+            {
                [0x4300] = { region_type = "code", address = 0x4300, size = 4 },
                [0x4400] = { region_type = "data", address = 0x4400, size = 4 },
                [0x4500] = { region_type = "text", address = 0x4500, size = 4 }
-            })
-         assert.are.same(sym.rom_banks[1].replacements, {
+            },
+            sym.rom_banks[1].regions)
+         assert.are.same(
+            {
                [0x4600] = { size = 4, body = "Bank 1 replacement body" }
-            })
-         assert.are.same(sym.rom_banks[1].operands, {
+            },
+            sym.rom_banks[1].replacements)
+         assert.are.same(
+            {
                [0x4700] = "Bank 1 operand"
-            })
+            },
+            sym.rom_banks[1].operands)
       end)
 
       it("handles invalid bank 0 target")
@@ -76,19 +96,27 @@ describe("symbols", function()
          local sym = create_symbols()
          read_symbols(sym, io.open("./spec/fixtures/wram_valid.sym"))
 
-         assert.are.same(sym.wram_banks[0].comments, {
+         assert.are.same(
+            {
                [0xc000] = { "Bank 0 comment body" }
-            })
-         assert.are.same(sym.wram_banks[0].labels, {
+            },
+            sym.wram_banks[0].comments)
+         assert.are.same(
+            {
                [0xc100] = { "bank_0_label_value" }
-            })
+            },
+            sym.wram_banks[0].labels)
 
-         assert.are.same(sym.wram_banks[1].comments, {
+         assert.are.same(
+            {
                [0xd000] = { "Bank 1 comment body" }
-            })
-         assert.are.same(sym.wram_banks[1].labels, {
+            },
+            sym.wram_banks[1].comments)
+         assert.are.same(
+            {
                [0xd100] = { "bank_1_label_value" }
-            })
+            },
+            sym.wram_banks[1].labels)
       end)
 
       it("handles invalid bank 0 target")
