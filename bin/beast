@@ -4,13 +4,13 @@ local beast = require("beast")
 
 local options = beast.cli.parse_args(arg)
 
--- Parse a symbols file
+-- Parse symbols file
 local sym = beast.symbol.create_symbols(options)
 if options.symbols_path then
    beast.symbol.read_symbols(sym, io.open(options.symbols_path, "rb"))
 end
 
--- Parse a ROM file
+-- Parse ROM file
 local rom = beast.rom.create_rom(sym, options)
 beast.rom.read_rom(rom, io.open(options.rom_path, "rb"))
 
