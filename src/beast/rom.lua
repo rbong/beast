@@ -98,6 +98,10 @@ local instruction_handlers = {
    ["jr nz, e8"] = relative_jump_instruction_handler,
 }
 
+local function create_context()
+   return {}
+end
+
 local function create_bank(bank_num, options)
    return {
       bank_num = bank_num,
@@ -204,7 +208,8 @@ local function parse_code_regions(rom, symbols, bank_num)
 
          -- Don't parse regions that have already been parsed
          if not bank_context[address] then
-            bank_context[address] = {}
+            context = create_context()
+            bank_context[address] = context
 
             while remaining > 0 do
                local index = address % 0x4000
@@ -233,7 +238,7 @@ local function parse_code_regions(rom, symbols, bank_num)
                      -- Run instruction handler if available
                      local instruction_handler = instruction_handlers[instruction.instruc]
                      if instruction_handler then
-                        instruction_handler(rom, bank_num, address, instruction)
+                        instruction_handler(rom, bank_num, address, instruction, context)
                      end
                   else
                      -- Handle data
@@ -257,7 +262,8 @@ local function parse_jump_call_location(rom, symbols, bank_num, address)
    local instructions = bank.instructions
    local data = bank.data
 
-   rom.context[bank_num][address] = {}
+   local context = create_context()
+   rom.context[bank_num][address] = context
 
    while true do
       local index = address % 0x4000
@@ -284,7 +290,7 @@ local function parse_jump_call_location(rom, symbols, bank_num, address)
       -- Run instruction handler if available
       local instruction_handler = instruction_handlers[instruction.instruc]
       if instruction_handler then
-         instruction_handler(rom, bank_num, address, instruction)
+         instruction_handler(rom, bank_num, address, instruction, context)
       end
 
       -- End parsing if instruction ends code
