@@ -5,8 +5,6 @@ local parse_next_instruction = require("beast/instruction").parse_next_instructi
 local init_rom_bank_metadata
 local add_jump_call_location
 
--- TODO: stop adding labels directly and let the formatter handle it
-
 function get_rst_instruction_handler(target_address)
    return function (rom, bank_num, address)
       rom.rst_call_locations[target_address] = true
