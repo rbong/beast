@@ -1,9 +1,4 @@
-local symbol = require("beast/symbol")
-
-local create_symbols = symbol.create_symbols
-local create_rom_symbols = symbol.create_rom_symbols
-local create_ram_symbols = symbol.create_ram_symbols
-local get_region_symbols = symbol.get_region_symbols
+local get_region_symbols = require("beast/symbol").get_region_symbols
 
 local parse_next_instruction = require("beast/instruction").parse_next_instruction
 
@@ -103,13 +98,12 @@ local instruction_handlers = {
    ["jr nz, e8"] = relative_jump_instruction_handler,
 }
 
-local function create_bank(bank_num, symbols, options)
+local function create_bank(bank_num, options)
    return {
       bank_num = bank_num,
       size = 0,
       data = "",
       instructions = {},
-      symbols = symbols or create_symbols(),
       options = options or {}
    }
 end
@@ -119,11 +113,10 @@ local function read_bank(bank, file)
    bank.size = bank.data and #bank.data or 0
 end
 
-local function create_rom(symbols, options)
+local function create_rom(options)
    local rom = {
       nbanks = 0,
       banks = {},
-      symbols = symbols or create_symbols(),
       options = options or {},
       jump_call_locations = {},
       unparsed_jump_call_locations = {},
@@ -167,14 +160,10 @@ function add_jump_call_location(
 end
 
 local function read_rom_bank(rom, file)
-   local symbols = rom.symbols
    local bank_num = rom.nbanks
 
-   local rom_symbols = symbols.rom_banks
-   local wram_symbols = symbols.wram_banks
-
    -- Read bank
-   local bank = create_bank(bank_num, symbols, options)
+   local bank = create_bank(bank_num, options)
    read_bank(bank, file)
    if bank.size == 0 then
       return
@@ -189,14 +178,6 @@ local function read_rom_bank(rom, file)
       init_rom_bank_metadata(rom, bank_num)
    end
 
-   -- Initialize symbols
-   if not rom_symbols[bank_num] then
-      rom_symbols[bank_num] = create_rom_symbols()
-   end
-   if not wram_symbols[bank_num] then
-      wram_symbols[bank_num] = create_ram_symbols()
-   end
-
    return bank
 end
 
@@ -207,14 +188,14 @@ local function read_rom_banks(rom, file)
 end
 
 -- TODO: handle code end/data as new context
-local function parse_code_regions(rom, bank_num)
+local function parse_code_regions(rom, symbols, bank_num)
    local bank = rom.banks[bank_num]
    local bank_context = rom.context[bank_num]
 
    local instructions = bank.instructions
    local data = bank.data
 
-   for region in get_region_symbols(rom.symbols, bank_num) do
+   for region in get_region_symbols(symbols, bank_num) do
       if region.region_type == "code" then
          local address = region.address
          local remaining = region.size
@@ -258,8 +239,8 @@ local function parse_code_regions(rom, bank_num)
    end
 end
 
-local function parse_jump_call_location(rom, bank_num, address)
-   local regions = rom.symbols.rom_banks[bank_num].regions
+local function parse_jump_call_location(rom, symbols, bank_num, address)
+   local regions = (symbols.rom_banks[bank_num] or {}).regions or {}
    local bank = rom.banks[bank_num]
 
    local instructions = bank.instructions
@@ -305,7 +286,7 @@ local function parse_jump_call_location(rom, bank_num, address)
    end
 end
 
-local function parse_jump_call_locations(rom)
+local function parse_jump_call_locations(rom, symbols)
    local unparsed_jump_call_locations = rom.unparsed_jump_call_locations
 
    -- Parse call/jump locations
@@ -318,21 +299,21 @@ local function parse_jump_call_locations(rom)
          unparsed_jump_call_locations[bank_num] = {}
 
          for address in pairs(bank_jump_call_locations) do
-            parse_jump_call_location(rom, bank_num, address)
+            parse_jump_call_location(rom, symbols, bank_num, address)
             has_new_code_locations = true
          end
       end
    end
 end
 
-local function read_rom(rom, file)
+local function read_rom(rom, symbols, file)
    read_rom_banks(rom, file)
 
    for bank_num = 0, rom.nbanks - 1 do
-      parse_code_regions(rom, bank_num)
+      parse_code_regions(rom, symbols, bank_num)
    end
 
-   parse_jump_call_locations(rom)
+   parse_jump_call_locations(rom, symbols)
 end
 
 return {

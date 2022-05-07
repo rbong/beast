@@ -174,7 +174,7 @@ local function format_rom_jump_call_location_labels(formatter, rom)
 end
 
 -- TODO: rename
-local function write_asm(formatter, base_path, rom)
+local function write_asm(formatter, base_path, rom, symbols)
    -- TODO: create base if it does not exist
 
    -- TODO: better error handling
@@ -182,8 +182,7 @@ local function write_asm(formatter, base_path, rom)
       error("No base path")
    end
 
-   local sym = rom.symbols
-   local rom_banks = sym.rom_banks
+   local rom_banks = symbols.rom_banks or {}
 
    local jump_call_labels = format_rom_jump_call_location_labels(formatter, rom)
 
@@ -199,8 +198,8 @@ local function write_asm(formatter, base_path, rom)
       local instructions = bank.instructions
       local data = bank.data
 
-      local rom_bank = rom_banks[bank_num]
-      local labels = rom_bank.labels
+      local rom_bank = rom_banks[bank_num] or {}
+      local labels = rom_bank.labels or {}
       local bank_jump_call_labels = jump_call_labels[bank_num]
 
       local address

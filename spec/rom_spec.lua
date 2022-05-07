@@ -9,22 +9,24 @@ local read_rom = beast.rom.read_rom
 describe("Rom", function()
    it("reads a bank", function()
       local rom = create_rom()
-      read_rom(rom, io.open("./spec/fixtures/ret.gb", "rb"))
+      local sym = create_symbols()
+      read_rom(rom, sym, io.open("./spec/fixtures/ret.gb", "rb"))
       assert.truthy(rom.nbanks == 1)
    end)
 
    it("reads a bank byte", function()
       local rom = create_rom()
-      read_rom(rom, io.open("./spec/fixtures/ret.gb", "rb"))
+      local sym = create_symbols()
+      read_rom(rom, sym, io.open("./spec/fixtures/ret.gb", "rb"))
       assert.truthy(rom.banks[0].size == 1)
    end)
 
    it("reads ret instruction", function()
+      local rom = create_rom()
       local sym = create_symbols()
-      add_region_symbol(sym, 0, 0, "code", 1)
 
-      local rom = create_rom(sym)
-      read_rom(rom, io.open("./spec/fixtures/ret.gb", "rb"))
+      add_region_symbol(sym, 0, 0, "code", 1)
+      read_rom(rom, sym, io.open("./spec/fixtures/ret.gb", "rb"))
 
       assert.are.same(rom.banks[0].instructions, {
          [0x000] = { instruc = "ret", code_end = true }
@@ -32,11 +34,11 @@ describe("Rom", function()
    end)
 
    it("reads basic instructions", function()
-      local sym = create_symbols()
-      add_region_symbol(sym, 0, 0, "code", 0x4000)
-
       local rom = create_rom(sym)
-      read_rom(rom, io.open("./spec/fixtures/basic_instructions.gb", "rb"))
+      local sym = create_symbols()
+
+      add_region_symbol(sym, 0, 0, "code", 0x4000)
+      read_rom(rom, sym, io.open("./spec/fixtures/basic_instructions.gb", "rb"))
 
       assert.are.same(rom.banks[0].instructions, {
             [0x0000] = { instruc = "nop" },
@@ -244,11 +246,11 @@ describe("Rom", function()
    end)
 
    it("reads instructions with a dynamic byte operand", function()
+      local rom = create_rom()
       local sym = create_symbols()
-      add_region_symbol(sym, 0, 0, "code", 0x4000)
 
-      local rom = create_rom(sym)
-      read_rom(rom, io.open("./spec/fixtures/byte_op_instructions.gb", "rb"))
+      add_region_symbol(sym, 0, 0, "code", 0x4000)
+      read_rom(rom, sym, io.open("./spec/fixtures/byte_op_instructions.gb", "rb"))
 
       assert.are.same(rom.banks[0].instructions, {
             [0x0000] = { instruc = "ld a, n8", data = 0x00, size = 2 },
@@ -280,11 +282,11 @@ describe("Rom", function()
    end)
 
    it("reads instructions with a dynamic octet operand", function()
+      local rom = create_rom()
       local sym = create_symbols()
-      add_region_symbol(sym, 0, 0, "code", 0x4000)
 
-      local rom = create_rom(sym)
-      read_rom(rom, io.open("./spec/fixtures/octet_op_instructions.gb", "rb"))
+      add_region_symbol(sym, 0, 0, "code", 0x4000)
+      read_rom(rom, sym, io.open("./spec/fixtures/octet_op_instructions.gb", "rb"))
 
       assert.are.same(rom.banks[0].instructions, {
             [0x0000] = { instruc = "ld a, [n16]", data = 0x0000, size = 3 },
@@ -308,11 +310,11 @@ describe("Rom", function()
    end)
 
    it("reads extended instructions", function()
+      local rom = create_rom()
       local sym = create_symbols()
-      add_region_symbol(sym, 0, 0, "code", 0x4000)
 
-      local rom = create_rom(sym)
-      read_rom(rom, io.open("./spec/fixtures/extended_instructions.gb", "rb"))
+      add_region_symbol(sym, 0, 0, "code", 0x4000)
+      read_rom(rom, sym, io.open("./spec/fixtures/extended_instructions.gb", "rb"))
 
       assert.are.same(rom.banks[0].instructions, {
             [0x0000] = { instruc = "stop", size = 2 },
@@ -576,11 +578,11 @@ describe("Rom", function()
    end)
 
    it("reads data", function()
+      local rom = create_rom()
       local sym = create_symbols()
-      add_region_symbol(sym, 0, 0, "code", 0x4000)
 
-      local rom = create_rom(sym)
-      read_rom(rom, io.open("./spec/fixtures/non_instructions.gb", "rb"))
+      add_region_symbol(sym, 0, 0, "code", 0x4000)
+      read_rom(rom, sym, io.open("./spec/fixtures/non_instructions.gb", "rb"))
 
       assert.are.same(rom.banks[0].data,
             string.char(0xd3) ..
@@ -597,11 +599,11 @@ describe("Rom", function()
    end)
 
    it("reads cut off instruction", function()
+      local rom = create_rom()
       local sym = create_symbols()
-      add_region_symbol(sym, 0, 0, "code", 0x4000)
 
-      local rom = create_rom(sym)
-      read_rom(rom, io.open("./spec/fixtures/cut_off_instruction.gb", "rb"))
+      add_region_symbol(sym, 0, 0, "code", 0x4000)
+      read_rom(rom, sym, io.open("./spec/fixtures/cut_off_instruction.gb", "rb"))
 
       assert.are.same(rom.banks[0].instructions, {})
       assert.are.same(rom.banks[0].data, string.char(0xcb))

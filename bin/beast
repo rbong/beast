@@ -5,15 +5,15 @@ local beast = require("beast")
 local options = beast.cli.parse_args(arg)
 
 -- Parse symbols file
-local sym = beast.symbol.create_symbols(options)
+local symbols = beast.symbol.create_symbols(options)
 if options.symbols_path then
-   beast.symbol.read_symbols(sym, io.open(options.symbols_path, "rb"))
+   beast.symbol.read_symbols(symbols, io.open(options.symbols_path, "rb"))
 end
 
 -- Parse ROM file
-local rom = beast.rom.create_rom(sym, options)
-beast.rom.read_rom(rom, io.open(options.rom_path, "rb"))
+local rom = beast.rom.create_rom(options)
+beast.rom.read_rom(rom, symbols, io.open(options.rom_path, "rb"))
 
 -- Output assembly code
 local formatter = beast.format.create_formatter(options)
-beast.format.write_asm(formatter, options.out_path, rom, sym)
+beast.format.write_asm(formatter, options.out_path, rom, symbols)
