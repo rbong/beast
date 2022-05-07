@@ -111,7 +111,7 @@ local function format_bank_header(formatter, bank_num)
       bank_num)
 end
 
-local function format_instruction(formatter, bank, instruction, address)
+local function format_instruction(formatter, bank, jump_call_labels, instruction, address)
    local instruction_type = instruction.instruc
 
    if instruction_type then
@@ -134,6 +134,45 @@ local function format_data(formatter, data, address)
    return 1, string.format("db $%02x", string.byte(data:sub(index, index)))
 end
 
+local function format_rom_jump_call_location_labels(formatter, rom)
+   local labels = {}
+
+   local jump_locations = rom.jump_locations
+   local relative_jump_locations = rom.relative_jump_locations
+   local call_locations = rom.call_locations
+   local rst_call_locations = rom.rst_call_locations
+
+   for bank_num = 0, rom.nbanks - 1 do
+      labels[bank_num] = {}
+
+      local bank_jump_locations = jump_locations[bank_num]
+      local bank_relative_jump_locations = relative_jump_locations[bank_num]
+      local bank_call_locations = call_locations[bank_num]
+
+      for address in pairs(bank_relative_jump_locations) do
+         labels[bank_num][address] = { string.format("jr_%02x_%04x", bank_num, address) }
+      end
+
+      for address in pairs(bank_jump_locations) do
+         if bank_relative_jump_locations[address] then
+            labels[bank_num][address] = { string.format("jump_%02x_%04x", bank_num, address) }
+         else
+            labels[bank_num][address] = { string.format("jp_%02x_%04x", bank_num, address) }
+         end
+      end
+
+      for address in pairs(bank_call_locations) do
+         labels[bank_num][address] = { string.format("call_%02x_%04x", bank_num, address) }
+      end
+   end
+
+   for address in pairs(rst_call_locations) do
+      labels[0x00][address] = { string.format("rst_%02x", address) }
+   end
+
+   return labels
+end
+
 -- TODO: rename
 local function write_asm(formatter, base_path, rom)
    -- TODO: create base if it does not exist
@@ -145,6 +184,8 @@ local function write_asm(formatter, base_path, rom)
 
    local sym = rom.symbols
    local rom_banks = sym.rom_banks
+
+   local jump_call_labels = format_rom_jump_call_location_labels(formatter, rom)
 
    for bank_num, bank in pairs(rom.banks) do
       -- Get bank ASM file
@@ -160,6 +201,7 @@ local function write_asm(formatter, base_path, rom)
 
       local rom_bank = rom_banks[bank_num]
       local labels = rom_bank.labels
+      local bank_jump_call_labels = jump_call_labels[bank_num]
 
       local address
       local next_bank_start
@@ -174,7 +216,7 @@ local function write_asm(formatter, base_path, rom)
 
       while address < next_bank_start do
          -- Write labels
-         local labels = labels[address]
+         local labels = labels[address] or bank_jump_call_labels[address]
          if labels then
             if address % 0x4000 ~= 0x0000 then
                file:write("\n")
@@ -193,7 +235,7 @@ local function write_asm(formatter, base_path, rom)
             -- Write instruction
             -- TODO: configurable indentation
             file:write("    ")
-            file:write(format_instruction(formatter, bank, instruction, address))
+            file:write(format_instruction(formatter, bank, jump_call_labels, instruction, address))
             address = address + (instruction.size or 1)
          else
             -- Write data

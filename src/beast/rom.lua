@@ -7,6 +7,7 @@ local get_region_symbols = symbol.get_region_symbols
 
 local parse_next_instruction = require("beast/instruction").parse_next_instruction
 
+local init_rom_bank_metadata
 local add_jump_call_location
 
 -- TODO: add option to disable auto code detection
@@ -14,12 +15,7 @@ local add_jump_call_location
 
 function get_rst_instruction_handler(target_address)
    return function (rom, bank_num, address)
-      local labels = rom.symbols.rom_banks[0x00].labels
-
-      if not labels[target_address] then
-         labels[target_address] = string.format("rst_%02x", target_address)
-      end
-
+      rom.rst_call_locations[target_address] = true
       add_jump_call_location(rom, 0x00, target_address, bank_num, address)
    end
 end
@@ -34,9 +30,9 @@ function call_instruction_handler(rom, bank_num, address, instruction)
 
    local target_bank_num = target_address < 0x4000 and 0 or bank_num
 
-   local labels = rom.symbols.rom_banks[target_bank_num].labels
-   if not labels[target_address] then
-      labels[target_address] = { string.format("call_%02x_%04x", target_bank_num, target_address) }
+   local call_locations = rom.call_locations[target_bank_num]
+   if call_locations then
+      call_locations[target_address] = true
    end
 
    add_jump_call_location(rom, target_bank_num, target_address, bank_num, address)
@@ -52,12 +48,9 @@ function jump_instruction_handler(rom, bank_num, address, instruction)
 
    local target_bank_num = target_address < 0x4000 and 0 or bank_num
 
-   local rom_symbols = rom.symbols.rom_banks[target_bank_num]
-   if rom_symbols then
-      local labels = rom_symbols.labels
-      if not labels[target_address] then
-         labels[target_address] = { string.format("jp_%02x_%04x", target_bank_num, target_address) }
-      end
+   local jump_locations = rom.jump_locations[target_bank_num]
+   if jump_locations then
+      jump_locations[target_address] = true
    end
 
    add_jump_call_location(rom, target_bank_num, target_address, bank_num, address)
@@ -76,9 +69,9 @@ function relative_jump_instruction_handler(rom, bank_num, address, instruction)
       end
    end
 
-   local labels = rom.symbols.rom_banks[bank_num].labels
-   if not labels[target_address] then
-      labels[target_address] = { string.format("jr_%02x_%04x", bank_num, target_address) }
+   local jump_locations = rom.relative_jump_locations[bank_num]
+   if jump_locations then
+      jump_locations[target_address] = true
    end
 
    add_jump_call_location(rom, bank_num, target_address, bank_num, address)
@@ -132,16 +125,16 @@ local function create_rom(symbols, options)
       banks = {},
       symbols = symbols or create_symbols(),
       options = options or {},
-      jump_call_locations = {
-         [0x00] = {}
-      },
-      unparsed_jump_call_locations = {
-         [0x00] = {}
-      },
-      context = {
-         [0x00] = {}
-      }
+      jump_call_locations = {},
+      unparsed_jump_call_locations = {},
+      jump_locations = {},
+      relative_jump_locations = {},
+      call_locations = {},
+      rst_call_locations = {},
+      context = {}
    }
+
+   init_rom_bank_metadata(rom, 0x00)
 
    -- Add default code locations
 
@@ -150,6 +143,15 @@ local function create_rom(symbols, options)
    add_jump_call_location(rom, 0x00, 0x0150)
 
    return rom
+end
+
+function init_rom_bank_metadata(rom, bank_num)
+   rom.jump_call_locations[bank_num] = {}
+   rom.unparsed_jump_call_locations[bank_num] = {}
+   rom.jump_locations[bank_num] = {}
+   rom.relative_jump_locations[bank_num] = {}
+   rom.call_locations[bank_num] = {}
+   rom.context[bank_num] = {}
 end
 
 function add_jump_call_location(
@@ -184,9 +186,7 @@ local function read_rom_bank(rom, file)
 
    -- Initialize metadata (bank 0 already initialized)
    if bank_num ~= 0x00 then
-      rom.jump_call_locations[bank_num] = {}
-      rom.unparsed_jump_call_locations[bank_num] = {}
-      rom.context[bank_num] = {}
+      init_rom_bank_metadata(rom, bank_num)
    end
 
    -- Initialize symbols
