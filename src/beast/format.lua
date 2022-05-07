@@ -137,14 +137,20 @@ end
 local function format_rom_jump_call_location_labels(formatter, rom)
    local labels = {}
 
+   for bank_num = 0, rom.nbanks - 1 do
+      labels[bank_num] = {}
+   end
+
+   if formatter.options.no_auto_labels then
+      return labels
+   end
+
    local jump_locations = rom.jump_locations
    local relative_jump_locations = rom.relative_jump_locations
    local call_locations = rom.call_locations
    local rst_call_locations = rom.rst_call_locations
 
    for bank_num = 0, rom.nbanks - 1 do
-      labels[bank_num] = {}
-
       local bank_jump_locations = jump_locations[bank_num]
       local bank_relative_jump_locations = relative_jump_locations[bank_num]
       local bank_call_locations = call_locations[bank_num]

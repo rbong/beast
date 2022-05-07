@@ -40,6 +40,10 @@ add_arg_opt("-nd", "--no-code-detection", {
    opt_name = "no_code_detection",
    flag_value = true
 })
+add_arg_opt("-nl", "--no-auto-labels", {
+   opt_name = "no_auto_labels",
+   flag_value = true
+})
 
 add_positional_arg_opt({
    opt_name = "rom_path",
