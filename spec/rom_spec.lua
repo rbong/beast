@@ -1,6 +1,5 @@
 local beast = require("beast")
 
--- TODO: add option for auto-code region so we don't have to create symbols
 local create_symbols = beast.symbol.create_symbols
 local add_region_symbol = beast.symbol.add_region_symbol
 local create_rom = beast.rom.create_rom

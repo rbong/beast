@@ -5,7 +5,6 @@ local parse_next_instruction = require("beast/instruction").parse_next_instructi
 local init_rom_bank_metadata
 local add_jump_call_location
 
--- TODO: add option to disable auto code detection
 -- TODO: stop adding labels directly and let the formatter handle it
 
 function get_rst_instruction_handler(target_address)
@@ -330,7 +329,9 @@ local function read_rom(rom, symbols, file)
       parse_code_regions(rom, symbols, bank_num)
    end
 
-   parse_jump_call_locations(rom, symbols)
+   if not rom.options.no_code_detection then
+      parse_jump_call_locations(rom, symbols)
+   end
 end
 
 return {

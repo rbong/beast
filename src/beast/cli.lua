@@ -36,6 +36,11 @@ add_arg_opt("-s", "--symbols", {
    opt_name = "symbols_path"
 })
 
+add_arg_opt("-nd", "--no-code-detection", {
+   opt_name = "no_code_detection",
+   flag_value = true
+})
+
 add_positional_arg_opt({
    opt_name = "rom_path",
    required = true
