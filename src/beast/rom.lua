@@ -66,9 +66,14 @@ end
 function relative_jump_instruction_handler(rom, bank_num, address, instruction)
    local target_address = address + instruction.data
 
-   -- TODO: detect ROM location
-   if target_address >= 0x4000 and bank_num == 0 then
-      return
+   if bank_num == 0 then
+      if target_address < 0 or target_address >= 0x4000 then
+         return
+      end
+   else
+      if target_address < 0x4000 or target_address >= 0x8000 then
+         return
+      end
    end
 
    local labels = rom.symbols.rom_banks[bank_num].labels
