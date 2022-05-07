@@ -56,7 +56,7 @@ function jump_instruction_handler(rom, bank_num, address, instruction)
    if rom_symbols then
       local labels = rom_symbols.labels
       if not labels[target_address] then
-         labels[target_address] = { string.format("jump_%02x_%04x", target_bank_num, target_address) }
+         labels[target_address] = { string.format("jp_%02x_%04x", target_bank_num, target_address) }
       end
    end
 
