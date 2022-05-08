@@ -16,8 +16,7 @@ description = {
 dependencies = {}
 
 test_dependencies = {
-   "busted ~> 2.0.0-1",
-   "luacheck ~> 0.26.0-1"
+   "busted ~> 2.0.0-1"
 }
 
 build = {
