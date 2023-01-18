@@ -304,6 +304,7 @@ local function parse_jump_call_locations(rom, symbols)
     local unparsed_jump_call_locations = rom.unparsed_jump_call_locations
 
     -- Parse call/jump locations
+    local has_parsed = false
     local has_new_code_locations = true
     while has_new_code_locations do
         has_new_code_locations = false
@@ -314,10 +315,13 @@ local function parse_jump_call_locations(rom, symbols)
 
             for address in pairs(bank_jump_call_locations) do
                 parse_jump_call_location(rom, symbols, bank_num, address)
+                has_parsed = true
                 has_new_code_locations = true
             end
         end
     end
+
+    return has_parsed
 end
 
 local function read_rom(rom, symbols, file)
