@@ -1,36 +1,3 @@
-local function create_line_reader(line)
-    return {
-        index = 1,
-        line = line,
-        len = #line,
-    }
-end
-
-local function read_pattern(reader, pattern, offset)
-    local _, pattern_end, group = reader.line:find(pattern, reader.index)
-    if pattern_end then
-        pattern_end = pattern_end + 1
-        reader.index = pattern_end + (offset or 0)
-    end
-    return pattern_end, group
-end
-
-local function read_hex_pattern(reader, pattern, offset)
-    local pattern_end, group = read_pattern(reader, pattern, offset)
-    if group then
-        group = tonumber(group, 16)
-    end
-    return pattern_end, group
-end
-
-local function read_rest(reader)
-    return reader.len, reader.line:sub(reader.index)
-end
-
-local function reader_has_remaining(reader)
-    return reader.index ~= reader.len
-end
-
 local function create_rom_symbols(bank_num)
     return {
         labels = {},
@@ -232,105 +199,120 @@ local function get_region_symbols(sym, bank_num)
     end
 end
 
-local function _read_replacement(sym, reader, bank_num, address)
-    local size_end, size = read_hex_pattern(reader, "^:(%x+)")
-    if not size_end then
-        return
-    end
-
-    local space_end = read_pattern(reader, "^%s+")
-    if not space_end and reader_has_remaining(reader) then
-        -- Unrecognized data after size
-        return
-    end
-
-    local _, body = read_rest(reader)
-    add_replacement_symbol(sym, bank_num, address, size, body or "")
+local function parse_comment(sym, bank_num, address, body)
+    -- Trim first whitespace on body
+    body = body:gsub("^%s", "")
+    add_comment_symbol(sym, bank_num, address, body)
 end
 
-local function _read_op(sym, reader, bank_num, address)
-    local space_end = read_pattern(reader, "^%s+")
-    if not space_end and reader_has_remaining(reader) then
-        -- Unrecognized data after l_op
+local function parse_replacement(sym, bank_num, address, replace_opts, body)
+    local _, _, size = replace_opts:find("^:(%x+)$")
+
+    if size == nil then
+        -- Unreadable size opt
         return
     end
 
-    local _, body = read_rest(reader)
-    set_op_symbol(sym, bank_num, address, body or "")
+    -- Parse size
+    size = tonumber(size, 16)
+
+    -- Trim leading whitespace on body
+    body = body:gsub("^%s*", "")
+
+    add_replacement_symbol(sym, bank_num, address, size, body)
 end
 
-local function _read_comment(sym, reader, bank_num, address)
-    local space_end = read_pattern(reader, "^%s+")
-    if not space_end and reader_has_remaining(reader) then
-        -- Unrecognized data after address
+local function parse_op(sym, bank_num, address, op_opts, body)
+    if op_opts ~= "" then
+        -- Unrecognized data after :op
         return
     end
 
-    local _, body = read_rest(reader)
-    add_comment_symbol(sym, bank_num, address, body or "")
+    -- Trim leading whitespace on body
+    body = body:gsub("^%s*", "")
+
+    set_op_symbol(sym, bank_num, address, body)
 end
 
-local function _read_region(sym, reader, bank_num, address, region_type)
-    local size_end, size = read_hex_pattern(reader, "^:(%x+)$")
-    if not size_end then
-        -- Size is required
+local function parse_region(sym, bank_num, address, label, region_opts)
+    -- Trim leading "." from label to get region type
+    local region_type = label:gsub("^%.", "")
+
+    local _, _, size = region_opts:find("^:(%x+)$")
+
+    if size == nil then
+        -- Unreadable size opt
         return
     end
+
+    size = tonumber(size, 16)
+
     add_region_symbol(sym, bank_num, address, region_type, size)
 end
 
-local function _read_line(sym, line)
-    local reader = create_line_reader(line)
-
-    local comment_end = read_pattern(reader, "^;;%s+")
-
-    local bank_end, bank_num = read_hex_pattern(reader, "^(%x%x):", -1)
-    if not bank_end then
+local function parse_commented_line(sym, bank_num, address, opts, body)
+    if opts == "" then
+        parse_comment(sym, bank_num, address, body)
         return
     end
 
-    local address_end, address = read_hex_pattern(reader, "^:(%x%x%x%x)")
-    if not address_end then
+    -- Break the opts into groups
+    local _, _, symbol_type, symbol_type_opts = opts:find("^:([^:]*)(.*)")
+
+    if symbol_type == "replace" then
+        parse_replacement(sym, bank_num, address, symbol_type_opts, body)
+    elseif symbol_type == "op" then
+        parse_op(sym, bank_num, address, symbol_type_opts, body)
+    end
+end
+
+local function parse_uncommented_line(sym, bank_num, address, opts, body)
+    local _, _, label, label_opts = body:find("^%s*([^%s:]+)(.*)")
+
+    if label == nil then
         return
     end
 
-    if comment_end then
-        local comment_type_end, comment_type = read_pattern(reader, "^:([^%s:]+)")
-
-        if comment_type == "replace" then
-            _read_replacement(sym, reader, bank_num, address)
-        elseif comment_type == "op" then
-            _read_op(sym, reader, bank_num, address)
-        elseif comment_type_end then
-            -- Unknown comment type
-            return
-        else
-            _read_comment(sym, reader, bank_num, address)
-        end
+    if label == ".code" or label == ".data" or label == ".text" then
+        parse_region(sym, bank_num, address, label, label_opts)
+    elseif label_opts ~= "" then
+        -- Extra label opts, unknown label type
+        return
     else
-        local space_end = read_pattern(reader, "^%s+")
-        if not space_end then
-            -- Unrecognized data after address or no label
-            return
-        end
+        -- Add plain label
+        add_label_symbol(sym, bank_num, address, label)
+    end
+end
 
-        local label_end, label = read_pattern(reader, "^([^%s:]+)")
+local function parse_line(sym, line)
+    -- Break the line into groups
+    local start_index, _, leading_semicolons, bank_num, address, opts, body =
+        line:find("^%s*(;*)%s*(%x%x):(%x%x%x%x)([^%s]*)(.*)")
 
-        if not label_end then
-            -- Unlabeled line
-            return
-        elseif label == ".code" or label == ".data" or label == ".text" then
-            _read_region(sym, reader, bank_num, address, label:sub(2))
-        else
-            -- Add plain label
-            add_label_symbol(sym, bank_num, address, label)
-        end
+    -- Unparsable symbols
+    if not start_index then
+        return
+    end
+
+    -- Parse bank/address
+    bank_num = tonumber(bank_num, 16)
+    address = tonumber(address, 16)
+
+    -- Trim first whitespace on body (used to separate from opts)
+    body = body:sub(2)
+
+    if leading_semicolons == ";;" then
+        -- The line starts with ";;"
+        parse_commented_line(sym, bank_num, address, opts, body)
+    elseif leading_semicolons == "" then
+        -- The line does not start with any semicolons
+        parse_uncommented_line(sym, bank_num, address, opts, body)
     end
 end
 
 local function read_symbols(sym, file)
     for line in file:lines() do
-        _read_line(sym, line)
+        parse_line(sym, line)
     end
 end
 
