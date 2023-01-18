@@ -278,7 +278,6 @@ Formatter.format_rom_jump_call_location_labels = function(self, rom)
 end
 
 -- TODO: replace operands
--- TODO: replace code
 Formatter.generate_asm = function(self, base_path, rom, symbols)
     -- TODO: create base if it does not exist
 
@@ -305,6 +304,7 @@ Formatter.generate_asm = function(self, base_path, rom, symbols)
         local curr_bank_symbols = bank_symbols[bank_num] or {}
         local labels = curr_bank_symbols.labels or {}
         local comments = curr_bank_symbols.comments or {}
+        local replacements = curr_bank_symbols.replacements or {}
         local bank_jump_call_labels = jump_call_labels[bank_num]
 
         local address
@@ -345,20 +345,33 @@ Formatter.generate_asm = function(self, base_path, rom, symbols)
                 end
             end
 
-            -- Get instruction, if any
-            local instruction = instructions[address]
+            -- Get replacement
+            local replacement = replacements[address]
 
-            if instruction then
-                -- Write instruction
+            if replacement then
+                -- Replacement found
                 -- TODO: configurable indentation
                 file:write("    ")
-                file:write(self:format_instruction(bank, jump_call_labels, instruction, address))
-                address = address + (instruction.size or 1)
+                file:write(replacement.body)
+                address = address + replacement.size
             else
-                -- Write data
-                local data_size, formatted_data = self:format_data(bank, address, curr_bank_symbols)
-                file:write(formatted_data)
-                address = address + data_size
+                -- No replacement
+
+                -- Get instruction, if any
+                local instruction = instructions[address]
+
+                if instruction then
+                    -- Write instruction
+                    -- TODO: configurable indentation
+                    file:write("    ")
+                    file:write(self:format_instruction(bank, jump_call_labels, instruction, address))
+                    address = address + (instruction.size or 1)
+                else
+                    -- Write data
+                    local data_size, formatted_data = self:format_data(bank, address, curr_bank_symbols)
+                    file:write(formatted_data)
+                    address = address + data_size
+                end
             end
 
             -- Write newline
