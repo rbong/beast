@@ -54,6 +54,22 @@ add_positional_arg_opt({
     default = "disassembly",
 })
 
+local function print_usage()
+    print([[Usage: beast [arguments] <rom path> <output directory>
+
+Disassembles the GameBoy ROM into assembly files at the output directory.
+
+Arguments:
+  -s, --symbols <symbols path>  Load symbols from this file. Symbols can be
+                                used to add labels and modify the output.
+  -nc, --no-code-detection      Do not automatically detect code regions based
+                                on call/jump locations.
+  -nl, --no-auto-labels         Do not automatically generate labels for
+                                call/jump locations.
+  -h, --help                    Display this help and exit.
+  -v, --version                 Display version and exit.]])
+end
+
 local set_default_arg_opt
 
 function set_default_arg_opt(options, arg_opt)
@@ -135,7 +151,7 @@ local function parse_arg(arg_parser)
 
     -- Handle special arguments
     if arg_opt.opt_name == "help" then
-        -- TODO
+        print_usage()
         os.exit(0)
     end
     if arg_opt.opt_name == "version" then
