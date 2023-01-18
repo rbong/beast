@@ -148,18 +148,80 @@ Formatter.format_instruction = function(self, bank, address, bank_symbols)
     return instruction_type
 end
 
+Formatter.get_text_output = function(self, bank, address, size)
+    local data = bank.data
+
+    local index = (address % 0x4000) + 1
+    local end_index = index + size
+    -- TODO: configurable indentation
+    local output = "    db "
+
+    local has_preceeding_byte = false
+    local has_preceeding_char = false
+
+    repeat
+        local char = data:sub(index, index)
+        local byte = string.byte(char)
+
+        if (byte < 0x20 and char ~= "\t" and char ~= "\n") or byte == 0x7f then
+            -- Handle non-printable bytes
+
+            if has_preceeding_char then
+                output = output .. '", '
+            elseif has_preceeding_byte then
+                output = output .. ", "
+            end
+
+            output = output .. string.format("$%02x", byte)
+            has_preceeding_char = false
+            has_preceeding_byte = true
+        else
+            -- Handle printable bytes
+
+            if not has_preceeding_char then
+                output = output .. '"'
+            elseif has_preceeding_byte then
+                output = output .. ", "
+            end
+
+            if char == '"' or char == "\\" then
+                -- Char which needs to be escaped
+                output = output .. "\\" .. char
+            elseif byte == "\t" then
+                -- Tab
+                output = output .. "\\t"
+            elseif byte == "\n" then
+                -- Newline
+                output = output .. "\\n"
+            else
+                -- Other chars
+                output = output .. char
+            end
+
+            has_preceeding_char = true
+            has_preceeding_byte = false
+        end
+
+        index = index + 1
+    until index >= end_index
+
+    if has_preceeding_char then
+        output = output .. '"'
+    end
+
+    return output
+end
+
 -- TODO: format text regions
 Formatter.format_data = function(self, bank, address, bank_symbols)
     local bank_size = bank.size
     local data = bank.data
+    local region = (bank_symbols.regions or {})[address] or {}
 
     local size = 0
-    local output = ""
     local index = (address % 0x4000) + 1
 
     -- Get data size
-
-    local region = (bank_symbols.regions or {})[address] or {}
 
     if region.region_type == "data" or region.region_type == "text" and region.size > 0 then
         -- Get data size for region: can only be terminated by end of bank
@@ -192,6 +254,11 @@ Formatter.format_data = function(self, bank, address, bank_symbols)
 
     -- Build data output
 
+    if region.region_type == "text" then
+        return size, self:get_text_output(bank, address, size)
+    end
+
+    local output = ""
     local remaining_bytes = size
 
     -- Output by increments of 8
