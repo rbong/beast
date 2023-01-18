@@ -187,7 +187,8 @@ local function read_rom_banks(rom, file)
     end
 end
 
--- TODO: handle code end/data as new context
+-- TODO: when adding automatic code comments, treat region start/end as new context
+-- TODO: when automatically determining bank 0 ROM jump location, treat region start/end as new context
 local function parse_code_regions(rom, symbols, bank_num)
     local bank = rom.banks[bank_num]
     local bank_context = rom.context[bank_num]
