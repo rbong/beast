@@ -75,58 +75,61 @@ end
 Symbols.get_memory_area = function(self, bank_num, address)
     -- Check bank
     if bank_num < 0 then
-        error(string.format("Invalid bank target: %x:%x", bank_num, address))
+        error(string.format("Invalid bank target: %d", bank_num))
     end
 
     -- Check address
-    if address < 0 or address > 0xffff then
-        error(string.format("Invalid address target: %x:%x", bank_num, address))
+    if address < 0 then
+        error(string.format("Invalid address target: %d", address))
+    end
+    if address > 0xffff then
+        error(string.format("Invalid address target: %02x:%x", bank_num, address))
     end
     if address >= 0xfea0 and address < 0xff00 then
-        error(string.format("Invalid address target: %x:%x", bank_num, address))
+        error(string.format("Invalid address target: %02x:%04x", bank_num, address))
     end
 
     -- Check ROM bank
     if address < 0x4000 and bank_num ~= 0 then
-        error(string.format("Invalid ROM target: %x:%x", bank_num, address))
+        error(string.format("Invalid ROM target: %02x:%04x", bank_num, address))
     end
     if address >= 0x4000 and address < 0x8000 and bank_num == 0 then
-        error(string.format("Invalid ROM target: %x:%x", bank_num, address))
+        error(string.format("Invalid ROM target: %02x:%04x", bank_num, address))
     end
 
     -- Check for VRAM target
     if address >= 0x8000 and address < 0xa000 then
-        error(string.format("Unsupported target in VRAM: %x:%x", bank_num, address))
+        error(string.format("Unsupported target in VRAM: %02x:%04x", bank_num, address))
     end
 
     -- Check WRAM bank
     if address >= 0xc000 and address < 0xd000 and bank_num ~= 0 then
-        error(string.format("Invalid WRAM target: %x:%x", bank_num, address))
+        error(string.format("Invalid WRAM target: %02x:%04x", bank_num, address))
     end
 
     -- Check for ECHO RAM target
     if address >= 0xe000 and address < 0xfe00 then
-        error(string.format("Unsupported target in ECHO RAM: %x:%x", bank_num, address))
+        error(string.format("Unsupported target in ECHO RAM: %02x:%04x", bank_num, address))
     end
 
     -- Check for OAM target
     if address >= 0xfe00 and address < 0xfea0 then
-        error(string.format("Unsupported target in OAM: %x:%x", bank_num, address))
+        error(string.format("Unsupported target in OAM: %02x:%04x", bank_num, address))
     end
 
     -- Check for IO register target
     if address >= 0xff00 and address < 0xff80 then
-        error(string.format("Unsupported target in IO registers: %x:%x", bank_num, address))
+        error(string.format("Unsupported target in IO registers: %02x:%04x", bank_num, address))
     end
 
     -- Check HRAM bank
     if address >= 0xff80 and address < 0xffff and bank_num ~= 0 then
-        error(string.format("Invalid HRAM target: %x:%x", bank_num, address))
+        error(string.format("Invalid HRAM target: %02x:%04x", bank_num, address))
     end
 
     -- Check for IE target
     if address == 0xffff then
-        error(string.format("Unsupported target IE: %x:%x", bank_num, address))
+        error(string.format("Unsupported target IE: %02x:%04x", bank_num, address))
     end
 
     if address < 0x8000 then
@@ -143,7 +146,7 @@ end
 Symbols.add_replacement_symbol = function(self, bank_num, address, size, body)
     local mem = self:get_memory_area(bank_num, address)
     if mem.is_ram then
-        error(string.format("Attempted to add replacement at RAM target: %x:%x", bank_num, address))
+        error(string.format("Attempted to add replacement at RAM target: %02x:%04x", bank_num, address))
     end
 
     mem.replacements[address] = { size = size, body = body }
@@ -152,7 +155,7 @@ end
 Symbols.set_op_symbol = function(self, bank_num, address, value)
     local mem = self:get_memory_area(bank_num, address)
     if mem.is_ram then
-        error(string.format("Attempted to add operand at RAM target: %x:%x", bank_num, address))
+        error(string.format("Attempted to add operand at RAM target: %02x:%04x", bank_num, address))
     end
 
     mem.operands[address] = value
@@ -181,7 +184,7 @@ end
 Symbols.add_region_symbol = function(self, bank_num, address, region_type, size)
     local mem = self:get_memory_area(bank_num, address)
     if mem.is_ram then
-        error(string.format("Attempted to add region to RAM target: %x:%x", bank_num, address))
+        error(string.format("Attempted to add region to RAM target: %02x:%04x", bank_num, address))
     end
 
     local region = { region_type = region_type, address = address, size = size }
