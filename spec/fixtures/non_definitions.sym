@@ -1,0 +1,4 @@
+; Random comment 1
+;;; Random comment 2
+;; 00:abcd:non-command
+00:1234 .unknown

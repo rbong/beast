@@ -3,7 +3,10 @@ local beast = require("beast")
 local Symbols = beast.symbol.Symbols
 
 describe("symbols", function()
-    it("handles non-definitions")
+    it("handles non-definitions", function()
+        local sym = Symbols:new()
+        sym:read_symbols(io.open("./spec/fixtures/non_definitions.sym"))
+    end)
 
     describe("invalid targets", function()
         it("handles unsupported VRAM target")
