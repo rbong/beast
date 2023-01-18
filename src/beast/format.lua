@@ -277,7 +277,6 @@ Formatter.format_rom_jump_call_location_labels = function(self, rom)
     return labels
 end
 
--- TODO: add comments
 -- TODO: replace code
 Formatter.generate_asm = function(self, base_path, rom, symbols)
     -- TODO: create base if it does not exist
@@ -304,6 +303,7 @@ Formatter.generate_asm = function(self, base_path, rom, symbols)
 
         local curr_bank_symbols = bank_symbols[bank_num] or {}
         local labels = curr_bank_symbols.labels or {}
+        local comments = curr_bank_symbols.comments or {}
         local bank_jump_call_labels = jump_call_labels[bank_num]
 
         local address
@@ -328,6 +328,19 @@ Formatter.generate_asm = function(self, base_path, rom, symbols)
                 for _, label in pairs(address_labels) do
                     file:write(label)
                     file:write(":\n")
+                end
+            end
+
+            -- Write comments
+            if comments[address] then
+                for _, comment in pairs(comments[address]) do
+                    if comment == "" then
+                        file:write(";")
+                    else
+                        file:write("; ")
+                        file:write(comment)
+                    end
+                    file:write("\n")
                 end
             end
 
