@@ -165,7 +165,17 @@ describe("symbols", function()
     end)
 
     describe("HRAM", function()
-        it("handles valid definitions")
+        it("handles valid definitions", function()
+            local sym = Symbols:new()
+            sym:read_symbols(io.open("./spec/fixtures/hram_valid.sym"))
+
+            assert.are.same({
+                [0xff80] = { "Comment body" },
+            }, sym.hram.comments)
+            assert.are.same({
+                [0xff90] = { "label_value" },
+            }, sym.hram.labels)
+        end)
     end)
 
     it("get_region_symbols")
