@@ -152,8 +152,8 @@ Rom.new = function(self, options)
     -- Add default code locations
 
     -- TODO: interrupts?
-    -- 00:0150 - Entrypoint
-    rom:add_jump_call_location(0x00, 0x0150)
+    -- 00:0100 - Entrypoint
+    rom:add_jump_call_location(0x00, 0x0100)
 
     return rom
 end
