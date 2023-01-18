@@ -23,7 +23,11 @@ describe("format", function()
 
     it("formats comments")
 
-    it("formats operands")
+    it("formats overriden operands")
+
+    it("formats unused overridden operand")
+
+    it("formats labeled operands")
 
     it("formats replacements")
 
