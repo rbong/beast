@@ -462,16 +462,7 @@ Formatter.format_rom_jump_call_location_labels = function(self, rom)
     return labels
 end
 
-Formatter.generate_files = function(self, base_path, rom, symbols)
-    -- TODO: create base if it does not exist
-
-    -- TODO: better error handling
-    if not base_path then
-        error("No base path")
-    end
-
-    -- Generate memory file
-
+Formatter.generate_memory_file = function(self, base_path, symbols)
     local memory_file_name = "memory.inc"
     local memory_path = string.format("%s/%s", base_path, memory_file_name)
     local memory_file = io.open(memory_path, "wb")
@@ -529,21 +520,12 @@ Formatter.generate_files = function(self, base_path, rom, symbols)
         end
     end
 
-    -- Write HRAM memory
-
     memory_file:close()
 
-    -- Open main ASM file
+    return memory_file_name
+end
 
-    local main_path = string.format("%s/%s", base_path, self.options.main)
-
-    local main_file = io.open(main_path, "wb")
-
-    -- Add memory file to main ASM
-    main_file:write(string.format('INCLUDE "%s"\n', memory_file_name))
-
-    -- Generate includes files
-
+Formatter.generate_include_files = function(self, base_path, main_file)
     for _, include_source_path in pairs(self.options.include) do
         local include_file_name = include_source_path:gsub(".*/", "")
         local include_path = string.format("%s/%s", base_path, include_file_name)
@@ -559,111 +541,141 @@ Formatter.generate_files = function(self, base_path, rom, symbols)
         -- Add include file to main ASM
         main_file:write(string.format('INCLUDE "%s"\n', include_file_name))
     end
+end
+
+Formatter.generate_bank_file = function(self, base_path, rom, symbols, main_file, bank_num, jump_call_labels)
+    local bank = rom.banks[bank_num]
+
+    -- Get bank ASM file
+    local file_name = string.format("bank_%03x.asm", bank_num)
+    local path = string.format("%s/%s", base_path, file_name)
+    local file = io.open(path, "wb")
+
+    -- Write bank ASM to main ASM file
+    main_file:write(string.format('INCLUDE "%s"\n', file_name))
+
+    -- Write bank header
+    file:write(self:format_bank_header(bank_num))
+    file:write("\n\n")
+
+    local instructions = bank.instructions
+
+    local bank_symbols = symbols:get_init_rom_bank(bank_num)
+    local labels = bank_symbols.labels
+    local comments = bank_symbols.comments
+    local replacements = bank_symbols.replacements
+    local files = bank_symbols.files
+    local bank_jump_call_labels = jump_call_labels[bank_num]
+
+    local address
+    local next_bank_start
+
+    if bank_num == 0 then
+        address = 0
+        next_bank_start = 0x4000
+    else
+        address = 0x4000
+        next_bank_start = 0x8000
+    end
+
+    while address < next_bank_start do
+        -- Write labels
+        local address_labels = labels[address] or bank_jump_call_labels[address]
+        if address_labels then
+            if address % 0x4000 ~= 0x0000 then
+                file:write("\n")
+            end
+
+            for _, label in pairs(address_labels) do
+                file:write(label)
+                file:write(":\n")
+            end
+        end
+
+        -- Write comments
+        if comments[address] then
+            for _, comment in pairs(comments[address]) do
+                if comment == "" then
+                    file:write(";")
+                else
+                    file:write("; ")
+                    file:write(comment)
+                end
+                file:write("\n")
+            end
+        end
+
+        -- Get replacement
+        local replacement = replacements[address]
+        local file_symbol = files[address]
+
+        if replacement then
+            -- Replacement found
+            -- TODO: configurable indentation
+            file:write("    ")
+            file:write(replacement.body)
+            address = address + replacement.size
+        elseif file_symbol then
+            -- File found
+            self:write_file_symbol(bank, address, base_path, symbols)
+            file:write(self:format_file_symbol(bank, address, symbols))
+            address = address + file_symbol.size
+        else
+            -- No replacement
+
+            -- Get instruction, if any
+            local instruction = instructions[address]
+
+            if instruction then
+                -- Write instruction
+                file:write(self:format_instruction(bank, address, symbols))
+                address = address + (instruction.size or 1)
+            else
+                -- Write data
+                local data_size, formatted_data = self:format_data(bank, address, symbols)
+                file:write(formatted_data)
+                address = address + data_size
+            end
+        end
+
+        -- Write newline
+        file:write("\n")
+    end
+
+    file:close()
+end
+
+Formatter.generate_files = function(self, base_path, rom, symbols)
+    -- TODO: create base if it does not exist
+
+    -- TODO: better error handling
+    if not base_path then
+        error("No base path")
+    end
+
+    -- Generate memory file
+
+    local memory_file_name = self:generate_memory_file(base_path, symbols)
+
+    -- Open main ASM file
+
+    local main_path = string.format("%s/%s", base_path, self.options.main)
+
+    local main_file = io.open(main_path, "wb")
+
+    -- Add memory file to main ASM
+    main_file:write(string.format('INCLUDE "%s"\n', memory_file_name))
+
+    -- Generate includes files
+
+    self:generate_include_files(base_path, main_file)
 
     -- Generate bank ASM files
 
     local jump_call_labels = self:format_rom_jump_call_location_labels(rom)
 
     for bank_num = 0, rom.nbanks - 1 do
-        local bank = rom.banks[bank_num]
-
-        -- Get bank ASM file
-        local file_name = string.format("bank_%03x.asm", bank_num)
-        local path = string.format("%s/%s", base_path, file_name)
-        local file = io.open(path, "wb")
-
-        -- Write bank ASM to main ASM file
-        main_file:write(string.format('INCLUDE "%s"\n', file_name))
-
-        -- Write bank header
-        file:write(self:format_bank_header(bank_num))
-        file:write("\n\n")
-
-        local instructions = bank.instructions
-
-        local bank_symbols = symbols:get_init_rom_bank(bank_num)
-        local labels = bank_symbols.labels
-        local comments = bank_symbols.comments
-        local replacements = bank_symbols.replacements
-        local files = bank_symbols.files
-        local bank_jump_call_labels = jump_call_labels[bank_num]
-
-        local address
-        local next_bank_start
-
-        if bank_num == 0 then
-            address = 0
-            next_bank_start = 0x4000
-        else
-            address = 0x4000
-            next_bank_start = 0x8000
-        end
-
-        while address < next_bank_start do
-            -- Write labels
-            local address_labels = labels[address] or bank_jump_call_labels[address]
-            if address_labels then
-                if address % 0x4000 ~= 0x0000 then
-                    file:write("\n")
-                end
-
-                for _, label in pairs(address_labels) do
-                    file:write(label)
-                    file:write(":\n")
-                end
-            end
-
-            -- Write comments
-            if comments[address] then
-                for _, comment in pairs(comments[address]) do
-                    if comment == "" then
-                        file:write(";")
-                    else
-                        file:write("; ")
-                        file:write(comment)
-                    end
-                    file:write("\n")
-                end
-            end
-
-            -- Get replacement
-            local replacement = replacements[address]
-            local file_symbol = files[address]
-
-            if replacement then
-                -- Replacement found
-                -- TODO: configurable indentation
-                file:write("    ")
-                file:write(replacement.body)
-                address = address + replacement.size
-            elseif file_symbol then
-                -- File found
-                self:write_file_symbol(bank, address, base_path, symbols)
-                file:write(self:format_file_symbol(bank, address, symbols))
-                address = address + file_symbol.size
-            else
-                -- No replacement
-
-                -- Get instruction, if any
-                local instruction = instructions[address]
-
-                if instruction then
-                    -- Write instruction
-                    file:write(self:format_instruction(bank, address, symbols))
-                    address = address + (instruction.size or 1)
-                else
-                    -- Write data
-                    local data_size, formatted_data = self:format_data(bank, address, symbols)
-                    file:write(formatted_data)
-                    address = address + data_size
-                end
-            end
-
-            -- Write newline
-            file:write("\n")
-        end
-
-        file:close()
+        self:generate_bank_file(base_path, rom, symbols, main_file, bank_num, jump_call_labels)
     end
 
     main_file:close()
