@@ -74,77 +74,87 @@ local function print_version()
     print("dev-1")
 end
 
-local set_default_arg_opt
+local Options = {}
 
-function set_default_arg_opt(options, arg_opt)
-    options[arg_opt.opt_name] = arg_opt.default
-end
-
-local function create_options()
+Options.new = function(self)
     local options = {}
 
+    setmetatable(options, self)
+    self.__index = self
+
     for _, arg_opt in pairs(arg_opts) do
-        set_default_arg_opt(options, arg_opt)
+        options[arg_opt.opt_name] = arg_opt.default
     end
 
     for _, arg_opt in pairs(positional_arg_opts) do
-        set_default_arg_opt(options, arg_opt)
+        options[arg_opt.opt_name] = arg_opt.default
     end
 
     return options
 end
 
-local function is_missing_required_opt(options, arg_opt)
-    return arg_opt.required and not options[arg_opt.opt_name]
+Options.is_missing_required_opt = function(self, arg_opt)
+    return arg_opt.required and not self[arg_opt.opt_name]
 end
 
-local function create_arg_parser(args, options)
-    return {
+local ArgParser = {}
+
+ArgParser.new = function(self, args, options)
+    local arg_parser = {
         args = args,
         options = options,
         nargs = #args,
         arg_index = 1,
         pos_arg_opt_index = 1,
     }
+
+    setmetatable(arg_parser, self)
+    self.__index = self
+
+    return arg_parser
 end
 
-local function parse_positional_arg(arg_parser)
-    local arg = arg_parser.args[arg_parser.arg_index]
-    local arg_opt = positional_arg_opts[arg_parser.pos_arg_opt_index]
+ArgParser.has_args = function(self)
+    return self.arg_index <= self.nargs
+end
+
+ArgParser.parse_positional_arg = function(self)
+    local arg = self.args[self.arg_index]
+    local arg_opt = positional_arg_opts[self.pos_arg_opt_index]
 
     if not arg_opt then
         -- TODO: better error handling
         error(string.format("Unexpected positional argument: %s", arg))
     end
 
-    arg_parser.options[arg_opt.opt_name] = arg
-    arg_parser.pos_arg_opt_index = arg_parser.pos_arg_opt_index + 1
-    arg_parser.arg_index = arg_parser.arg_index + 1
+    self.options[arg_opt.opt_name] = arg
+    self.pos_arg_opt_index = self.pos_arg_opt_index + 1
+    self.arg_index = self.arg_index + 1
 end
 
-local function parse_arg(arg_parser)
-    local args = arg_parser.args
-    local options = arg_parser.options
-    local nargs = arg_parser.nargs
+ArgParser.parse_arg = function(self)
+    local args = self.args
+    local options = self.options
+    local nargs = self.nargs
 
-    local arg = args[arg_parser.arg_index]
+    local arg = args[self.arg_index]
 
     local _, match_end, name, equals, value = arg:find("^(-[^=]+)(=?)(.*)")
 
     -- Ignore remaining args
     if name == "--" and equals == "" then
-        arg_parser.arg_index = arg_parser.nargs + 1
+        self.arg_index = self.nargs + 1
         return
     end
 
     -- Handle positional args
     if not match_end then
-        parse_positional_arg(arg_parser)
+        self:parse_positional_arg()
         return
     end
 
     -- Count arg as parsed
-    arg_parser.arg_index = arg_parser.arg_index + 1
+    self.arg_index = self.arg_index + 1
 
     -- Get arg option
     local arg_opt = arg_opts[name]
@@ -171,14 +181,14 @@ local function parse_arg(arg_parser)
 
     -- Get value
     if equals == "" then
-        if arg_parser.arg_index > nargs then
+        if self.arg_index > nargs then
             error(string.format("Reached end of arguments before reaching value for: '%s'", name))
         end
 
-        value = args[arg_parser.arg_index]
+        value = args[self.arg_index]
 
         -- Count value as parsed
-        arg_parser.arg_index = arg_parser.arg_index + 1
+        self.arg_index = self.arg_index + 1
     end
 
     -- Set option
@@ -187,18 +197,18 @@ local function parse_arg(arg_parser)
     return
 end
 
-local function verify_args(arg_parser)
-    local options = arg_parser.options
+ArgParser.verify_args = function(self)
+    local options = self.options
 
     for _, arg_opt in pairs(arg_opts) do
-        if is_missing_required_opt(options, arg_opt) then
+        if options:is_missing_required_opt(arg_opt) then
             -- TODO: better error handling
             error(string.format("Missing required argument: %s", arg_opt.long_arg or arg_opt.short_arg))
         end
     end
 
     for _, arg_opt in pairs(positional_arg_opts) do
-        if is_missing_required_opt(options, arg_opt) then
+        if options:is_missing_required_opt(arg_opt) then
             -- TODO: better error handling
             error(string.format("Missing required positional argument: %s", arg_opt.opt_name))
         end
@@ -206,20 +216,21 @@ local function verify_args(arg_parser)
 end
 
 local function parse_args(args)
-    local options = create_options()
-    local arg_parser = create_arg_parser(args, options)
+    local options = Options:new()
+    local arg_parser = ArgParser:new(args, options)
 
-    while arg_parser.arg_index <= arg_parser.nargs do
-        parse_arg(arg_parser)
+    while arg_parser:has_args() do
+        arg_parser:parse_arg()
     end
 
-    verify_args(arg_parser)
+    arg_parser:verify_args()
 
     return options
 end
 
 return {
-    create_options = create_options,
+    Options = Options,
+    ArgParser = ArgParser,
     arg_opts = arg_opts,
     positional_arg_opts = positional_arg_opts,
     parse_args = parse_args,
