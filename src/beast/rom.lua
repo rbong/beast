@@ -2,14 +2,10 @@
 
 local parse_next_instruction = require("beast/instruction").parse_next_instruction
 
-local init_rom_bank_metadata
-local add_jump_call_location
-local add_context
-
 local function get_rst_instruction_handler(target_address)
     return function(rom, bank_num, address)
         rom.rst_call_locations[target_address] = true
-        add_jump_call_location(rom, 0x00, target_address, bank_num, address)
+        rom:add_jump_call_location(0x00, target_address, bank_num, address)
     end
 end
 
@@ -28,7 +24,7 @@ local function call_instruction_handler(rom, bank_num, address, instruction)
         call_locations[target_address] = true
     end
 
-    add_jump_call_location(rom, target_bank_num, target_address, bank_num, address)
+    rom:add_jump_call_location(target_bank_num, target_address, bank_num, address)
 end
 
 local function jump_instruction_handler(rom, bank_num, address, instruction)
@@ -46,7 +42,7 @@ local function jump_instruction_handler(rom, bank_num, address, instruction)
         jump_locations[target_address] = true
     end
 
-    add_jump_call_location(rom, target_bank_num, target_address, bank_num, address)
+    rom:add_jump_call_location(target_bank_num, target_address, bank_num, address)
 end
 
 local function relative_jump_instruction_handler(rom, bank_num, address, instruction)
@@ -67,7 +63,7 @@ local function relative_jump_instruction_handler(rom, bank_num, address, instruc
         jump_locations[target_address] = true
     end
 
-    add_jump_call_location(rom, bank_num, target_address, bank_num, address)
+    rom:add_jump_call_location(bank_num, target_address, bank_num, address)
 end
 
 local instruction_handlers = {
@@ -96,26 +92,42 @@ local instruction_handlers = {
     ["jr nz, e8"] = relative_jump_instruction_handler,
 }
 
-local function create_context()
-    return {}
+local Context = {}
+
+Context.new = function(self)
+    local context = {}
+
+    setmetatable(context, self)
+    self.__index = self
+
+    return context
 end
 
-local function create_bank(bank_num, options)
-    return {
+local Bank = {}
+
+Bank.new = function(self, bank_num, options)
+    local bank = {
         bank_num = bank_num,
         size = 0,
         data = "",
         instructions = {},
         options = options or {},
     }
+
+    setmetatable(bank, self)
+    self.__index = self
+
+    return bank
 end
 
-local function read_bank(bank, file)
-    bank.data = file:read(0x4000)
-    bank.size = bank.data and #bank.data or 0
+Bank.read_bank = function(self, file)
+    self.data = file:read(0x4000)
+    self.size = self.data and #self.data or 0
 end
 
-local function create_rom(options)
+local Rom = {}
+
+Rom.new = function(self, options)
     local rom = {
         nbanks = 0,
         banks = {},
@@ -130,82 +142,89 @@ local function create_rom(options)
         unparsed_context = {},
     }
 
-    init_rom_bank_metadata(rom, 0x00)
+    setmetatable(rom, self)
+    self.__index = self
+
+    -- Initialize first bank
+
+    rom:init_rom_bank_metadata(0x00)
 
     -- Add default code locations
 
     -- TODO: interrupts?
     -- 00:0150 - Entrypoint
-    add_jump_call_location(rom, 0x00, 0x0150)
+    rom:add_jump_call_location(0x00, 0x0150)
 
     return rom
 end
 
-function init_rom_bank_metadata(rom, bank_num)
-    rom.jump_call_locations[bank_num] = {}
-    rom.unparsed_jump_call_locations[bank_num] = {}
-    rom.jump_locations[bank_num] = {}
-    rom.relative_jump_locations[bank_num] = {}
-    rom.call_locations[bank_num] = {}
-    rom.context[bank_num] = {}
-    rom.unparsed_context[bank_num] = {}
+Rom.init_rom_bank_metadata = function(self, bank_num)
+    self.jump_call_locations[bank_num] = {}
+    self.unparsed_jump_call_locations[bank_num] = {}
+    self.jump_locations[bank_num] = {}
+    self.relative_jump_locations[bank_num] = {}
+    self.call_locations[bank_num] = {}
+    self.context[bank_num] = {}
+    self.unparsed_context[bank_num] = {}
 end
 
-function add_jump_call_location(rom, target_bank_num, target_address, source_bank_num, source_address)
-    local bank_jump_call_locations = rom.jump_call_locations[target_bank_num]
+Rom.add_jump_call_location = function(self, target_bank_num, target_address, source_bank_num, source_address)
+    local bank_jump_call_locations = self.jump_call_locations[target_bank_num]
     if bank_jump_call_locations[target_address] then
         return
     end
 
     local source = { source_bank_num, source_address }
     bank_jump_call_locations[target_address] = source
-    rom.unparsed_jump_call_locations[target_bank_num][target_address] = source
+    self.unparsed_jump_call_locations[target_bank_num][target_address] = source
 end
 
-function add_context(rom, bank_num, address)
-    local bank_context = rom.context[bank_num]
+Rom.add_context = function(self, bank_num, address)
+    local bank_context = self.context[bank_num]
     if bank_context[address] then
         return nil
     end
 
-    local context = create_context()
+    local context = Context:new()
+
     bank_context[address] = context
-    rom.unparsed_context[bank_num][address] = context
+    self.unparsed_context[bank_num][address] = context
+
     return context
 end
 
-local function read_rom_bank(rom, file)
-    local bank_num = rom.nbanks
+Rom.read_rom_bank = function(self, file)
+    local bank_num = self.nbanks
 
     -- Read bank
-    local bank = create_bank(bank_num, rom.options)
-    read_bank(bank, file)
+    local bank = Bank:new(bank_num, self.options)
+    bank:read_bank(file)
     if bank.size == 0 then
         return
     end
 
     -- Add bank
-    rom.banks[bank_num] = bank
-    rom.nbanks = bank_num + 1
+    self.banks[bank_num] = bank
+    self.nbanks = bank_num + 1
 
     -- Initialize metadata (bank 0 already initialized)
     if bank_num ~= 0x00 then
-        init_rom_bank_metadata(rom, bank_num)
+        self:init_rom_bank_metadata(bank_num)
     end
 
     return bank
 end
 
-local function read_rom_banks(rom, file)
-    while read_rom_bank(rom, file) do
+Rom.read_rom_banks = function(self, file)
+    while self:read_rom_bank(file) do
         --
     end
 end
 
 -- TODO: when adding automatic code comments, treat region start/end as new context
 -- TODO: when automatically determining bank 0 ROM jump location, treat region start/end as new context
-local function parse_code_regions(rom, symbols, bank_num)
-    local bank = rom.banks[bank_num]
+Rom.parse_code_regions = function(self, symbols, bank_num)
+    local bank = self.banks[bank_num]
 
     local instructions = bank.instructions
     local data = bank.data
@@ -218,7 +237,7 @@ local function parse_code_regions(rom, symbols, bank_num)
             local remaining = region.size
 
             -- Don't parse regions that have already been parsed
-            if add_context(rom, bank_num, address) then
+            if self:add_context(bank_num, address) then
                 while remaining > 0 do
                     local index = address % 0x4000
 
@@ -246,7 +265,7 @@ local function parse_code_regions(rom, symbols, bank_num)
                             -- Run instruction handler if available
                             local instruction_handler = instruction_handlers[instruction.instruc]
                             if instruction_handler then
-                                instruction_handler(rom, bank_num, address, instruction)
+                                instruction_handler(self, bank_num, address, instruction)
                             end
                         else
                             -- Handle data
@@ -264,14 +283,14 @@ local function parse_code_regions(rom, symbols, bank_num)
 end
 
 -- TODO: count unconditional jumps as code end and treat return as new jump location
-local function parse_jump_call_location(rom, symbols, bank_num, address)
+Rom.parse_jump_call_location = function(self, symbols, bank_num, address)
     local regions = (symbols.rom_banks[bank_num] or {}).regions or {}
-    local bank = rom.banks[bank_num]
+    local bank = self.banks[bank_num]
 
     local instructions = bank.instructions
     local data = bank.data
 
-    add_context(rom, bank_num, address)
+    self:add_context(bank_num, address)
 
     while true do
         local index = address % 0x4000
@@ -298,7 +317,7 @@ local function parse_jump_call_location(rom, symbols, bank_num, address)
         -- Run instruction handler if available
         local instruction_handler = instruction_handlers[instruction.instruc]
         if instruction_handler then
-            instruction_handler(rom, bank_num, address, instruction)
+            instruction_handler(self, bank_num, address, instruction)
         end
 
         -- End parsing if instruction ends code
@@ -311,8 +330,8 @@ local function parse_jump_call_location(rom, symbols, bank_num, address)
     end
 end
 
-local function parse_jump_call_locations(rom, symbols)
-    local unparsed_jump_call_locations = rom.unparsed_jump_call_locations
+Rom.parse_jump_call_locations = function(self, symbols)
+    local unparsed_jump_call_locations = self.unparsed_jump_call_locations
 
     -- Parse call/jump locations
     local has_parsed = false
@@ -325,7 +344,7 @@ local function parse_jump_call_locations(rom, symbols)
             unparsed_jump_call_locations[bank_num] = {}
 
             for address in pairs(bank_jump_call_locations) do
-                parse_jump_call_location(rom, symbols, bank_num, address)
+                self:parse_jump_call_location(symbols, bank_num, address)
                 has_parsed = true
                 has_new_code_locations = true
             end
@@ -335,20 +354,20 @@ local function parse_jump_call_locations(rom, symbols)
     return has_parsed
 end
 
-local function read_rom(rom, symbols, file)
-    read_rom_banks(rom, file)
+Rom.read_rom = function(self, symbols, file)
+    self:read_rom_banks(file)
 
-    for bank_num = 0, rom.nbanks - 1 do
-        parse_code_regions(rom, symbols, bank_num)
+    for bank_num = 0, self.nbanks - 1 do
+        self:parse_code_regions(symbols, bank_num)
     end
 
-    if not rom.options.no_code_detection then
-        parse_jump_call_locations(rom, symbols)
+    if not self.options.no_code_detection then
+        self:parse_jump_call_locations(symbols)
     end
 end
 
 return {
-    create_bank = create_bank,
-    create_rom = create_rom,
-    read_rom = read_rom,
+    Context = Context,
+    Bank = Bank,
+    Rom = Rom,
 }

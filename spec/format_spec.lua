@@ -1,7 +1,7 @@
 local beast = require("beast")
 
 local format = beast.format
-local create_bank = beast.rom.create_bank
+local Bank = beast.rom.Bank
 
 describe("format", function()
     it("formats bank 0 header", function()
@@ -21,7 +21,7 @@ describe("format", function()
 
     it("formats basic instruction", function()
         local formatter = format.create_formatter()
-        assert.are.same("inc a", format.format_instruction(formatter, create_bank(), {}, { instruc = "inc a" }, 0x0000))
+        assert.are.same("inc a", format.format_instruction(formatter, Bank:new(), {}, { instruc = "inc a" }, 0x0000))
     end)
 
     it("formats data", function()
@@ -35,7 +35,7 @@ describe("format", function()
         local formatter = format.create_formatter()
         assert.are.same(
             "ld a, $bf",
-            format.format_instruction(formatter, create_bank(), {}, { instruc = "ld a, n8", data = 0xbf }, 0x0000)
+            format.format_instruction(formatter, Bank:new(), {}, { instruc = "ld a, n8", data = 0xbf }, 0x0000)
         )
     end)
 
@@ -43,7 +43,7 @@ describe("format", function()
         local formatter = format.create_formatter()
         assert.are.same(
             "ld a, [$beef]",
-            format.format_instruction(formatter, create_bank(), {}, { instruc = "ld a, [n16]", data = 0xbeef }, 0x0000)
+            format.format_instruction(formatter, Bank:new(), {}, { instruc = "ld a, [n16]", data = 0xbeef }, 0x0000)
         )
     end)
 
@@ -51,7 +51,7 @@ describe("format", function()
         local formatter = format.create_formatter()
         assert.are.same(
             "add sp, 1",
-            format.format_instruction(formatter, create_bank(), {}, { instruc = "add sp, e8", data = 1 }, 0x0000)
+            format.format_instruction(formatter, Bank:new(), {}, { instruc = "add sp, e8", data = 1 }, 0x0000)
         )
     end)
 
@@ -59,7 +59,7 @@ describe("format", function()
         local formatter = format.create_formatter()
         assert.are.same(
             "add sp, -1",
-            format.format_instruction(formatter, create_bank(), {}, { instruc = "add sp, e8", data = -1 }, 0x0000)
+            format.format_instruction(formatter, Bank:new(), {}, { instruc = "add sp, e8", data = -1 }, 0x0000)
         )
     end)
 end)
