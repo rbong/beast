@@ -5,9 +5,9 @@ local beast = require("beast")
 local options = beast.cli.parse_args(arg)
 
 -- Parse symbols file
-local symbols = beast.symbol.create_symbols(options)
+local symbols = beast.symbol.Symbols:new(options)
 if options.symbols_path then
-   beast.symbol.read_symbols(symbols, io.open(options.symbols_path, "rb"))
+   symbols:read_symbols(io.open(options.symbols_path, "rb"))
 end
 
 -- Parse ROM file

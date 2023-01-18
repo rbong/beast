@@ -1,7 +1,6 @@
 local beast = require("beast")
 
-local create_symbols = beast.symbol.create_symbols
-local read_symbols = beast.symbol.read_symbols
+local Symbols = beast.symbol.Symbols
 
 describe("symbols", function()
     it("handles non-definitions")
@@ -20,8 +19,8 @@ describe("symbols", function()
 
     describe("ROM", function()
         it("handles valid definitions", function()
-            local sym = create_symbols()
-            read_symbols(sym, io.open("./spec/fixtures/rom_valid.sym"))
+            local sym = Symbols:new()
+            sym:read_symbols(io.open("./spec/fixtures/rom_valid.sym"))
 
             assert.are.same({
                 [0x0000] = { "Bank 0 comment body" },
@@ -73,8 +72,8 @@ describe("symbols", function()
 
     describe("WRAM", function()
         it("handles valid definitions", function()
-            local sym = create_symbols()
-            read_symbols(sym, io.open("./spec/fixtures/wram_valid.sym"))
+            local sym = Symbols:new()
+            sym:read_symbols(io.open("./spec/fixtures/wram_valid.sym"))
 
             assert.are.same({
                 [0xc000] = { "Bank 0 comment body" },

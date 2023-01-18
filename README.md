@@ -38,8 +38,8 @@ beast -s /path/to/symbols.sym /path/to/rom.gb /path/to/output/dir
 local beast = require("beast")
 
 -- Parse a symbols file
-local sym = beast.symbol.create_symbols()
-beast.symbol.read_symbols(sym, io.open("/path/to/symbols.sym", "rb"))
+local sym = beast.symbol.Symbols:new()
+sym:read_symbols(io.open("/path/to/symbols.sym", "rb"))
 
 -- Parse a ROM file
 local rom = beast.rom.create_rom()

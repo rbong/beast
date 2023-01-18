@@ -1,5 +1,7 @@
-local function create_rom_symbols(bank_num)
-    return {
+local RomSymbols = {}
+
+RomSymbols.new = function(self, bank_num)
+    local rom_symbols = {
         labels = {},
         comments = {},
         -- TODO: warn when overlapping regions are specified
@@ -12,46 +14,65 @@ local function create_rom_symbols(bank_num)
         is_ram = false,
         is_rom = true,
     }
+
+    setmetatable(rom_symbols, self)
+    self.__index = self
+
+    return rom_symbols
 end
 
-local function create_ram_symbols(bank_num)
-    return {
+local RamSymbols = {}
+
+RamSymbols.new = function(self, bank_num)
+    local ram_symbols = {
         labels = {},
         comments = {},
         bank_num = bank_num,
         is_rom = false,
         is_ram = true,
     }
+
+    setmetatable(ram_symbols, self)
+    self.__index = self
+
+    return ram_symbols
 end
 
-local function create_symbols(options)
-    return {
+local Symbols = {}
+
+Symbols.new = function(self, options)
+    local sym = {
         rom_banks = {},
-        sram = create_ram_symbols(),
+        sram = RamSymbols:new(),
         wram_banks = {},
-        hram = create_ram_symbols(),
+        hram = RamSymbols:new(),
         options = options or {},
     }
+
+    setmetatable(sym, self)
+    self.__index = self
+
+    return sym
 end
 
-local function _get_init_rom_bank(sym, bank_num)
-    if not sym.rom_banks[bank_num] then
-        sym.rom_banks[bank_num] = create_rom_symbols(bank_num)
+Symbols.get_init_rom_bank = function(self, bank_num)
+    if not self.rom_banks[bank_num] then
+        self.rom_banks[bank_num] = RomSymbols:new(bank_num)
     end
-    return sym.rom_banks[bank_num]
+    return self.rom_banks[bank_num]
 end
 
-local function _get_init_wram_bank(sym, bank_num, address)
+Symbols.get_init_wram_bank = function(self, bank_num, address)
     if address >= 0xd000 and bank_num == 0 then
         bank_num = 1
     end
-    if not sym.wram_banks[bank_num] then
-        sym.wram_banks[bank_num] = create_ram_symbols(bank_num)
+    if not self.wram_banks[bank_num] then
+        self.wram_banks[bank_num] = RamSymbols:new(bank_num)
     end
-    return sym.wram_banks[bank_num]
+    return self.wram_banks[bank_num]
 end
 
-local function get_memory_area(sym, bank_num, address)
+Symbols.get_memory_area = function(self, bank_num, address)
     -- Check bank
     if bank_num < 0 then
         error(string.format("Invalid bank target: %x:%x", bank_num, address))
@@ -109,18 +130,18 @@ local function get_memory_area(sym, bank_num, address)
     end
 
     if address < 0x8000 then
-        return _get_init_rom_bank(sym, bank_num, address)
+        return self:get_init_rom_bank(bank_num, address)
     elseif address < 0xc000 then
-        return sym.sram
+        return self.sram
     elseif address < 0xe000 then
-        return _get_init_wram_bank(sym, bank_num, address)
+        return self:get_init_wram_bank(bank_num, address)
     elseif address < 0xffff then
-        return sym.hram
+        return self.hram
     end
 end
 
-local function add_replacement_symbol(sym, bank_num, address, size, body)
-    local mem = get_memory_area(sym, bank_num, address)
+Symbols.add_replacement_symbol = function(self, bank_num, address, size, body)
+    local mem = self:get_memory_area(bank_num, address)
     if mem.is_ram then
         error(string.format("Attempted to add replacement at RAM target: %x:%x", bank_num, address))
     end
@@ -128,8 +149,8 @@ local function add_replacement_symbol(sym, bank_num, address, size, body)
     mem.replacements[address] = { size = size, body = body }
 end
 
-local function set_op_symbol(sym, bank_num, address, value)
-    local mem = get_memory_area(sym, bank_num, address)
+Symbols.set_op_symbol = function(self, bank_num, address, value)
+    local mem = self:get_memory_area(bank_num, address)
     if mem.is_ram then
         error(string.format("Attempted to add operand at RAM target: %x:%x", bank_num, address))
     end
@@ -137,8 +158,8 @@ local function set_op_symbol(sym, bank_num, address, value)
     mem.operands[address] = value
 end
 
-local function add_comment_symbol(sym, bank_num, address, body)
-    local comments = get_memory_area(sym, bank_num, address).comments
+Symbols.add_comment_symbol = function(self, bank_num, address, body)
+    local comments = self:get_memory_area(bank_num, address).comments
 
     if comments[address] then
         table.insert(comments[address], body)
@@ -147,8 +168,8 @@ local function add_comment_symbol(sym, bank_num, address, body)
     end
 end
 
-local function add_label_symbol(sym, bank_num, address, body)
-    local labels = get_memory_area(sym, bank_num, address).labels
+Symbols.add_label_symbol = function(self, bank_num, address, body)
+    local labels = self:get_memory_area(bank_num, address).labels
 
     if labels[address] then
         table.insert(labels[address], body)
@@ -157,8 +178,8 @@ local function add_label_symbol(sym, bank_num, address, body)
     end
 end
 
-local function add_region_symbol(sym, bank_num, address, region_type, size)
-    local mem = get_memory_area(sym, bank_num, address)
+Symbols.add_region_symbol = function(self, bank_num, address, region_type, size)
+    local mem = self:get_memory_area(bank_num, address)
     if mem.is_ram then
         error(string.format("Attempted to add region to RAM target: %x:%x", bank_num, address))
     end
@@ -169,14 +190,14 @@ local function add_region_symbol(sym, bank_num, address, region_type, size)
     table.insert(mem._regions_list, region)
 end
 
-local function get_region_symbols(sym, bank_num)
+Symbols.get_region_symbols = function(self, bank_num)
     local i = 1
     local regions
     local regions_list
 
-    if sym.rom_banks[bank_num] then
-        regions = sym.rom_banks[bank_num].regions
-        regions_list = sym.rom_banks[bank_num]._regions_list
+    if self.rom_banks[bank_num] then
+        regions = self.rom_banks[bank_num].regions
+        regions_list = self.rom_banks[bank_num]._regions_list
     end
 
     return function()
@@ -199,13 +220,13 @@ local function get_region_symbols(sym, bank_num)
     end
 end
 
-local function parse_comment(sym, bank_num, address, body)
+Symbols.parse_comment = function(self, bank_num, address, body)
     -- Trim first whitespace on body
     body = body:gsub("^%s", "")
-    add_comment_symbol(sym, bank_num, address, body)
+    self:add_comment_symbol(bank_num, address, body)
 end
 
-local function parse_replacement(sym, bank_num, address, replace_opts, body)
+Symbols.parse_replacement = function(self, bank_num, address, replace_opts, body)
     local _, _, size = replace_opts:find("^:(%x+)$")
 
     if size == nil then
@@ -219,10 +240,10 @@ local function parse_replacement(sym, bank_num, address, replace_opts, body)
     -- Trim leading whitespace on body
     body = body:gsub("^%s*", "")
 
-    add_replacement_symbol(sym, bank_num, address, size, body)
+    self:add_replacement_symbol(bank_num, address, size, body)
 end
 
-local function parse_op(sym, bank_num, address, op_opts, body)
+Symbols.parse_op = function(self, bank_num, address, op_opts, body)
     if op_opts ~= "" then
         -- Unrecognized data after :op
         return
@@ -231,10 +252,10 @@ local function parse_op(sym, bank_num, address, op_opts, body)
     -- Trim leading whitespace on body
     body = body:gsub("^%s*", "")
 
-    set_op_symbol(sym, bank_num, address, body)
+    self:set_op_symbol(bank_num, address, body)
 end
 
-local function parse_region(sym, bank_num, address, label, region_opts)
+Symbols.parse_region = function(self, bank_num, address, label, region_opts)
     -- Trim leading "." from label to get region type
     local region_type = label:gsub("^%.", "")
 
@@ -247,12 +268,12 @@ local function parse_region(sym, bank_num, address, label, region_opts)
 
     size = tonumber(size, 16)
 
-    add_region_symbol(sym, bank_num, address, region_type, size)
+    self:add_region_symbol(bank_num, address, region_type, size)
 end
 
-local function parse_commented_line(sym, bank_num, address, opts, body)
+Symbols.parse_commented_line = function(self, bank_num, address, opts, body)
     if opts == "" then
-        parse_comment(sym, bank_num, address, body)
+        self:parse_comment(bank_num, address, body)
         return
     end
 
@@ -260,13 +281,13 @@ local function parse_commented_line(sym, bank_num, address, opts, body)
     local _, _, symbol_type, symbol_type_opts = opts:find("^:([^:]*)(.*)")
 
     if symbol_type == "replace" then
-        parse_replacement(sym, bank_num, address, symbol_type_opts, body)
+        self:parse_replacement(bank_num, address, symbol_type_opts, body)
     elseif symbol_type == "op" then
-        parse_op(sym, bank_num, address, symbol_type_opts, body)
+        self:parse_op(bank_num, address, symbol_type_opts, body)
     end
 end
 
-local function parse_uncommented_line(sym, bank_num, address, opts, body)
+Symbols.parse_uncommented_line = function(self, bank_num, address, opts, body)
     local _, _, label, label_opts = body:find("^%s*([^%s:]+)(.*)")
 
     if label == nil then
@@ -274,17 +295,17 @@ local function parse_uncommented_line(sym, bank_num, address, opts, body)
     end
 
     if label == ".code" or label == ".data" or label == ".text" then
-        parse_region(sym, bank_num, address, label, label_opts)
+        self:parse_region(bank_num, address, label, label_opts)
     elseif label_opts ~= "" then
         -- Extra label opts, unknown label type
         return
     else
         -- Add plain label
-        add_label_symbol(sym, bank_num, address, label)
+        self:add_label_symbol(bank_num, address, label)
     end
 end
 
-local function parse_line(sym, line)
+Symbols.parse_line = function(self, line)
     -- Break the line into groups
     local start_index, _, leading_semicolons, bank_num, address, opts, body =
         line:find("^%s*(;*)%s*(%x%x):(%x%x%x%x)([^%s]*)(.*)")
@@ -303,29 +324,21 @@ local function parse_line(sym, line)
 
     if leading_semicolons == ";;" then
         -- The line starts with ";;"
-        parse_commented_line(sym, bank_num, address, opts, body)
+        self:parse_commented_line(bank_num, address, opts, body)
     elseif leading_semicolons == "" then
         -- The line does not start with any semicolons
-        parse_uncommented_line(sym, bank_num, address, opts, body)
+        self:parse_uncommented_line(bank_num, address, opts, body)
     end
 end
 
-local function read_symbols(sym, file)
+Symbols.read_symbols = function(self, file)
     for line in file:lines() do
-        parse_line(sym, line)
+        self:parse_line(line)
     end
 end
 
 return {
-    create_rom_symbols = create_rom_symbols,
-    create_ram_symbols = create_ram_symbols,
-    create_symbols = create_symbols,
-    get_memory_area = get_memory_area,
-    add_replacement_symbol = add_replacement_symbol,
-    set_op_symbol = set_op_symbol,
-    add_comment_symbol = add_comment_symbol,
-    add_label_symbol = add_label_symbol,
-    add_region_symbol = add_region_symbol,
-    get_region_symbols = get_region_symbols,
-    read_symbols = read_symbols,
+    RomSymbols = RomSymbols,
+    RamSymbols = RamSymbols,
+    Symbols = Symbols,
 }

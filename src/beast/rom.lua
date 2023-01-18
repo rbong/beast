@@ -1,7 +1,5 @@
 -- TODO: support multiple contexts per address
 
-local get_region_symbols = require("beast/symbol").get_region_symbols
-
 local parse_next_instruction = require("beast/instruction").parse_next_instruction
 
 local init_rom_bank_metadata
@@ -214,7 +212,7 @@ local function parse_code_regions(rom, symbols, bank_num)
 
     local regions = (symbols.rom_banks[bank_num] or {}).regions
 
-    for region in get_region_symbols(symbols, bank_num) do
+    for region in symbols:get_region_symbols(bank_num) do
         if region.region_type == "code" then
             local address = region.address
             local remaining = region.size
