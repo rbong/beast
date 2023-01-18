@@ -126,6 +126,7 @@ Formatter.format_bank_header = function(self, bank_num)
     return string.format('SECTION "ROM Bank $%03x", ROMX[$4000], BANK[$%03x]', bank_num, bank_num)
 end
 
+-- TODO: use labels in formatted instructions
 Formatter.format_instruction = function(self, bank, address, bank_symbols)
     local instruction = bank.instructions[address]
 
