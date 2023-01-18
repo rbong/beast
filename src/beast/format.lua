@@ -187,19 +187,20 @@ Formatter.format_data = function(_, bank, address, bank_symbols)
                 output = output .. "\n"
             end
 
-            output = output .. string.format(
-                -- TODO: configurable indentation
-                "    db $%02x, $%02x, $%02x, $%02x, $%02x, $%02x, $%02x, $%02x",
-                string.byte(data:sub(index, index)),
-                string.byte(data:sub(index + 1, index + 1)),
-                string.byte(data:sub(index + 2, index + 2)),
-                string.byte(data:sub(index + 3, index + 3)),
-                string.byte(data:sub(index + 4, index + 4)),
-                string.byte(data:sub(index + 5, index + 5)),
-                string.byte(data:sub(index + 6, index + 6)),
-                string.byte(data:sub(index + 7, index + 7)),
-                string.byte(data:sub(index + 8, index + 8))
-            )
+            output = output
+                .. string.format(
+                    -- TODO: configurable indentation
+                    "    db $%02x, $%02x, $%02x, $%02x, $%02x, $%02x, $%02x, $%02x",
+                    string.byte(data:sub(index, index)),
+                    string.byte(data:sub(index + 1, index + 1)),
+                    string.byte(data:sub(index + 2, index + 2)),
+                    string.byte(data:sub(index + 3, index + 3)),
+                    string.byte(data:sub(index + 4, index + 4)),
+                    string.byte(data:sub(index + 5, index + 5)),
+                    string.byte(data:sub(index + 6, index + 6)),
+                    string.byte(data:sub(index + 7, index + 7)),
+                    string.byte(data:sub(index + 8, index + 8))
+                )
 
             remaining_bytes = remaining_bytes - 8
             address = address + 8
