@@ -115,8 +115,9 @@ Formatter.format_bank_header = function(self, bank_num)
     return string.format('SECTION "ROM Bank $%03x", ROMX[$4000], BANK[$%03x]', bank_num, bank_num)
 end
 
--- TODO: change format_instruction to be more similar to format_data
-Formatter.format_instruction = function(self, bank, jump_call_labels, instruction, address)
+Formatter.format_instruction = function(self, bank, address, bank_symbols)
+    local instruction = bank.instructions[address]
+
     local instruction_type = instruction.instruc
 
     if instruction_type then
@@ -364,7 +365,7 @@ Formatter.generate_asm = function(self, base_path, rom, symbols)
                     -- Write instruction
                     -- TODO: configurable indentation
                     file:write("    ")
-                    file:write(self:format_instruction(bank, jump_call_labels, instruction, address))
+                    file:write(self:format_instruction(bank, address, curr_bank_symbols))
                     address = address + (instruction.size or 1)
                 else
                     -- Write data

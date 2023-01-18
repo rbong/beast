@@ -19,11 +19,6 @@ describe("format", function()
         assert.are.same('SECTION "ROM Bank $002", ROMX[$4000], BANK[$002]', formatter:format_bank_header(2))
     end)
 
-    it("formats basic instruction", function()
-        local formatter = Formatter:new()
-        assert.are.same("inc a", formatter:format_instruction(Bank:new(), {}, { instruc = "inc a" }, 0x0000))
-    end)
-
     it("formats labels")
 
     it("formats comments")
@@ -45,11 +40,22 @@ describe("format", function()
 
     it("formats text")
 
+    it("formats basic instruction", function()
+        local formatter = Formatter:new()
+        assert.are.same(
+            "inc a",
+            formatter:format_instruction({ instructions = { [0x0000] = { instruc = "inc a" } } }, 0x0000)
+        )
+    end)
+
     it("formats byte instruction", function()
         local formatter = Formatter:new()
         assert.are.same(
             "ld a, $bf",
-            formatter:format_instruction(Bank:new(), {}, { instruc = "ld a, n8", data = 0xbf }, 0x0000)
+            formatter:format_instruction(
+                { instructions = { [0x0000] = { instruc = "ld a, n8", data = 0xbf } } },
+                0x0000
+            )
         )
     end)
 
@@ -57,7 +63,10 @@ describe("format", function()
         local formatter = Formatter:new()
         assert.are.same(
             "ld a, [$beef]",
-            formatter:format_instruction(Bank:new(), {}, { instruc = "ld a, [n16]", data = 0xbeef }, 0x0000)
+            formatter:format_instruction(
+                { instructions = { [0x0000] = { instruc = "ld a, [n16]", data = 0xbeef } } },
+                0x0000
+            )
         )
     end)
 
@@ -65,7 +74,7 @@ describe("format", function()
         local formatter = Formatter:new()
         assert.are.same(
             "add sp, 1",
-            formatter:format_instruction(Bank:new(), {}, { instruc = "add sp, e8", data = 1 }, 0x0000)
+            formatter:format_instruction({ instructions = { [0x0000] = { instruc = "add sp, e8", data = 1 } } }, 0x0000)
         )
     end)
 
@@ -73,7 +82,10 @@ describe("format", function()
         local formatter = Formatter:new()
         assert.are.same(
             "add sp, -1",
-            formatter:format_instruction(Bank:new(), {}, { instruc = "add sp, e8", data = -1 }, 0x0000)
+            formatter:format_instruction(
+                { instructions = { [0x0000] = { instruc = "add sp, e8", data = -1 } } },
+                0x0000
+            )
         )
     end)
 end)
