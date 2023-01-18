@@ -74,7 +74,7 @@ end
 
 Symbols.get_memory_area_unsafe = function(self, bank_num, address)
     if address < 0x8000 then
-        return self:get_init_rom_bank(bank_num, address)
+        return self:get_init_rom_bank(bank_num)
     elseif address < 0xc000 then
         return self.sram
     elseif address < 0xe000 then
