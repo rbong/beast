@@ -31,7 +31,7 @@ describe("format", function()
     it("formats data", function()
         local formatter = Formatter:new()
         assert.are.same({ 1, "    db $cb" }, {
-            formatter:format_data({ data = string.char(0xcb), size = 1 }, 0, {}),
+            formatter:format_data({ data = string.char(0xcb), size = 1, instructions = {} }, 0, {}),
         })
     end)
 

@@ -155,8 +155,9 @@ Formatter.format_data = function(_, bank, address, bank_symbols)
             size = bank_size - index + 1
         end
     else
-        -- Get data size for plain data: can be terminated by new labels, comments, or regions
+        -- Get data size for plain data: can be terminated by instructions, new labels, comments, or regions
 
+        local instructions = bank.instructions
         local labels = bank_symbols.labels or {}
         local comments = bank_symbols.comments or {}
         local regions = bank_symbols.regions or {}
@@ -168,7 +169,11 @@ Formatter.format_data = function(_, bank, address, bank_symbols)
             size = size + 1
             check_address = check_address + 1
             check_index = check_index + 1
-        until check_index > bank_size or labels[check_address] or comments[check_address] or regions[check_address]
+        until check_index > bank_size
+            or instructions[check_address]
+            or labels[check_address]
+            or comments[check_address]
+            or regions[check_address]
     end
 
     -- Build data output
