@@ -58,6 +58,8 @@ local function create_signed_op_instruction_parser(instruc)
     }
 end
 
+-- TODO: unconditional jump instructions should end code
+
 local instructions = {
     -- Control Instructions --
 

@@ -1,3 +1,5 @@
+-- TODO: support multiple contexts per address
+
 local get_region_symbols = require("beast/symbol").get_region_symbols
 
 local parse_next_instruction = require("beast/instruction").parse_next_instruction
