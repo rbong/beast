@@ -1,3 +1,5 @@
+-- TODO: add line numbers
+
 local function get_byte_op_instruction_formatter(byte_format, string_format)
     return function(bank, instruction)
         return string.format(byte_format, instruction.data)
