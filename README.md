@@ -33,6 +33,8 @@ export LUA_PATH="$LUA_PATH;/path/to/beast/src/?.lua"
 beast -s /path/to/symbols.sym /path/to/rom.gb /path/to/output/dir
 ```
 
+See `beast --help` for more options.
+
 **Module**
 
 ```lua
