@@ -15,7 +15,7 @@ end
 local function call_instruction_handler(rom, bank_num, address, instruction)
     local target_address = instruction.data
 
-    -- TODO: detect ROM location
+    -- TODO: detect ROM location automatically based on context
     if target_address >= 0x4000 and bank_num == 0 then
         return
     end
@@ -33,7 +33,7 @@ end
 local function jump_instruction_handler(rom, bank_num, address, instruction)
     local target_address = instruction.data
 
-    -- TODO: detect ROM location
+    -- TODO: detect ROM location automatically based on context
     if target_address >= 0x4000 and bank_num == 0 then
         return
     end

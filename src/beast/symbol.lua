@@ -35,9 +35,10 @@ local function create_rom_symbols(bank_num)
     return {
         labels = {},
         comments = {},
-        -- TODO: specify duplicate regions/replacements not allowed
+        -- TODO: warn when overlapping regions are specified
         regions = {},
         _regions_list = {},
+        -- TODO: warn when overlapping replacements are specified
         replacements = {},
         operands = {},
         bank_num = bank_num,
