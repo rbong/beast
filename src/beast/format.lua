@@ -1,26 +1,37 @@
 -- TODO: add line numbers
 
 local function get_byte_op_instruction_formatter(byte_format, string_format)
-    return function(bank, instruction)
+    return function(bank, instruction, op_symbol)
+        if op_symbol then
+            return string.format(string_format, op_symbol)
+        end
         return string.format(byte_format, instruction.data)
     end
 end
 
 local function get_hram_op_instruction_formatter(byte_format, string_format)
-    return function(bank, instruction)
+    return function(bank, instruction, op_symbol)
+        if op_symbol then
+            return string.format(string_format, op_symbol)
+        end
         return string.format(byte_format, instruction.data)
     end
 end
 
 local function get_octet_op_instruction_formatter(octet_format, string_format)
-    return function(bank, instruction)
+    return function(bank, instruction, op_symbol)
+        if op_symbol then
+            return string.format(string_format, op_symbol)
+        end
         return string.format(octet_format, instruction.data)
     end
 end
 
 local function get_signed_op_instruction_formatter(signed_format, string_format, is_relative)
-    return function(bank, instruction)
-        if is_relative then
+    return function(bank, instruction, op_symbol)
+        if op_symbol then
+            return string.format(string_format, op_symbol)
+        elseif is_relative then
             return string.format(signed_format, instruction.data + 2)
         else
             return string.format(signed_format, instruction.data)
@@ -120,19 +131,20 @@ Formatter.format_instruction = function(self, bank, address, bank_symbols)
 
     local instruction_type = instruction.instruc
 
-    if instruction_type then
-        local instruction_formatter = instruction_formatters[instruction_type]
-
-        -- Format complex instruction
-        if instruction_formatter then
-            return instruction_formatter(bank, instruction, address)
-        end
-
-        -- Format basic instruction
-        return instruction_type
+    if not instruction_type then
+        error(string.format("Unrecognized instruction: %s", instruction.instruc))
     end
 
-    error(string.format("Unrecognized instruction: %s", instruction.instruc))
+    local instruction_formatter = instruction_formatters[instruction_type]
+
+    -- Format complex instruction
+    if instruction_formatter then
+        local op_symbol = (bank_symbols.operands or {})[address]
+        return instruction_formatter(bank, instruction, op_symbol)
+    end
+
+    -- Format basic instruction
+    return instruction_type
 end
 
 -- TODO: format text regions

@@ -1,6 +1,5 @@
 local beast = require("beast")
 
-local Bank = beast.rom.Bank
 local Formatter = beast.format.Formatter
 
 describe("format", function()
@@ -44,7 +43,7 @@ describe("format", function()
         local formatter = Formatter:new()
         assert.are.same(
             "inc a",
-            formatter:format_instruction({ instructions = { [0x0000] = { instruc = "inc a" } } }, 0x0000)
+            formatter:format_instruction({ instructions = { [0x0000] = { instruc = "inc a" } } }, 0x0000, {})
         )
     end)
 
@@ -54,7 +53,8 @@ describe("format", function()
             "ld a, $bf",
             formatter:format_instruction(
                 { instructions = { [0x0000] = { instruc = "ld a, n8", data = 0xbf } } },
-                0x0000
+                0x0000,
+                {}
             )
         )
     end)
@@ -65,7 +65,8 @@ describe("format", function()
             "ld a, [$beef]",
             formatter:format_instruction(
                 { instructions = { [0x0000] = { instruc = "ld a, [n16]", data = 0xbeef } } },
-                0x0000
+                0x0000,
+                {}
             )
         )
     end)
@@ -74,7 +75,11 @@ describe("format", function()
         local formatter = Formatter:new()
         assert.are.same(
             "add sp, 1",
-            formatter:format_instruction({ instructions = { [0x0000] = { instruc = "add sp, e8", data = 1 } } }, 0x0000)
+            formatter:format_instruction(
+                { instructions = { [0x0000] = { instruc = "add sp, e8", data = 1 } } },
+                0x0000,
+                {}
+            )
         )
     end)
 
@@ -84,7 +89,8 @@ describe("format", function()
             "add sp, -1",
             formatter:format_instruction(
                 { instructions = { [0x0000] = { instruc = "add sp, e8", data = -1 } } },
-                0x0000
+                0x0000,
+                {}
             )
         )
     end)
