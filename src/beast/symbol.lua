@@ -120,7 +120,7 @@ Symbols.get_memory_area = function(self, bank_num, address)
     end
 
     -- Check HRAM bank
-    if address >= 0xff80 and address < 0xfff and bank_num ~= 0 then
+    if address >= 0xff80 and address < 0xffff and bank_num ~= 0 then
         error(string.format("Invalid HRAM target: %x:%x", bank_num, address))
     end
 
