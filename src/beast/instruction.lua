@@ -707,7 +707,9 @@ local instruction_parsers = {
 }
 
 local function parse_next_instruction(data, address, max)
-    max = max or (0x4000 - (address % 0x4000))
+    if max == nil then
+        max = 0x4000 - (address % 0x4000)
+    end
 
     if max == 0 then
         return
