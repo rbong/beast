@@ -24,6 +24,14 @@ describe("format", function()
         assert.are.same("inc a", formatter:format_instruction(Bank:new(), {}, { instruc = "inc a" }, 0x0000))
     end)
 
+    it("formats labels")
+
+    it("formats comments")
+
+    it("formats operands")
+
+    it("formats replacements")
+
     -- TODO: test formatting 4 bytes
     -- TODO: test formatting 8 bytes
     -- TODO: test formatting 16 bytes
@@ -34,6 +42,8 @@ describe("format", function()
             formatter:format_data({ data = string.char(0xcb), size = 1, instructions = {} }, 0, {}),
         })
     end)
+
+    it("formats text")
 
     it("formats byte instruction", function()
         local formatter = Formatter:new()
