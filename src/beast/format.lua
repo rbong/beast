@@ -410,7 +410,6 @@ Formatter.format_rom_jump_call_location_labels = function(self, rom)
 end
 
 -- TODO: add ".inc" files
--- TODO: add memory.asm
 Formatter.generate_files = function(self, base_path, rom, symbols)
     -- TODO: create base if it does not exist
 
@@ -419,11 +418,77 @@ Formatter.generate_files = function(self, base_path, rom, symbols)
         error("No base path")
     end
 
+    -- Generate memory file
+
+    local memory_file_name = "memory.inc"
+    local memory_path = string.format("%s/%s", base_path, memory_file_name)
+    local memory_file = io.open(memory_path, "wb")
+
+    -- Write SRAM memory
+    local has_sram_labels = false
+    for address, labels in pairs(symbols.sram.labels) do
+        if not has_sram_labels then
+            memory_file:write("; SRAM\n\n")
+            has_sram_labels = true
+        end
+
+        for _, label in pairs(labels) do
+            memory_file:write(string.format("DEF %s\tEQU $%04x\n", label, address))
+        end
+    end
+
+    -- Write WRAM memory
+    local has_wram_labels = false
+    for wram_bank_num, wram_symbols in pairs(symbols.wram_banks) do
+        if not has_wram_labels then
+            if has_sram_labels then
+                memory_file:write("\n")
+            end
+            memory_file:write("; WRAM\n\n")
+            has_wram_labels = true
+        end
+
+        local has_wram_bank_labels = false
+        for address, labels in pairs(wram_symbols.labels) do
+            if not has_wram_bank_labels then
+                memory_file:write(string.format("; WRAM bank $%03x\n\n", wram_bank_num))
+                has_wram_bank_labels = true
+            end
+
+            for _, label in pairs(labels) do
+                memory_file:write(string.format("DEF %s\tEQU $%04x\n", label, address))
+            end
+        end
+    end
+
+    -- Write HRAM memory
+    local has_hram_labels = false
+    for address, labels in pairs(symbols.hram.labels) do
+        if not has_hram_labels then
+            if has_sram_labels or has_wram_labels then
+                memory_file:write("\n")
+            end
+            memory_file:write("; HRAM\n\n")
+            has_hram_labels = true
+        end
+
+        for _, label in pairs(labels) do
+            memory_file:write(string.format("DEF %s\tEQU $%04x\n", label, address))
+        end
+    end
+
+    -- Write HRAM memory
+
+    memory_file:close()
+
     -- Open main ASM file
 
     local main_path = string.format("%s/%s", base_path, self.options.main)
 
     local main_file = io.open(main_path, "wb")
+
+    -- Add memory file to main ASM
+    main_file:write(string.format('INCLUDE "%s"\n', memory_file_name))
 
     -- Generate bank ASM files
 
@@ -440,7 +505,7 @@ Formatter.generate_files = function(self, base_path, rom, symbols)
         local file = io.open(path, "wb")
 
         -- Write bank ASM to main ASM file
-        main_file:write(string.format('\nINCLUDE "%s"', file_name))
+        main_file:write(string.format('INCLUDE "%s"\n', file_name))
 
         -- Write bank header
         file:write(self:format_bank_header(bank_num))
