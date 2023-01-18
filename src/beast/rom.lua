@@ -1,4 +1,5 @@
 -- TODO: support multiple contexts per address
+-- TODO: support .image regions
 
 local parse_next_instruction = require("beast/instruction").parse_next_instruction
 
