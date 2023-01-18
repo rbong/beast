@@ -263,7 +263,6 @@ Formatter.get_text_output = function(self, bank, address, size)
     return output
 end
 
--- TODO: format text regions
 Formatter.format_data = function(self, bank, address, symbols)
     local bank_size = bank.size
     local data = bank.data
@@ -410,7 +409,6 @@ Formatter.format_rom_jump_call_location_labels = function(self, rom)
     return labels
 end
 
--- TODO: replace operands
 Formatter.generate_asm = function(self, base_path, rom, symbols)
     -- TODO: create base if it does not exist
 
