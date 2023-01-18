@@ -1,6 +1,7 @@
 local beast = require("beast")
 
 local Formatter = beast.format.Formatter
+local RomSymbols = beast.symbol.RomSymbols
 
 describe("format", function()
     it("formats bank 0 header", function()
@@ -54,7 +55,7 @@ describe("format", function()
             formatter:format_instruction(
                 { instructions = { [0x0000] = { instruc = "ld a, n8", data = 0xbf } } },
                 0x0000,
-                {}
+                RomSymbols:new()
             )
         )
     end)
@@ -66,7 +67,7 @@ describe("format", function()
             formatter:format_instruction(
                 { instructions = { [0x0000] = { instruc = "ld a, [n16]", data = 0xbeef } } },
                 0x0000,
-                {}
+                RomSymbols:new()
             )
         )
     end)
@@ -78,7 +79,7 @@ describe("format", function()
             formatter:format_instruction(
                 { instructions = { [0x0000] = { instruc = "add sp, e8", data = 1 } } },
                 0x0000,
-                {}
+                RomSymbols:new()
             )
         )
     end)
@@ -90,7 +91,7 @@ describe("format", function()
             formatter:format_instruction(
                 { instructions = { [0x0000] = { instruc = "add sp, e8", data = -1 } } },
                 0x0000,
-                {}
+                RomSymbols:new()
             )
         )
     end)

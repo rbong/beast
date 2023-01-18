@@ -1,40 +1,44 @@
 -- TODO: add line numbers
 
 local function get_byte_op_instruction_formatter(byte_format, string_format)
-    return function(bank, instruction, op_symbol)
+    return function(bank, address, bank_symbols)
+        local op_symbol = bank_symbols.operands[address]
         if op_symbol then
             return string.format(string_format, op_symbol)
         end
-        return string.format(byte_format, instruction.data)
+        return string.format(byte_format, bank.instructions[address].data)
     end
 end
 
 local function get_hram_op_instruction_formatter(byte_format, string_format)
-    return function(bank, instruction, op_symbol)
+    return function(bank, address, bank_symbols)
+        local op_symbol = bank_symbols.operands[address]
         if op_symbol then
             return string.format(string_format, op_symbol)
         end
-        return string.format(byte_format, instruction.data)
+        return string.format(byte_format, bank.instructions[address].data)
     end
 end
 
 local function get_octet_op_instruction_formatter(octet_format, string_format)
-    return function(bank, instruction, op_symbol)
+    return function(bank, address, bank_symbols)
+        local op_symbol = bank_symbols.operands[address]
         if op_symbol then
             return string.format(string_format, op_symbol)
         end
-        return string.format(octet_format, instruction.data)
+        return string.format(octet_format, bank.instructions[address].data)
     end
 end
 
 local function get_signed_op_instruction_formatter(signed_format, string_format, is_relative)
-    return function(bank, instruction, op_symbol)
+    return function(bank, address, bank_symbols)
+        local op_symbol = bank_symbols.operands[address]
         if op_symbol then
             return string.format(string_format, op_symbol)
         elseif is_relative then
-            return string.format(signed_format, instruction.data + 2)
+            return string.format(signed_format, bank.instructions[address].data + 2)
         else
-            return string.format(signed_format, instruction.data)
+            return string.format(signed_format, bank.instructions[address].data)
         end
     end
 end
@@ -140,8 +144,7 @@ Formatter.format_instruction = function(self, bank, address, bank_symbols)
 
     -- Format complex instruction
     if instruction_formatter then
-        local op_symbol = (bank_symbols.operands or {})[address]
-        return instruction_formatter(bank, instruction, op_symbol)
+        return instruction_formatter(bank, address, bank_symbols)
     end
 
     -- Format basic instruction
