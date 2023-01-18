@@ -72,6 +72,23 @@ Symbols.get_init_wram_bank = function(self, bank_num, address)
     return self.wram_banks[bank_num]
 end
 
+Symbols.get_relative_memory_area = function(self, source_bank_num, target_address)
+    if target_address < 0x8000 then
+        if source_bank_num == 0 and target_address >= 0x8000 then
+            -- Can't determine target bank from bank 0 at this time
+            return nil
+        end
+        return self:get_init_rom_bank(source_bank_num)
+    elseif target_address < 0xc000 then
+        return self.sram
+    elseif target_address < 0xe000 then
+        -- Unable to determine WRAM target bank currently
+        return nil
+    elseif target_address < 0xffff then
+        return self.hram
+    end
+end
+
 Symbols.get_memory_area_unsafe = function(self, bank_num, address)
     if address < 0x8000 then
         return self:get_init_rom_bank(bank_num)

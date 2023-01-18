@@ -1,45 +1,94 @@
 -- TODO: add line numbers
 
-local function get_byte_op_instruction_formatter(byte_format, string_format)
+local function get_byte_op_instruction_formatter(byte_format, op_format)
     return function(bank, address, symbols)
-        local op_symbol = symbols:get_init_rom_bank(bank.bank_num).operands[address]
+        local bank_num = bank.bank_num
+
+        local op_symbol = symbols:get_init_rom_bank(bank_num).operands[address]
         if op_symbol then
-            return string.format(string_format, op_symbol)
+            -- Format byte instruction with op symbol
+            return string.format(op_format, op_symbol)
         end
+
+        local data = bank.instructions[address].data
+
+        -- Format byte instruction
+        return string.format(byte_format, data)
+    end
+end
+
+local function get_hram_op_instruction_formatter(byte_format, op_format)
+    return function(bank, address, symbols)
+        local bank_num = bank.bank_num
+
+        local op_symbol = symbols:get_init_rom_bank(bank_num).operands[address]
+        if op_symbol then
+            -- Format HRAM instruction with op symbol
+            return string.format(op_format, op_symbol)
+        end
+
+        -- Format HRAM instruction
         return string.format(byte_format, bank.instructions[address].data)
     end
 end
 
-local function get_hram_op_instruction_formatter(byte_format, string_format)
-    return function(bank, address, symbols)
-        local op_symbol = symbols:get_init_rom_bank(bank.bank_num).operands[address]
-        if op_symbol then
-            return string.format(string_format, op_symbol)
-        end
-        return string.format(byte_format, bank.instructions[address].data)
+local function get_octet_op_instruction_formatter(octet_format, op_format, label_format)
+    if label_format == nil then
+        label_format = op_format
     end
-end
 
-local function get_octet_op_instruction_formatter(octet_format, string_format)
     return function(bank, address, symbols)
-        local op_symbol = symbols:get_init_rom_bank(bank.bank_num, address).operands[address]
+        local bank_num = bank.bank_num
+
+        local op_symbol = symbols:get_init_rom_bank(bank_num, address).operands[address]
         if op_symbol then
-            return string.format(string_format, op_symbol)
+            -- Format octet instruction with op symbol
+            return string.format(op_format, op_symbol)
         end
-        return string.format(octet_format, bank.instructions[address].data)
+
+        local data = bank.instructions[address].data
+
+        local target_symbols = symbols:get_relative_memory_area(bank_num, data)
+        if target_symbols then
+            local label = target_symbols.labels[data]
+            if label then
+                -- Format octet instruction with label symbol
+                return string.format(label_format, label[1])
+            end
+        end
+
+        -- Format octet instruction
+        return string.format(octet_format, data)
     end
 end
 
 local function get_signed_op_instruction_formatter(signed_format, string_format, is_relative)
     return function(bank, address, symbols)
-        local op_symbol = symbols:get_init_rom_bank(bank.bank_num, address).operands[address]
+        local bank_num = bank.bank_num
+
+        local bank_symbols = symbols:get_init_rom_bank(bank_num, address)
+        local op_symbol = bank_symbols.operands[address]
+
         if op_symbol then
+            -- Format signed instruction with op symbol
             return string.format(string_format, op_symbol)
-        elseif is_relative then
-            return string.format(signed_format, bank.instructions[address].data + 2)
-        else
-            return string.format(signed_format, bank.instructions[address].data)
         end
+
+        local data = bank.instructions[address].data
+
+        if is_relative then
+            local label = bank_symbols.labels[address + data + 2]
+
+            if label then
+                return string.format(string_format, label[1])
+            end
+
+            -- Format relative signed instruction
+            return string.format(signed_format, data + 2)
+        end
+
+        -- Format signed instruction
+        return string.format(signed_format, data)
     end
 end
 
@@ -55,7 +104,7 @@ local instruction_formatters = {
     ["ld l, n8"] = get_byte_op_instruction_formatter("ld l, $%02x", "ld l, %s"),
 
     ["ld a, [n16]"] = get_octet_op_instruction_formatter("ld a, [$%04x]", "ld a, %s"),
-    ["ld [n16], a"] = get_octet_op_instruction_formatter("ld [$%04x], a", "ld %s, a"),
+    ["ld [n16], a"] = get_octet_op_instruction_formatter("ld [$%04x], a", "ld %s, a", "ld [%s], a"),
 
     ["ldio a, [$ff00+n8]"] = get_hram_op_instruction_formatter("ldio a, [$ff00+$%02x]", "ldio a, %s"),
     ["ldio [$ff00+n8], a"] = get_hram_op_instruction_formatter("ldio [$ff00+$%02x], a", "ldio %s, a"),
@@ -86,7 +135,7 @@ local instruction_formatters = {
     ["ld hl, sp+e8"] = get_signed_op_instruction_formatter("ld hl, sp%+d", "ld hl, %s"),
 
     ["ld sp, n16"] = get_octet_op_instruction_formatter("ld sp, $%04x", "ld sp, %s"),
-    ["ld [n16], sp"] = get_octet_op_instruction_formatter("ld [$%04x], sp", "ld %s, sp"),
+    ["ld [n16], sp"] = get_octet_op_instruction_formatter("ld [$%04x], sp", "ld %s, sp", "ld [%s], sp"),
 
     -- Jump/Call Instructions --
 
@@ -130,7 +179,6 @@ Formatter.format_bank_header = function(self, bank_num)
     return string.format('SECTION "ROM Bank $%03x", ROMX[$4000], BANK[$%03x]', bank_num, bank_num)
 end
 
--- TODO: use labels in formatted instructions
 Formatter.format_instruction = function(self, bank, address, symbols)
     local instruction = bank.instructions[address]
 
