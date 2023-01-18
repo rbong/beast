@@ -292,12 +292,18 @@ Formatter.format_data = function(self, bank, address, symbols)
     -- Get data size
 
     if region.region_type == "data" or region.region_type == "text" and region.size > 0 then
-        -- Get data size for region: can only be terminated by end of bank
+        -- Get data size for region: can only be terminated by end of bank or file
 
-        size = region.size
-        if index + size - 1 > bank_size then
-            size = bank_size - index + 1
-        end
+        local files = bank_symbols.files or {}
+
+        local check_address = address
+        local check_index = index
+
+        repeat
+            size = size + 1
+            check_address = check_address + 1
+            check_index = check_index + 1
+        until check_index > bank_size or size >= region.size or files[check_address]
     else
         -- Get data size for plain data: can be terminated by instructions, new labels, comments, or regions
 
@@ -305,6 +311,7 @@ Formatter.format_data = function(self, bank, address, symbols)
         local labels = bank_symbols.labels or {}
         local comments = bank_symbols.comments or {}
         local regions = bank_symbols.regions or {}
+        local files = bank_symbols.files or {}
 
         local check_address = address
         local check_index = index
@@ -318,6 +325,7 @@ Formatter.format_data = function(self, bank, address, symbols)
             or labels[check_address]
             or comments[check_address]
             or regions[check_address]
+            or files[check_address]
     end
 
     -- Output text

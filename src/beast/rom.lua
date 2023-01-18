@@ -284,7 +284,10 @@ end
 
 -- TODO: count unconditional jumps as code end and treat return as new jump location
 Rom.parse_jump_call_location = function(self, symbols, bank_num, address)
-    local regions = (symbols.rom_banks[bank_num] or {}).regions or {}
+    local bank_symbols = symbols.rom_banks[bank_num] or {}
+    local regions = bank_symbols.regions or {}
+    local files = bank_symbols.files or {}
+
     local bank = self.banks[bank_num]
 
     local instructions = bank.instructions
@@ -303,6 +306,12 @@ Rom.parse_jump_call_location = function(self, symbols, bank_num, address)
             if region_type == "data" or region_type == "text" then
                 break
             end
+        end
+
+        -- Check for file symbol - terminates call/jump location
+        -- TODO: optional warn
+        if files[address] then
+            break
         end
 
         -- Parse address
