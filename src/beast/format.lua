@@ -134,9 +134,95 @@ Formatter.format_instruction = function(self, bank, jump_call_labels, instructio
 end
 
 -- TODO: print multiple bytes on one line
-Formatter.format_data = function(self, data, address)
+Formatter.format_data = function(_, bank, address, bank_symbols)
+    local bank_size = bank.size
+    local data = bank.data
+
+    local size = 0
+    local output = ""
     local index = (address % 0x4000) + 1
-    return 1, string.format("db $%02x", string.byte(data:sub(index, index)))
+
+    -- Get data size
+
+    local region = (bank_symbols.regions or {})[address] or {}
+
+    if region.region_type == "data" or region.region_type == "text" and region.size > 0 then
+        -- Get data size for region: can only be terminated by end of bank
+
+        size = region.size
+        if index + size - 1 > bank_size then
+            size = bank_size - index + 1
+        end
+    else
+        -- Get data size for plain data: can be terminated by new labels, comments, or regions
+
+        local labels = bank_symbols.labels or {}
+        local comments = bank_symbols.comments or {}
+        local regions = bank_symbols.regions or {}
+
+        local check_address = address
+        local check_index = index
+
+        repeat
+            size = size + 1
+            check_address = check_address + 1
+            check_index = check_index + 1
+        until check_index > bank_size or labels[check_address] or comments[check_address] or regions[check_address]
+    end
+
+    -- Build data output
+
+    local remaining_bytes = size
+
+    -- Output by increments of 8
+    if size >= 8 then
+        repeat
+            if output ~= "" then
+                output = output .. "\n"
+            end
+
+            output = output .. string.format(
+                -- TODO: configurable indentation
+                "    db $%02x, $%02x, $%02x, $%02x, $%02x, $%02x, $%02x, $%02x",
+                string.byte(data:sub(index, index)),
+                string.byte(data:sub(index + 1, index + 1)),
+                string.byte(data:sub(index + 2, index + 2)),
+                string.byte(data:sub(index + 3, index + 3)),
+                string.byte(data:sub(index + 4, index + 4)),
+                string.byte(data:sub(index + 5, index + 5)),
+                string.byte(data:sub(index + 6, index + 6)),
+                string.byte(data:sub(index + 7, index + 7)),
+                string.byte(data:sub(index + 8, index + 8))
+            )
+
+            remaining_bytes = remaining_bytes - 8
+            address = address + 8
+            index = index + 8
+        until remaining_bytes < 8
+    end
+
+    -- Output remaining bytes
+    local line_bytes = 0
+    while remaining_bytes > 0 do
+        local byte = string.byte(data:sub(index, index))
+
+        if line_bytes == 0 then
+            if output ~= "" then
+                output = output .. "\n"
+            end
+            -- TODO: configurable indentation
+            output = output .. string.format("    db $%02x", byte)
+        else
+            output = output .. string.format(", $%02x", byte)
+        end
+
+        remaining_bytes = remaining_bytes - 1
+        address = address + 1
+        index = index + 1
+        line_bytes = (line_bytes + 1) % 8
+    end
+
+    return size, output
 end
 
 Formatter.format_rom_jump_call_location_labels = function(self, rom)
@@ -192,7 +278,7 @@ Formatter.generate_asm = function(self, base_path, rom, symbols)
         error("No base path")
     end
 
-    local rom_banks = symbols.rom_banks or {}
+    local bank_symbols = symbols.rom_banks or {}
 
     local jump_call_labels = self:format_rom_jump_call_location_labels(rom)
 
@@ -206,10 +292,9 @@ Formatter.generate_asm = function(self, base_path, rom, symbols)
         file:write("\n\n")
 
         local instructions = bank.instructions
-        local data = bank.data
 
-        local rom_bank = rom_banks[bank_num] or {}
-        local labels = rom_bank.labels or {}
+        local curr_bank_symbols = bank_symbols[bank_num] or {}
+        local labels = curr_bank_symbols.labels or {}
         local bank_jump_call_labels = jump_call_labels[bank_num]
 
         local address
@@ -248,9 +333,7 @@ Formatter.generate_asm = function(self, base_path, rom, symbols)
                 address = address + (instruction.size or 1)
             else
                 -- Write data
-                local data_size, formatted_data = self:format_data(data, address)
-                -- TODO: configurable indentation
-                file:write("    ")
+                local data_size, formatted_data = self:format_data(bank, address, curr_bank_symbols)
                 file:write(formatted_data)
                 address = address + data_size
             end
