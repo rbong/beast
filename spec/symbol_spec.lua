@@ -130,7 +130,17 @@ describe("symbols", function()
     end)
 
     describe("SRAM", function()
-        it("handles valid definitions")
+        it("handles valid definitions", function()
+            local sym = Symbols:new()
+            sym:read_symbols(io.open("./spec/fixtures/sram_valid.sym"))
+
+            assert.are.same({
+                [0xa000] = { "Comment body" },
+            }, sym.sram.comments)
+            assert.are.same({
+                [0xa100] = { "label_value" },
+            }, sym.sram.labels)
+        end)
     end)
 
     describe("WRAM", function()
