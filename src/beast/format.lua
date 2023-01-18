@@ -149,7 +149,7 @@ Formatter.format_instruction = function(self, bank, address, bank_symbols)
 end
 
 -- TODO: format text regions
-Formatter.format_data = function(_, bank, address, bank_symbols)
+Formatter.format_data = function(self, bank, address, bank_symbols)
     local bank_size = bank.size
     local data = bank.data
 
