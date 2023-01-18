@@ -409,6 +409,9 @@ Formatter.format_rom_jump_call_location_labels = function(self, rom)
     return labels
 end
 
+-- TODO: generate main ASM file
+-- TODO: add ".inc" files
+-- TODO: add memory.asm
 Formatter.generate_asm = function(self, base_path, rom, symbols)
     -- TODO: create base if it does not exist
 
