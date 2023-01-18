@@ -131,6 +131,7 @@ Formatter.format_instruction = function(self, bank, jump_call_labels, instructio
     error(string.format("Unrecognized instruction: %s", instruction.instruc))
 end
 
+-- TODO: print multiple bytes on one line
 Formatter.format_data = function(self, data, address)
     local index = (address % 0x4000) + 1
     return 1, string.format("db $%02x", string.byte(data:sub(index, index)))
