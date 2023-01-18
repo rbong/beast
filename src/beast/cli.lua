@@ -56,6 +56,10 @@ add_positional_arg_opt({
 
 local set_default_arg_opt
 
+function set_default_arg_opt(options, arg_opt)
+    options[arg_opt.opt_name] = arg_opt.default
+end
+
 local function create_options()
     local options = {}
 
@@ -68,10 +72,6 @@ local function create_options()
     end
 
     return options
-end
-
-function set_default_arg_opt(options, arg_opt)
-    options[arg_opt.opt_name] = arg_opt.default
 end
 
 local function is_missing_required_opt(options, arg_opt)
