@@ -70,6 +70,10 @@ Arguments:
   -v, --version                 Display version and exit.]])
 end
 
+local function print_version()
+    print("dev-1")
+end
+
 local set_default_arg_opt
 
 function set_default_arg_opt(options, arg_opt)
@@ -155,7 +159,7 @@ local function parse_arg(arg_parser)
         os.exit(0)
     end
     if arg_opt.opt_name == "version" then
-        -- TODO
+	print_version()
         os.exit(0)
     end
 
