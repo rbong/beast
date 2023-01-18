@@ -229,7 +229,7 @@ Rom.parse_code_regions = function(self, symbols, bank_num)
     local instructions = bank.instructions
     local data = bank.data
 
-    local regions = (symbols.rom_banks[bank_num] or {}).regions
+    local regions = symbols:get_init_rom_bank(bank_num).regions
 
     for region in symbols:get_region_symbols(bank_num) do
         if region.region_type == "code" then
@@ -284,9 +284,9 @@ end
 
 -- TODO: count unconditional jumps as code end and treat return as new jump location
 Rom.parse_jump_call_location = function(self, symbols, bank_num, address)
-    local bank_symbols = symbols.rom_banks[bank_num] or {}
-    local regions = bank_symbols.regions or {}
-    local files = bank_symbols.files or {}
+    local bank_symbols = symbols:get_init_rom_bank(bank_num)
+    local regions = bank_symbols.regions
+    local files = bank_symbols.files
 
     local bank = self.banks[bank_num]
 

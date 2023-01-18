@@ -38,7 +38,7 @@ local function get_octet_op_instruction_formatter(octet_format, op_format, label
     return function(bank, address, symbols)
         local bank_num = bank.bank_num
 
-        local op_symbol = symbols:get_init_rom_bank(bank_num, address).operands[address]
+        local op_symbol = symbols:get_init_rom_bank(bank_num).operands[address]
         if op_symbol then
             -- Format octet instruction with op symbol
             return string.format(op_format, op_symbol)
@@ -64,7 +64,7 @@ local function get_signed_op_instruction_formatter(signed_format, string_format,
     return function(bank, address, symbols)
         local bank_num = bank.bank_num
 
-        local bank_symbols = symbols:get_init_rom_bank(bank_num, address)
+        local bank_symbols = symbols:get_init_rom_bank(bank_num)
         local op_symbol = bank_symbols.operands[address]
 
         if op_symbol then
@@ -283,8 +283,9 @@ Formatter.format_data = function(self, bank, address, symbols)
     local bank_num = bank.bank_num
     local bank_size = bank.size
     local data = bank.data
-    local bank_symbols = symbols.rom_banks[bank.bank_num] or {}
-    local region = (bank_symbols.regions or {})[address] or {}
+
+    local bank_symbols = symbols:get_init_rom_bank(bank_num)
+    local region = bank_symbols.regions[address] or {}
 
     local size = 0
     local index = (address % 0x4000) + 1
@@ -294,7 +295,7 @@ Formatter.format_data = function(self, bank, address, symbols)
     if region.region_type == "data" or region.region_type == "text" and region.size > 0 then
         -- Get data size for region: can only be terminated by end of bank or file
 
-        local files = bank_symbols.files or {}
+        local files = bank_symbols.files
 
         local check_address = address
         local check_index = index
@@ -308,10 +309,10 @@ Formatter.format_data = function(self, bank, address, symbols)
         -- Get data size for plain data: can be terminated by instructions, new labels, comments, or regions
 
         local instructions = bank.instructions
-        local labels = bank_symbols.labels or {}
-        local comments = bank_symbols.comments or {}
-        local regions = bank_symbols.regions or {}
-        local files = bank_symbols.files or {}
+        local labels = bank_symbols.labels
+        local comments = bank_symbols.comments
+        local regions = bank_symbols.regions
+        local files = bank_symbols.files
 
         local check_address = address
         local check_index = index
@@ -561,8 +562,6 @@ Formatter.generate_files = function(self, base_path, rom, symbols)
 
     -- Generate bank ASM files
 
-    local bank_symbols = symbols.rom_banks or {}
-
     local jump_call_labels = self:format_rom_jump_call_location_labels(rom)
 
     for bank_num = 0, rom.nbanks - 1 do
@@ -582,11 +581,11 @@ Formatter.generate_files = function(self, base_path, rom, symbols)
 
         local instructions = bank.instructions
 
-        local curr_bank_symbols = bank_symbols[bank_num] or {}
-        local labels = curr_bank_symbols.labels or {}
-        local comments = curr_bank_symbols.comments or {}
-        local replacements = curr_bank_symbols.replacements or {}
-        local files = curr_bank_symbols.files or {}
+        local bank_symbols = symbols:get_init_rom_bank(bank_num)
+        local labels = bank_symbols.labels
+        local comments = bank_symbols.comments
+        local replacements = bank_symbols.replacements
+        local files = bank_symbols.files
         local bank_jump_call_labels = jump_call_labels[bank_num]
 
         local address
