@@ -40,6 +40,11 @@ add_arg_opt("-m", "--main", {
     default = "main.asm",
 })
 
+add_arg_opt("-i", "--include", {
+    multiple = true,
+    default = {},
+})
+
 add_arg_opt("-nd", "--no-code-detection", {
     opt_name = "no_code_detection",
     flag_value = true,
@@ -197,8 +202,16 @@ ArgParser.parse_arg = function(self)
         self.arg_index = self.arg_index + 1
     end
 
-    -- Set option
-    options[arg_opt.opt_name] = value
+    if arg_opt.multiple then
+        -- Append multiple option
+        if not options[arg_opt.opt_name] then
+            options[arg_opt.opt_name] = {}
+        end
+        table.insert(options[arg_opt.opt_name], value)
+    else
+        -- Set option
+        options[arg_opt.opt_name] = value
+    end
 
     return
 end

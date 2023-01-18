@@ -409,7 +409,6 @@ Formatter.format_rom_jump_call_location_labels = function(self, rom)
     return labels
 end
 
--- TODO: add ".inc" files
 Formatter.generate_files = function(self, base_path, rom, symbols)
     -- TODO: create base if it does not exist
 
@@ -489,6 +488,25 @@ Formatter.generate_files = function(self, base_path, rom, symbols)
 
     -- Add memory file to main ASM
     main_file:write(string.format('INCLUDE "%s"\n', memory_file_name))
+
+    -- Generate includes files
+
+    for _, include_source_path in pairs(self.options.include) do
+
+        local include_file_name = include_source_path:gsub(".*/", "")
+        local include_path = string.format("%s/%s", base_path, include_file_name)
+
+        local include_source_file = io.open(include_source_path, "rb")
+        local include_file = io.open(include_path, "wb")
+
+        include_file:write(include_source_file:read("a"))
+
+        include_source_file:close()
+        include_file:close()
+
+        -- Add include file to main ASM
+        main_file:write(string.format('INCLUDE "%s"\n', include_file_name))
+    end
 
     -- Generate bank ASM files
 
