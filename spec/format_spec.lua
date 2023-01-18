@@ -1,7 +1,7 @@
 local beast = require("beast")
 
 local Formatter = beast.format.Formatter
-local RomSymbols = beast.symbol.RomSymbols
+local Symbols = beast.symbol.Symbols
 
 describe("format", function()
     it("formats bank 0 header", function()
@@ -38,7 +38,11 @@ describe("format", function()
     it("formats data", function()
         local formatter = Formatter:new()
         assert.are.same({ 1, "    db $cb" }, {
-            formatter:format_data({ data = string.char(0xcb), size = 1, instructions = {} }, 0, {}),
+            formatter:format_data(
+                { bank_num = 0x00, data = string.char(0xcb), size = 1, instructions = {} },
+                0,
+                Symbols:new()
+            ),
         })
     end)
 
@@ -48,7 +52,11 @@ describe("format", function()
         local formatter = Formatter:new()
         assert.are.same(
             "inc a",
-            formatter:format_instruction({ instructions = { [0x0000] = { instruc = "inc a" } } }, 0x0000, {})
+            formatter:format_instruction(
+                { bank_num = 0x00, instructions = { [0x0000] = { instruc = "inc a" } } },
+                0x0000,
+                Symbols:new()
+            )
         )
     end)
 
@@ -57,9 +65,9 @@ describe("format", function()
         assert.are.same(
             "ld a, $bf",
             formatter:format_instruction(
-                { instructions = { [0x0000] = { instruc = "ld a, n8", data = 0xbf } } },
+                { bank_num = 0x00, instructions = { [0x0000] = { instruc = "ld a, n8", data = 0xbf } } },
                 0x0000,
-                RomSymbols:new()
+                Symbols:new()
             )
         )
     end)
@@ -69,9 +77,9 @@ describe("format", function()
         assert.are.same(
             "ld a, [$beef]",
             formatter:format_instruction(
-                { instructions = { [0x0000] = { instruc = "ld a, [n16]", data = 0xbeef } } },
+                { bank_num = 0x00, instructions = { [0x0000] = { instruc = "ld a, [n16]", data = 0xbeef } } },
                 0x0000,
-                RomSymbols:new()
+                Symbols:new()
             )
         )
     end)
@@ -81,9 +89,9 @@ describe("format", function()
         assert.are.same(
             "add sp, 1",
             formatter:format_instruction(
-                { instructions = { [0x0000] = { instruc = "add sp, e8", data = 1 } } },
+                { bank_num = 0x00, instructions = { [0x0000] = { instruc = "add sp, e8", data = 1 } } },
                 0x0000,
-                RomSymbols:new()
+                Symbols:new()
             )
         )
     end)
@@ -93,9 +101,9 @@ describe("format", function()
         assert.are.same(
             "add sp, -1",
             formatter:format_instruction(
-                { instructions = { [0x0000] = { instruc = "add sp, e8", data = -1 } } },
+                { bank_num = 0x00, instructions = { [0x0000] = { instruc = "add sp, e8", data = -1 } } },
                 0x0000,
-                RomSymbols:new()
+                Symbols:new()
             )
         )
     end)

@@ -1,8 +1,8 @@
 -- TODO: add line numbers
 
 local function get_byte_op_instruction_formatter(byte_format, string_format)
-    return function(bank, address, bank_symbols)
-        local op_symbol = bank_symbols.operands[address]
+    return function(bank, address, symbols)
+        local op_symbol = symbols:get_init_rom_bank(bank.bank_num).operands[address]
         if op_symbol then
             return string.format(string_format, op_symbol)
         end
@@ -11,8 +11,8 @@ local function get_byte_op_instruction_formatter(byte_format, string_format)
 end
 
 local function get_hram_op_instruction_formatter(byte_format, string_format)
-    return function(bank, address, bank_symbols)
-        local op_symbol = bank_symbols.operands[address]
+    return function(bank, address, symbols)
+        local op_symbol = symbols:get_init_rom_bank(bank.bank_num).operands[address]
         if op_symbol then
             return string.format(string_format, op_symbol)
         end
@@ -21,8 +21,8 @@ local function get_hram_op_instruction_formatter(byte_format, string_format)
 end
 
 local function get_octet_op_instruction_formatter(octet_format, string_format)
-    return function(bank, address, bank_symbols)
-        local op_symbol = bank_symbols.operands[address]
+    return function(bank, address, symbols)
+        local op_symbol = symbols:get_init_rom_bank(bank.bank_num, address).operands[address]
         if op_symbol then
             return string.format(string_format, op_symbol)
         end
@@ -31,8 +31,8 @@ local function get_octet_op_instruction_formatter(octet_format, string_format)
 end
 
 local function get_signed_op_instruction_formatter(signed_format, string_format, is_relative)
-    return function(bank, address, bank_symbols)
-        local op_symbol = bank_symbols.operands[address]
+    return function(bank, address, symbols)
+        local op_symbol = symbols:get_init_rom_bank(bank.bank_num, address).operands[address]
         if op_symbol then
             return string.format(string_format, op_symbol)
         elseif is_relative then
@@ -131,7 +131,7 @@ Formatter.format_bank_header = function(self, bank_num)
 end
 
 -- TODO: use labels in formatted instructions
-Formatter.format_instruction = function(self, bank, address, bank_symbols)
+Formatter.format_instruction = function(self, bank, address, symbols)
     local instruction = bank.instructions[address]
 
     local instruction_type = instruction.instruc
@@ -144,7 +144,7 @@ Formatter.format_instruction = function(self, bank, address, bank_symbols)
 
     -- Format complex instruction
     if instruction_formatter then
-        return instruction_formatter(bank, address, bank_symbols)
+        return instruction_formatter(bank, address, symbols)
     end
 
     -- Format basic instruction
@@ -216,9 +216,10 @@ Formatter.get_text_output = function(self, bank, address, size)
 end
 
 -- TODO: format text regions
-Formatter.format_data = function(self, bank, address, bank_symbols)
+Formatter.format_data = function(self, bank, address, symbols)
     local bank_size = bank.size
     local data = bank.data
+    local bank_symbols = symbols.rom_banks[bank.bank_num] or {}
     local region = (bank_symbols.regions or {})[address] or {}
 
     local size = 0
@@ -448,11 +449,11 @@ Formatter.generate_asm = function(self, base_path, rom, symbols)
                     -- Write instruction
                     -- TODO: configurable indentation
                     file:write("    ")
-                    file:write(self:format_instruction(bank, address, curr_bank_symbols))
+                    file:write(self:format_instruction(bank, address, symbols))
                     address = address + (instruction.size or 1)
                 else
                     -- Write data
-                    local data_size, formatted_data = self:format_data(bank, address, curr_bank_symbols)
+                    local data_size, formatted_data = self:format_data(bank, address, symbols)
                     file:write(formatted_data)
                     address = address + data_size
                 end
