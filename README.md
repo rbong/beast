@@ -40,16 +40,19 @@ See `beast --help` for more options.
 ```lua
 local beast = require("beast")
 
+-- Create default options
+local options = beast.cli.Options:new()
+
 -- Parse a symbols file
-local sym = beast.symbol.Symbols:new()
+local sym = beast.symbol.Symbols:new(options)
 sym:read_symbols(io.open("/path/to/symbols.sym", "rb"))
 
 -- Parse a ROM file
-local rom = beast.rom.Rom:new()
+local rom = beast.rom.Rom:new(options)
 rom:read_rom(sym, io.open("/path/to/rom.gb", "rb"))
 
 -- Output assembly code
-local formatter = beast.format.Formatter:new()
+local formatter = beast.format.Formatter:new(options)
 formatter:generate_files("/path/to/output/dir", rom, sym)
 ```
 
