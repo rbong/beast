@@ -71,7 +71,7 @@ Arguments:
 end
 
 local function print_version()
-    print("dev-1")
+    print("0.0.0")
 end
 
 local Options = {}

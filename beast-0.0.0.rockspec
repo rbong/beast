@@ -2,7 +2,7 @@ rockspec_format = "3.0"
 
 package = "beast"
 
-version = "dev-1"
+version = "0.0.0"
 
 source = {
     url = "https://github.com/rbong/beast",
