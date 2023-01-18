@@ -69,16 +69,18 @@ local function print_usage()
 Disassembles the GameBoy ROM into assembly files at the output directory.
 
 Arguments:
-  -s, --symbols <symbols path>  Load symbols from this file. Symbols can be
-                                used to add labels and modify the output.
-  -m, --main <main file name>   The main file name to use in the output.
-                                Defaults to "main.asm".
-  -nc, --no-code-detection      Do not automatically detect code regions based
-                                on call/jump locations.
-  -nl, --no-auto-labels         Do not automatically generate labels for
-                                call/jump locations.
-  -h, --help                    Display this help and exit.
-  -v, --version                 Display version and exit.]])
+  -s, --symbols <symbols path>       Load symbols from this file. Symbols can be
+                                     used to add labels and modify the output.
+  -m, --main <main file name>        The main file name to use in the output.
+                                     Defaults to "main.asm".
+  -i, --include <include file path>  An ".asm" or ".inc" file to include in the
+                                     output.
+  -nc, --no-code-detection           Do not automatically detect code regions based
+                                     on call/jump locations.
+  -nl, --no-auto-labels              Do not automatically generate labels for
+                                     call/jump locations.
+  -h, --help                         Display this help and exit.
+  -v, --version                      Display version and exit.]])
 end
 
 local function print_version()
