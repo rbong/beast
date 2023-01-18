@@ -72,6 +72,18 @@ Symbols.get_init_wram_bank = function(self, bank_num, address)
     return self.wram_banks[bank_num]
 end
 
+Symbols.get_memory_area_unsafe = function(self, bank_num, address)
+    if address < 0x8000 then
+        return self:get_init_rom_bank(bank_num, address)
+    elseif address < 0xc000 then
+        return self.sram
+    elseif address < 0xe000 then
+        return self:get_init_wram_bank(bank_num, address)
+    elseif address < 0xffff then
+        return self.hram
+    end
+end
+
 Symbols.get_memory_area = function(self, bank_num, address)
     -- Check bank
     if bank_num < 0 then
@@ -132,15 +144,7 @@ Symbols.get_memory_area = function(self, bank_num, address)
         error(string.format("Unsupported target IE: %02x:%04x", bank_num, address))
     end
 
-    if address < 0x8000 then
-        return self:get_init_rom_bank(bank_num, address)
-    elseif address < 0xc000 then
-        return self.sram
-    elseif address < 0xe000 then
-        return self:get_init_wram_bank(bank_num, address)
-    elseif address < 0xffff then
-        return self.hram
-    end
+    return self:get_memory_area_unsafe(bank_num, address)
 end
 
 Symbols.add_replacement_symbol = function(self, bank_num, address, size, body)
