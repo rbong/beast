@@ -45,10 +45,16 @@ add_arg_opt("-i", "--include", {
     default = {},
 })
 
+add_arg_opt("-na", "--no-address", {
+    opt_name = "no_address",
+    flag_value = true,
+})
+
 add_arg_opt("-nd", "--no-code-detection", {
     opt_name = "no_code_detection",
     flag_value = true,
 })
+
 add_arg_opt("-nl", "--no-auto-labels", {
     opt_name = "no_auto_labels",
     flag_value = true,
@@ -75,6 +81,7 @@ Arguments:
                                      Defaults to "main.asm".
   -i, --include <include file path>  An ".asm" or ".inc" file to include in the
                                      output.
+  -na, --no-address                  Do not append addresses to ouput lines.
   -nc, --no-code-detection           Do not automatically detect code regions based
                                      on call/jump locations.
   -nl, --no-auto-labels              Do not automatically generate labels for

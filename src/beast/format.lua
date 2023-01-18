@@ -1,5 +1,3 @@
--- TODO: add line numbers
-
 local function get_byte_op_instruction_formatter(byte_format, op_format)
     return function(bank, address, symbols)
         local bank_num = bank.bank_num
@@ -171,6 +169,20 @@ Formatter.new = function(self, options)
     return formatter
 end
 
+Formatter.add_address = function(self, line, bank_num, address)
+    if self.options.no_address then
+        return line
+    end
+
+    local len = #line
+    while len < 60 do
+        line = line .. " "
+        len = len + 1
+    end
+
+    return line .. string.format("; %02x:%04x", bank_num, address)
+end
+
 Formatter.format_bank_header = function(self, bank_num)
     if bank_num == 0 then
         return 'SECTION "ROM Bank $000", ROM0[$0000]'
@@ -188,15 +200,19 @@ Formatter.format_instruction = function(self, bank, address, symbols)
         error(string.format("Unrecognized instruction: %s", instruction.instruc))
     end
 
+    local output
     local instruction_formatter = instruction_formatters[instruction_type]
 
-    -- Format complex instruction
     if instruction_formatter then
-        return instruction_formatter(bank, address, symbols)
+        -- Format complex instruction
+        output = instruction_formatter(bank, address, symbols)
+    else
+        -- Format basic instruction
+        output = instruction_type
     end
 
-    -- Format basic instruction
-    return instruction_type
+    -- TODO: configurable indentation
+    return self:add_address("    " .. output, bank.bank_num, address)
 end
 
 Formatter.get_text_output = function(self, bank, address, size)
@@ -260,10 +276,11 @@ Formatter.get_text_output = function(self, bank, address, size)
         output = output .. '"'
     end
 
-    return output
+    return self:add_address(output, bank.bank_num, address)
 end
 
 Formatter.format_data = function(self, bank, address, symbols)
+    local bank_num = bank.bank_num
     local bank_size = bank.size
     local data = bank.data
     local bank_symbols = symbols.rom_banks[bank.bank_num] or {}
@@ -303,11 +320,13 @@ Formatter.format_data = function(self, bank, address, symbols)
             or regions[check_address]
     end
 
-    -- Build data output
+    -- Output text
 
     if region.region_type == "text" then
         return size, self:get_text_output(bank, address, size)
     end
+
+    -- Build data output
 
     local output = ""
     local remaining_bytes = size
@@ -320,18 +339,22 @@ Formatter.format_data = function(self, bank, address, symbols)
             end
 
             output = output
-                .. string.format(
-                    -- TODO: configurable indentation
-                    "    db $%02x, $%02x, $%02x, $%02x, $%02x, $%02x, $%02x, $%02x",
-                    string.byte(data:sub(index, index)),
-                    string.byte(data:sub(index + 1, index + 1)),
-                    string.byte(data:sub(index + 2, index + 2)),
-                    string.byte(data:sub(index + 3, index + 3)),
-                    string.byte(data:sub(index + 4, index + 4)),
-                    string.byte(data:sub(index + 5, index + 5)),
-                    string.byte(data:sub(index + 6, index + 6)),
-                    string.byte(data:sub(index + 7, index + 7)),
-                    string.byte(data:sub(index + 8, index + 8))
+                .. self:add_address(
+                    string.format(
+                        -- TODO: configurable indentation
+                        "    db $%02x, $%02x, $%02x, $%02x, $%02x, $%02x, $%02x, $%02x",
+                        string.byte(data:sub(index, index)),
+                        string.byte(data:sub(index + 1, index + 1)),
+                        string.byte(data:sub(index + 2, index + 2)),
+                        string.byte(data:sub(index + 3, index + 3)),
+                        string.byte(data:sub(index + 4, index + 4)),
+                        string.byte(data:sub(index + 5, index + 5)),
+                        string.byte(data:sub(index + 6, index + 6)),
+                        string.byte(data:sub(index + 7, index + 7)),
+                        string.byte(data:sub(index + 8, index + 8))
+                    ),
+                    bank_num,
+                    address
                 )
 
             remaining_bytes = remaining_bytes - 8
@@ -341,24 +364,25 @@ Formatter.format_data = function(self, bank, address, symbols)
     end
 
     -- Output remaining bytes
-    local line_bytes = 0
-    while remaining_bytes > 0 do
-        local byte = string.byte(data:sub(index, index))
-
-        if line_bytes == 0 then
-            if output ~= "" then
-                output = output .. "\n"
-            end
-            -- TODO: configurable indentation
-            output = output .. string.format("    db $%02x", byte)
-        else
-            output = output .. string.format(", $%02x", byte)
-        end
+    if remaining_bytes > 0 then
+        -- TODO: configurable indentation
+        local last_line = string.format("    db $%02x", string.byte(data:sub(index, index)))
 
         remaining_bytes = remaining_bytes - 1
-        address = address + 1
         index = index + 1
-        line_bytes = (line_bytes + 1) % 8
+
+        while remaining_bytes > 0 do
+            last_line = last_line .. string.format(", $%02x", string.byte(data:sub(index, index)))
+
+            remaining_bytes = remaining_bytes - 1
+            index = index + 1
+        end
+
+        if output ~= "" then
+            output = output .. "\n"
+        end
+
+        output = output .. self:add_address(last_line, bank_num, address)
     end
 
     return size, output
@@ -492,7 +516,6 @@ Formatter.generate_files = function(self, base_path, rom, symbols)
     -- Generate includes files
 
     for _, include_source_path in pairs(self.options.include) do
-
         local include_file_name = include_source_path:gsub(".*/", "")
         local include_path = string.format("%s/%s", base_path, include_file_name)
 
@@ -592,8 +615,6 @@ Formatter.generate_files = function(self, base_path, rom, symbols)
 
                 if instruction then
                     -- Write instruction
-                    -- TODO: configurable indentation
-                    file:write("    ")
                     file:write(self:format_instruction(bank, address, symbols))
                     address = address + (instruction.size or 1)
                 else
