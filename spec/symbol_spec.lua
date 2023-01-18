@@ -2,6 +2,8 @@ local beast = require("beast")
 
 local Symbols = beast.symbol.Symbols
 
+-- TODO: test file symbols
+
 describe("symbols", function()
 	it("handles non-definitions", function()
 		local sym = Symbols:new()

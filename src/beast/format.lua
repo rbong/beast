@@ -388,6 +388,26 @@ Formatter.format_data = function(self, bank, address, symbols)
     return size, output
 end
 
+Formatter.format_file_symbol = function(self, bank, address, symbols)
+    local bank_num = bank.bank_num
+    local file_symbol = symbols.rom_banks[bank_num].files[address]
+    -- TODO: configurable indentation
+    return self:add_address(string.format('    INCBIN("%s")', file_symbol.file_name), bank_num, address)
+end
+
+Formatter.write_file_symbol = function(self, bank, address, base_path, symbols)
+    local bank_num = bank.bank_num
+    local index = (address % 0x4000) + 1
+    local file_symbol = symbols.rom_banks[bank_num].files[address]
+
+    local file_name = file_symbol.file_name
+    local file_path = string.format("%s/%s", base_path, file_name)
+    local file = io.open(file_path, "wb")
+
+    file:write(bank.data:sub(index, index + file_symbol.size - 1))
+    file:close()
+end
+
 Formatter.format_rom_jump_call_location_labels = function(self, rom)
     local labels = {}
 
@@ -558,6 +578,7 @@ Formatter.generate_files = function(self, base_path, rom, symbols)
         local labels = curr_bank_symbols.labels or {}
         local comments = curr_bank_symbols.comments or {}
         local replacements = curr_bank_symbols.replacements or {}
+        local files = curr_bank_symbols.files or {}
         local bank_jump_call_labels = jump_call_labels[bank_num]
 
         local address
@@ -600,6 +621,7 @@ Formatter.generate_files = function(self, base_path, rom, symbols)
 
             -- Get replacement
             local replacement = replacements[address]
+            local file_symbol = files[address]
 
             if replacement then
                 -- Replacement found
@@ -607,6 +629,11 @@ Formatter.generate_files = function(self, base_path, rom, symbols)
                 file:write("    ")
                 file:write(replacement.body)
                 address = address + replacement.size
+            elseif file_symbol then
+                -- File found
+                self:write_file_symbol(bank, address, base_path, symbols)
+                file:write(self:format_file_symbol(bank, address, symbols))
+                address = address + file_symbol.size
             else
                 -- No replacement
 

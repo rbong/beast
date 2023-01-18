@@ -103,6 +103,14 @@ Generating comments in this way can be useful to leave comments without
 distributing the assembly code itself, getting around licensing issues for
 ROMs.
 
+**Extracting Files**
+
+Extracts `f0` bytes of data at `0a:4f00` into the file `my_file.data`:
+
+```
+;; 0a:4f00:file:f0 my_file.data
+```
+
 **Replacing Operands**
 
 Replaces the operand of the instruction at `0a:4f00` with `MY_CONST`:

@@ -10,6 +10,8 @@ RomSymbols.new = function(self, bank_num)
         -- TODO: warn when overlapping replacements are specified
         replacements = {},
         operands = {},
+        -- TODO: warn when overlapping files are specified
+        files = {},
         bank_num = bank_num,
         is_ram = false,
         is_rom = true,
@@ -182,6 +184,15 @@ Symbols.set_op_symbol = function(self, bank_num, address, value)
     mem.operands[address] = value
 end
 
+Symbols.set_file_symbol = function(self, bank_num, address, size, file_name)
+    local mem = self:get_memory_area(bank_num, address)
+    if mem.is_ram then
+        error(string.format("Attempted to add file at RAM target: %02x:%04x", bank_num, address))
+    end
+
+    mem.files[address] = { size = size, file_name = file_name }
+end
+
 Symbols.add_comment_symbol = function(self, bank_num, address, body)
     local comments = self:get_memory_area(bank_num, address).comments
 
@@ -279,6 +290,28 @@ Symbols.parse_op = function(self, bank_num, address, op_opts, body)
     self:set_op_symbol(bank_num, address, body)
 end
 
+Symbols.parse_file = function(self, bank_num, address, file_opts, body)
+    local _, _, size = file_opts:find("^:(%x+)$")
+
+    if size == nil then
+        -- Unreadable size opt
+        return
+    end
+
+    -- Parse size
+    size = tonumber(size, 16)
+
+    -- Trim leading whitespace on body
+    body = body:gsub("^%s*", "")
+
+    if body == "" then
+        -- No filename
+        return
+    end
+
+    self:set_file_symbol(bank_num, address, size, body)
+end
+
 Symbols.parse_region = function(self, bank_num, address, label, region_opts)
     -- Trim leading "." from label to get region type
     local region_type = label:gsub("^%.", "")
@@ -308,6 +341,8 @@ Symbols.parse_commented_line = function(self, bank_num, address, opts, body)
         self:parse_replacement(bank_num, address, symbol_type_opts, body)
     elseif symbol_type == "op" then
         self:parse_op(bank_num, address, symbol_type_opts, body)
+    elseif symbol_type == "file" then
+        self:parse_file(bank_num, address, symbol_type_opts, body)
     end
 end
 
