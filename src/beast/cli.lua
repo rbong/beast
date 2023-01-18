@@ -36,6 +36,10 @@ add_arg_opt("-s", "--symbols", {
     opt_name = "symbols_path",
 })
 
+add_arg_opt("-m", "--main", {
+    default = "main.asm",
+})
+
 add_arg_opt("-nd", "--no-code-detection", {
     opt_name = "no_code_detection",
     flag_value = true,
@@ -62,6 +66,8 @@ Disassembles the GameBoy ROM into assembly files at the output directory.
 Arguments:
   -s, --symbols <symbols path>  Load symbols from this file. Symbols can be
                                 used to add labels and modify the output.
+  -m, --main <main file name>   The main file name to use in the output.
+                                Defaults to "main.asm".
   -nc, --no-code-detection      Do not automatically detect code regions based
                                 on call/jump locations.
   -nl, --no-auto-labels         Do not automatically generate labels for

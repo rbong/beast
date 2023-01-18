@@ -409,10 +409,9 @@ Formatter.format_rom_jump_call_location_labels = function(self, rom)
     return labels
 end
 
--- TODO: generate main ASM file
 -- TODO: add ".inc" files
 -- TODO: add memory.asm
-Formatter.generate_asm = function(self, base_path, rom, symbols)
+Formatter.generate_files = function(self, base_path, rom, symbols)
     -- TODO: create base if it does not exist
 
     -- TODO: better error handling
@@ -420,14 +419,28 @@ Formatter.generate_asm = function(self, base_path, rom, symbols)
         error("No base path")
     end
 
+    -- Open main ASM file
+
+    local main_path = string.format("%s/%s", base_path, self.options.main)
+
+    local main_file = io.open(main_path, "wb")
+
+    -- Generate bank ASM files
+
     local bank_symbols = symbols.rom_banks or {}
 
     local jump_call_labels = self:format_rom_jump_call_location_labels(rom)
 
-    for bank_num, bank in pairs(rom.banks) do
+    for bank_num = 0, rom.nbanks - 1 do
+        local bank = rom.banks[bank_num]
+
         -- Get bank ASM file
-        local path = string.format("%s/bank_%03x.asm", base_path, bank_num)
+        local file_name = string.format("bank_%03x.asm", bank_num)
+        local path = string.format("%s/%s", base_path, file_name)
         local file = io.open(path, "wb")
+
+        -- Write bank ASM to main ASM file
+        main_file:write(string.format('\nINCLUDE "%s"', file_name))
 
         -- Write bank header
         file:write(self:format_bank_header(bank_num))
@@ -514,6 +527,8 @@ Formatter.generate_asm = function(self, base_path, rom, symbols)
 
         file:close()
     end
+
+    main_file:close()
 end
 
 return {

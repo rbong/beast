@@ -48,7 +48,7 @@ rom:read_rom(sym, io.open("/path/to/rom.gb", "rb"))
 
 -- Output assembly code
 local formatter = beast.format.Formatter:new()
-formatter:generate_asm("/path/to/output/dir", rom, sym)
+formatter:generate_files("/path/to/output/dir", rom, sym)
 ```
 
 ## Symbol File Syntax
