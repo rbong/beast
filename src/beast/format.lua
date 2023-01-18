@@ -176,8 +176,7 @@ local function format_rom_jump_call_location_labels(formatter, rom)
     return labels
 end
 
--- TODO: rename
-local function write_asm(formatter, base_path, rom, symbols)
+local function generate_asm(formatter, base_path, rom, symbols)
     -- TODO: create base if it does not exist
 
     -- TODO: better error handling
@@ -261,5 +260,5 @@ return {
     format_bank_header = format_bank_header,
     format_instruction = format_instruction,
     format_data = format_data,
-    write_asm = write_asm,
+    generate_asm = generate_asm,
 }

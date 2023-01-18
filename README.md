@@ -47,5 +47,5 @@ beast.rom.read_rom(rom, io.open("/path/to/rom.gb", "rb"))
 
 -- Output assembly code
 local formatter = beast.format.create_formatter()
-beast.format.write_asm(formatter, "/path/to/output/dir", rom, sym)
+beast.format.generate_asm(formatter, "/path/to/output/dir", rom, sym)
 ```
