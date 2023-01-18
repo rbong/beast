@@ -92,13 +92,20 @@ local instruction_formatters = {
     ["jp nz, n16"] = get_octet_op_instruction_formatter("jp nz, $%04x", "jp nz, %s"),
 }
 
-local function create_formatter(options)
-    return {
+local Formatter = {}
+
+Formatter.new = function(self, options)
+    local formatter = {
         options = options,
     }
+
+    setmetatable(formatter, self)
+    self.__index = self
+
+    return formatter
 end
 
-local function format_bank_header(formatter, bank_num)
+Formatter.format_bank_header = function(self, bank_num)
     if bank_num == 0 then
         return 'SECTION "ROM Bank $000", ROM0[$0000]'
     end
@@ -106,7 +113,7 @@ local function format_bank_header(formatter, bank_num)
     return string.format('SECTION "ROM Bank $%03x", ROMX[$4000], BANK[$%03x]', bank_num, bank_num)
 end
 
-local function format_instruction(formatter, bank, jump_call_labels, instruction, address)
+Formatter.format_instruction = function(self, bank, jump_call_labels, instruction, address)
     local instruction_type = instruction.instruc
 
     if instruction_type then
@@ -124,19 +131,19 @@ local function format_instruction(formatter, bank, jump_call_labels, instruction
     error(string.format("Unrecognized instruction: %s", instruction.instruc))
 end
 
-local function format_data(formatter, data, address)
+Formatter.format_data = function(self, data, address)
     local index = (address % 0x4000) + 1
     return 1, string.format("db $%02x", string.byte(data:sub(index, index)))
 end
 
-local function format_rom_jump_call_location_labels(formatter, rom)
+Formatter.format_rom_jump_call_location_labels = function(self, rom)
     local labels = {}
 
     for bank_num = 0, rom.nbanks - 1 do
         labels[bank_num] = {}
     end
 
-    if formatter.options.no_auto_labels then
+    if self.options.no_auto_labels then
         return labels
     end
 
@@ -174,7 +181,7 @@ local function format_rom_jump_call_location_labels(formatter, rom)
     return labels
 end
 
-local function generate_asm(formatter, base_path, rom, symbols)
+Formatter.generate_asm = function(self, base_path, rom, symbols)
     -- TODO: create base if it does not exist
 
     -- TODO: better error handling
@@ -184,7 +191,7 @@ local function generate_asm(formatter, base_path, rom, symbols)
 
     local rom_banks = symbols.rom_banks or {}
 
-    local jump_call_labels = format_rom_jump_call_location_labels(formatter, rom)
+    local jump_call_labels = self:format_rom_jump_call_location_labels(rom)
 
     for bank_num, bank in pairs(rom.banks) do
         -- Get bank ASM file
@@ -192,7 +199,7 @@ local function generate_asm(formatter, base_path, rom, symbols)
         local file = io.open(path, "wb")
 
         -- Write bank header
-        file:write(format_bank_header(formatter, bank_num))
+        file:write(self:format_bank_header(bank_num))
         file:write("\n\n")
 
         local instructions = bank.instructions
@@ -234,11 +241,11 @@ local function generate_asm(formatter, base_path, rom, symbols)
                 -- Write instruction
                 -- TODO: configurable indentation
                 file:write("    ")
-                file:write(format_instruction(formatter, bank, jump_call_labels, instruction, address))
+                file:write(self:format_instruction(bank, jump_call_labels, instruction, address))
                 address = address + (instruction.size or 1)
             else
                 -- Write data
-                local data_size, formatted_data = format_data(formatter, data, address)
+                local data_size, formatted_data = self:format_data(data, address)
                 -- TODO: configurable indentation
                 file:write("    ")
                 file:write(formatted_data)
@@ -254,9 +261,5 @@ local function generate_asm(formatter, base_path, rom, symbols)
 end
 
 return {
-    create_formatter = create_formatter,
-    format_bank_header = format_bank_header,
-    format_instruction = format_instruction,
-    format_data = format_data,
-    generate_asm = generate_asm,
+    Formatter = Formatter,
 }

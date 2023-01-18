@@ -15,5 +15,5 @@ local rom = beast.rom.Rom:new(options)
 rom:read_rom(symbols, io.open(options.rom_path, "rb"))
 
 -- Output assembly code
-local formatter = beast.format.create_formatter(options)
-beast.format.generate_asm(formatter, options.out_path, rom, symbols)
+local formatter = beast.format.Formatter:new(options)
+formatter:generate_asm(options.out_path, rom, symbols)
