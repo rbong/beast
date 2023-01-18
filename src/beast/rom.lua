@@ -263,6 +263,7 @@ local function parse_code_regions(rom, symbols, bank_num)
     end
 end
 
+-- TODO: count unconditional jumps as code end and treat return as new jump location
 local function parse_jump_call_location(rom, symbols, bank_num, address)
     local regions = (symbols.rom_banks[bank_num] or {}).regions or {}
     local bank = rom.banks[bank_num]
