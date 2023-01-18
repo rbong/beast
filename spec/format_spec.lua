@@ -24,6 +24,10 @@ describe("format", function()
         assert.are.same("inc a", formatter:format_instruction(Bank:new(), {}, { instruc = "inc a" }, 0x0000))
     end)
 
+    -- TODO: test formatting 4 bytes
+    -- TODO: test formatting 8 bytes
+    -- TODO: test formatting 16 bytes
+    -- TODO: test that regions split data
     it("formats data", function()
         local formatter = Formatter:new()
         assert.are.same({ 1, "    db $cb" }, {

@@ -115,6 +115,7 @@ Formatter.format_bank_header = function(self, bank_num)
     return string.format('SECTION "ROM Bank $%03x", ROMX[$4000], BANK[$%03x]', bank_num, bank_num)
 end
 
+-- TODO: change format_instruction to be more similar to format_data
 Formatter.format_instruction = function(self, bank, jump_call_labels, instruction, address)
     local instruction_type = instruction.instruc
 
@@ -133,7 +134,7 @@ Formatter.format_instruction = function(self, bank, jump_call_labels, instructio
     error(string.format("Unrecognized instruction: %s", instruction.instruc))
 end
 
--- TODO: print multiple bytes on one line
+-- TODO: format text regions
 Formatter.format_data = function(_, bank, address, bank_symbols)
     local bank_size = bank.size
     local data = bank.data
@@ -270,6 +271,8 @@ Formatter.format_rom_jump_call_location_labels = function(self, rom)
     return labels
 end
 
+-- TODO: add comments
+-- TODO: replace code
 Formatter.generate_asm = function(self, base_path, rom, symbols)
     -- TODO: create base if it does not exist
 
