@@ -159,7 +159,7 @@ local function parse_arg(arg_parser)
         os.exit(0)
     end
     if arg_opt.opt_name == "version" then
-	print_version()
+        print_version()
         os.exit(0)
     end
 
