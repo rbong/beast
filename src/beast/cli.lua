@@ -71,7 +71,7 @@ Arguments:
 end
 
 local function print_version()
-    print("0.0.0")
+    print("git-0")
 end
 
 local Options = {}
