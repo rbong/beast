@@ -9,15 +9,79 @@ describe("symbols", function()
     end)
 
     describe("invalid targets", function()
-        it("handles unsupported VRAM target")
+        it("handles invalid bank", function()
+            assert.has_error(function()
+                Symbols:new():get_memory_area(-1, 0x0000)
+            end, "Invalid bank target: -1")
+        end)
 
-        it("handles unsupported ECHO RAM target")
+        it("handles invalid address", function()
+            assert.has_error(function()
+                Symbols:new():get_memory_area(0x00, -1)
+            end, "Invalid address target: -1")
 
-        it("handles unsupported ECHO RAM target")
+            assert.has_error(function()
+                Symbols:new():get_memory_area(0x00, 0x10000)
+            end, "Invalid address target: 00:10000")
 
-        it("handles unsupported IO register target")
+            assert.has_error(function()
+                Symbols:new():get_memory_area(0x00, 0xfea0)
+            end, "Invalid address target: 00:fea0")
+        end)
 
-        it("handles unsupported IE target")
+        it("handles invalid bank 0 ROM target", function()
+            assert.has_error(function()
+                Symbols:new():get_memory_area(0x00, 0x4000)
+            end, "Invalid ROM target: 00:4000")
+        end)
+
+        it("handles invalid high bank ROM target", function()
+            assert.has_error(function()
+                Symbols:new():get_memory_area(0x01, 0x3fff)
+            end, "Invalid ROM target: 01:3fff")
+        end)
+
+        it("handles unsupported VRAM target", function()
+            assert.has_error(function()
+                Symbols:new():get_memory_area(0x01, 0x8000)
+            end, "Unsupported target in VRAM: 01:8000")
+        end)
+
+        it("handles invalid WRAM target", function()
+            assert.has_error(function()
+                Symbols:new():get_memory_area(0x01, 0xc000)
+            end, "Invalid WRAM target: 01:c000")
+        end)
+
+        it("handles unsupported ECHO RAM target", function()
+            assert.has_error(function()
+                Symbols:new():get_memory_area(0x00, 0xe000)
+            end, "Unsupported target in ECHO RAM: 00:e000")
+        end)
+
+        it("handles unsupported OAM target", function()
+            assert.has_error(function()
+                Symbols:new():get_memory_area(0x00, 0xfe00)
+            end, "Unsupported target in OAM: 00:fe00")
+        end)
+
+        it("handles unsupported IO register target", function()
+            assert.has_error(function()
+                Symbols:new():get_memory_area(0x00, 0xff00)
+            end, "Unsupported target in IO registers: 00:ff00")
+        end)
+
+        it("handles invalid HRAM bank", function()
+            assert.has_error(function()
+                Symbols:new():get_memory_area(0x01, 0xff80)
+            end, "Invalid HRAM target: 01:ff80")
+        end)
+
+        it("handles unsupported IE target", function()
+            assert.has_error(function()
+                Symbols:new():get_memory_area(0x00, 0xffff)
+            end, "Unsupported target IE: 00:ffff")
+        end)
     end)
 
     describe("ROM", function()
@@ -63,10 +127,6 @@ describe("symbols", function()
                 [0x4700] = "Bank 1 operand",
             }, sym.rom_banks[1].operands)
         end)
-
-        it("handles invalid bank 0 target")
-
-        it("handles invalid high bank target")
     end)
 
     describe("SRAM", function()
@@ -92,14 +152,10 @@ describe("symbols", function()
                 [0xd100] = { "bank_1_label_value" },
             }, sym.wram_banks[1].labels)
         end)
-
-        it("handles invalid bank 0 target")
     end)
 
     describe("HRAM", function()
         it("handles valid definitions")
-
-        it("handles invalid banked target")
     end)
 
     it("get_region_symbols")
