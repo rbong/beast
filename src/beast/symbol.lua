@@ -45,7 +45,7 @@ local Symbols = {}
 Symbols.new = function(self, options)
     local sym = {
         rom_banks = {},
-        sram = RamSymbols:new(),
+        sram_banks = {},
         wram_banks = {},
         hram = RamSymbols:new(),
         options = options or {},
@@ -62,6 +62,13 @@ Symbols.get_init_rom_bank = function(self, bank_num)
         self.rom_banks[bank_num] = RomSymbols:new(bank_num)
     end
     return self.rom_banks[bank_num]
+end
+
+Symbols.get_init_sram_bank = function(self, bank_num)
+    if not self.sram_banks[bank_num] then
+        self.sram_banks[bank_num] = RamSymbols:new(bank_num)
+    end
+    return self.sram_banks[bank_num]
 end
 
 Symbols.get_init_wram_bank = function(self, bank_num, address)
@@ -82,7 +89,8 @@ Symbols.get_relative_memory_area = function(self, source_bank_num, target_addres
         end
         return self:get_init_rom_bank(source_bank_num)
     elseif target_address < 0xc000 then
-        return self.sram
+        -- Unable to determine SRAM target bank currently
+        return nil
     elseif target_address < 0xe000 then
         -- Unable to determine WRAM target bank currently
         return nil
@@ -95,7 +103,7 @@ Symbols.get_memory_area_unsafe = function(self, bank_num, address)
     if address < 0x8000 then
         return self:get_init_rom_bank(bank_num)
     elseif address < 0xc000 then
-        return self.sram
+        return self:get_init_sram_bank(bank_num)
     elseif address < 0xe000 then
         return self:get_init_wram_bank(bank_num, address)
     elseif address < 0xffff then

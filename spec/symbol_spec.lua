@@ -138,10 +138,10 @@ describe("symbols", function()
 
 			assert.are.same({
 				[0xa000] = { "Comment body" },
-			}, sym.sram.comments)
+			}, sym.sram_banks[0].comments)
 			assert.are.same({
 				[0xa100] = { "label_value" },
-			}, sym.sram.labels)
+			}, sym.sram_banks[0].labels)
 		end)
 	end)
 

@@ -469,14 +469,22 @@ Formatter.generate_memory_file = function(self, base_path, symbols)
 
     -- Write SRAM memory
     local has_sram_labels = false
-    for address, labels in pairs(symbols.sram.labels) do
+    for sram_bank_num, sram_symbols in pairs(symbols.sram_banks) do
         if not has_sram_labels then
             memory_file:write("; SRAM\n\n")
             has_sram_labels = true
         end
 
-        for _, label in pairs(labels) do
-            memory_file:write(string.format("DEF %s\tEQU $%04x\n", label, address))
+        local has_sram_bank_labels = false
+        for address, labels in pairs(sram_symbols.labels) do
+            if not has_sram_bank_labels then
+                memory_file:write(string.format("; SRAM bank $%03x\n\n", sram_bank_num))
+                has_sram_bank_labels = true
+            end
+
+            for _, label in pairs(labels) do
+                memory_file:write(string.format("DEF %s\tEQU $%04x\n", label, address))
+            end
         end
     end
 
