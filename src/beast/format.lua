@@ -469,93 +469,130 @@ Formatter.format_rom_jump_call_location_labels = function(self, rom)
     return labels
 end
 
-Formatter.generate_memory_file = function(self, base_path, symbols)
-    local memory_file_name = "memory.inc"
-    local memory_path = string.format("%s/%s", base_path, memory_file_name)
-    local memory_file = io.open(memory_path, "wb")
+Formatter.format_sram_header = function(self, bank_num, address)
+    return string.format('SECTION "SRAM_%02x_%04x", SRAM[$%04x], BANK[%d]\n', bank_num, address, address, bank_num)
+end
 
-    -- Write SRAM memory
-    local has_sram_labels = false
-    for sram_bank_num, sram_symbols in pairs(symbols.sram_banks) do
-        if not has_sram_labels then
-            memory_file:write("; SRAM\n\n")
-            has_sram_labels = true
-        end
+Formatter.format_wram_header = function(self, bank_num, address)
+    if bank_num == 0 then
+        return string.format('SECTION "WRAM_%02x_%04x", WRAM0[$%04x]\n', bank_num, address, address)
+    end
+    return string.format('SECTION "WRAM_%02x_%04x", WRAMX[$%04x], BANK[$%02x]\n', bank_num, address, address, bank_num)
+end
 
-        local has_sram_bank_labels = false
-        local comments = sram_symbols.comments
-        for address, labels in pairs(sram_symbols.labels) do
-            if not has_sram_bank_labels then
-                memory_file:write(string.format("; SRAM bank $%03x\n\n", sram_bank_num))
-                has_sram_bank_labels = true
-            end
+Formatter.format_hram_header = function(self, address)
+    return string.format('SECTION "HRAM_%04x", HRAM[$%04x]\n', address, address)
+end
 
-            if comments[address] then
-                for _, comment in pairs(comments[address]) do
-                    memory_file:write(self:format_comment(comment))
-                    memory_file:write("\n")
-                end
-            end
-
-            for _, label in pairs(labels) do
-                memory_file:write(string.format("DEF %s\tEQU $%04x\n", label, address))
-            end
+Formatter.generate_memory_symbols = function(self, file, labels, comments, address)
+    if comments[address] then
+        for _, comment in pairs(comments[address]) do
+            file:write(self:format_comment(comment))
+            file:write("\n")
         end
     end
 
-    -- Write WRAM memory
-    local has_wram_labels = false
-    for wram_bank_num, wram_symbols in pairs(symbols.wram_banks) do
-        if not has_wram_labels then
-            if has_sram_labels then
-                memory_file:write("\n")
-            end
-            memory_file:write("; WRAM\n\n")
-            has_wram_labels = true
-        end
+    for _, label in pairs(labels[address]) do
+        file:write(label)
+        file:write(":\n")
+    end
 
-        local has_wram_bank_labels = false
-        local comments = wram_symbols.comments
-        for address, labels in pairs(wram_symbols.labels) do
-            if not has_wram_bank_labels then
-                memory_file:write(string.format("; WRAM bank $%03x\n\n", wram_bank_num))
-                has_wram_bank_labels = true
-            end
+    -- TODO: configurable indentation
+    file:write("    ds 1\n")
+end
 
-            if comments[address] then
-                for _, comment in pairs(comments[address]) do
-                    memory_file:write(self:format_comment(comment))
-                    memory_file:write("\n")
+Formatter.generate_memory_file = function(self, base_path, symbols)
+    local memory_file_name = "memory.asm"
+    local memory_path = string.format("%s/%s", base_path, memory_file_name)
+    local memory_file = io.open(memory_path, "wb")
+
+    local has_labels = false
+
+    -- Write SRAM memory
+    local max_sram_bank = table.maxn(symbols.sram_banks)
+    if max_sram_bank ~= nil then
+        for sram_bank_num = 0, max_sram_bank do
+            local sram_symbols = symbols:get_init_sram_bank(sram_bank_num)
+
+            local labels = sram_symbols.labels
+            local comments = sram_symbols.comments
+            local last_address = -2
+
+            for address = 0xa000, 0xbfff do
+                if labels[address] then
+                    if last_address ~= address - 1 then
+                        if has_labels then
+                            memory_file:write("\n")
+                        end
+                        memory_file:write(self:format_sram_header(sram_bank_num, address))
+                    end
+
+                    self:generate_memory_symbols(memory_file, labels, comments, address)
+
+                    has_labels = true
+                    last_address = address
                 end
             end
+        end
 
-            for _, label in pairs(labels) do
-                memory_file:write(string.format("DEF %s\tEQU $%04x\n", label, address))
+    end
+
+    -- Write WRAM memory
+    local max_wram_bank = table.maxn(symbols.wram_banks)
+    if max_wram_bank ~= nil then
+        for wram_bank_num = 0, max_wram_bank do
+            local wram_symbols = symbols.wram_banks[wram_bank_num] or {}
+
+            local labels = wram_symbols.labels or {}
+            local comments = wram_symbols.comments or {}
+            local last_address = -2
+
+            local wram_address_start
+            local wram_address_end
+
+            if wram_bank_num == 0 then
+                wram_address_start = 0xc000
+                wram_address_end = 0xcfff
+            else
+                wram_address_start = 0xd000
+                wram_address_end = 0xdfff
+            end
+
+            for address = wram_address_start, wram_address_end do
+                if labels[address] then
+                    if last_address ~= address - 1 then
+                        if has_labels then
+                            memory_file:write("\n")
+                        end
+                        memory_file:write(self:format_wram_header(wram_bank_num, address))
+                    end
+
+                    self:generate_memory_symbols(memory_file, labels, comments, address)
+
+                    has_labels = true
+                    last_address = address
+                end
             end
         end
     end
 
     -- Write HRAM memory
-    local has_hram_labels = false
+    local labels = symbols.hram.labels
     local comments = symbols.hram.comments
-    for address, labels in pairs(symbols.hram.labels) do
-        if not has_hram_labels then
-            if has_sram_labels or has_wram_labels then
-                memory_file:write("\n")
+    local last_address = -2
+    for address = 0xff80, 0xfffe do
+        if labels[address] then
+            if last_address ~= address - 1 then
+                if has_labels then
+                    memory_file:write("\n")
+                end
+                memory_file:write(self:format_hram_header(address))
             end
-            memory_file:write("; HRAM\n\n")
-            has_hram_labels = true
-        end
 
-        if comments[address] then
-            for _, comment in pairs(comments[address]) do
-                memory_file:write(self:format_comment(comment))
-                memory_file:write("\n")
-            end
-        end
+            self:generate_memory_symbols(memory_file, labels, comments, address)
 
-        for _, label in pairs(labels) do
-            memory_file:write(string.format("DEF %s\tEQU $%04x\n", label, address))
+            has_labels = true
+            last_address = address
         end
     end
 
