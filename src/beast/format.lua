@@ -191,6 +191,13 @@ Formatter.format_bank_header = function(self, bank_num)
     return string.format('SECTION "ROM Bank $%03x", ROMX[$4000], BANK[$%03x]', bank_num, bank_num)
 end
 
+Formatter.format_comment = function(self, comment)
+    if comment == "" then
+        return ";"
+    end
+    return string.format("; %s", comment)
+end
+
 Formatter.format_instruction = function(self, bank, address, symbols)
     local instruction = bank.instructions[address]
 
@@ -476,10 +483,18 @@ Formatter.generate_memory_file = function(self, base_path, symbols)
         end
 
         local has_sram_bank_labels = false
+        local comments = sram_symbols.comments
         for address, labels in pairs(sram_symbols.labels) do
             if not has_sram_bank_labels then
                 memory_file:write(string.format("; SRAM bank $%03x\n\n", sram_bank_num))
                 has_sram_bank_labels = true
+            end
+
+            if comments[address] then
+                for _, comment in pairs(comments[address]) do
+                    memory_file:write(self:format_comment(comment))
+                    memory_file:write("\n")
+                end
             end
 
             for _, label in pairs(labels) do
@@ -500,10 +515,18 @@ Formatter.generate_memory_file = function(self, base_path, symbols)
         end
 
         local has_wram_bank_labels = false
+        local comments = wram_symbols.comments
         for address, labels in pairs(wram_symbols.labels) do
             if not has_wram_bank_labels then
                 memory_file:write(string.format("; WRAM bank $%03x\n\n", wram_bank_num))
                 has_wram_bank_labels = true
+            end
+
+            if comments[address] then
+                for _, comment in pairs(comments[address]) do
+                    memory_file:write(self:format_comment(comment))
+                    memory_file:write("\n")
+                end
             end
 
             for _, label in pairs(labels) do
@@ -514,6 +537,7 @@ Formatter.generate_memory_file = function(self, base_path, symbols)
 
     -- Write HRAM memory
     local has_hram_labels = false
+    local comments = symbols.hram.comments
     for address, labels in pairs(symbols.hram.labels) do
         if not has_hram_labels then
             if has_sram_labels or has_wram_labels then
@@ -521,6 +545,13 @@ Formatter.generate_memory_file = function(self, base_path, symbols)
             end
             memory_file:write("; HRAM\n\n")
             has_hram_labels = true
+        end
+
+        if comments[address] then
+            for _, comment in pairs(comments[address]) do
+                memory_file:write(self:format_comment(comment))
+                memory_file:write("\n")
+            end
         end
 
         for _, label in pairs(labels) do
@@ -603,12 +634,7 @@ Formatter.generate_bank_file = function(self, base_path, rom, symbols, main_file
         -- Write comments
         if comments[address] then
             for _, comment in pairs(comments[address]) do
-                if comment == "" then
-                    file:write(";")
-                else
-                    file:write("; ")
-                    file:write(comment)
-                end
+                file:write(self:format_comment(comment))
                 file:write("\n")
             end
         end
