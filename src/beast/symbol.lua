@@ -72,7 +72,7 @@ Symbols.get_init_sram_bank = function(self, bank_num)
 end
 
 Symbols.get_init_wram_bank = function(self, bank_num, address)
-    if address >= 0xd000 and bank_num == 0 then
+    if address ~= nil and address >= 0xd000 and bank_num == 0 then
         bank_num = 1
     end
     if not self.wram_banks[bank_num] then
