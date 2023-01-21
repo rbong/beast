@@ -410,7 +410,14 @@ Formatter.new = function(self, options)
 
             local data = bank.instructions[address].data
 
-            local label = rom_labels[bank_num][data]
+            local target_rom_labels
+            if data >= 0x0150 and data < 0x4000 then
+                target_rom_labels = rom_labels[0x00]
+            else
+                target_rom_labels = rom_labels[bank_num]
+            end
+
+            local label = target_rom_labels[data]
             if label then
                 -- Format octet instruction with ROM label symbol
                 return string.format(label_format, label[1])
