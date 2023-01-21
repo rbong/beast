@@ -257,13 +257,17 @@ Rom.parse_code_regions = function(self, symbols, bank_num)
                             -- Parse instruction
                             instruction = parse_next_instruction(data, index, remaining)
 
-                            instructions[address] = instruction
+														if instruction then
+															-- Handle new instruction
 
-                            -- Run instruction handler if available
-                            local instruction_handler = instruction_handlers[instruction.instruc]
-                            if instruction_handler then
-                                instruction_handler(self, bank_num, address, instruction)
-                            end
+															instructions[address] = instruction
+
+															-- Run instruction handler if available
+															local instruction_handler = instruction_handlers[instruction.instruc]
+															if instruction_handler then
+																instruction_handler(self, bank_num, address, instruction)
+															end
+														end
                         end
 
                         if instruction then
