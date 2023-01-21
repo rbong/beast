@@ -4,7 +4,7 @@ local Symbols = beast.symbol.Symbols
 
 -- TODO: test file symbols
 
-describe("symbols", function()
+describe("Symbols", function()
 	it("handles non-definitions", function()
 		local sym = Symbols:new()
 		sym:read_symbols(io.open("./spec/fixtures/non_definitions.sym"))
