@@ -1,4 +1,5 @@
 -- TODO: support multiple contexts per address
+-- TODO: don't use local labels in instructions that can't jump to them
 
 local parse_next_instruction = require("beast/instruction").parse_next_instruction
 
