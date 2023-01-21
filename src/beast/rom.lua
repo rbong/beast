@@ -258,16 +258,16 @@ Rom.parse_code_regions = function(self, symbols, bank_num)
 
                             instructions[address] = instruction
 
-                            -- Iterate loop variables
-                            local size = instruction.size or 1
-                            remaining = remaining - size
-                            address = address + size
-
                             -- Run instruction handler if available
                             local instruction_handler = instruction_handlers[instruction.instruc]
                             if instruction_handler then
                                 instruction_handler(self, bank_num, address, instruction)
                             end
+
+                            -- Iterate loop variables
+                            local size = instruction.size or 1
+                            remaining = remaining - size
+                            address = address + size
                         else
                             -- Handle data
 
