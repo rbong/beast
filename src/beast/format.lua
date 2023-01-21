@@ -455,9 +455,9 @@ Formatter.new = function(self, options)
         -- "ld" Instructions --
 
         ["ld a, n8"] = get_byte_op_instruction_formatter("ld a, $%02x", "ld a, %s"),
-        ["ld b, n8"] = get_byte_op_instruction_formatter("ld b, $%02x", "ld a, %s"),
-        ["ld c, n8"] = get_byte_op_instruction_formatter("ld c, $%02x", "ld a, %s"),
-        ["ld d, n8"] = get_byte_op_instruction_formatter("ld d, $%02x", "ld a, %s"),
+        ["ld b, n8"] = get_byte_op_instruction_formatter("ld b, $%02x", "ld b, %s"),
+        ["ld c, n8"] = get_byte_op_instruction_formatter("ld c, $%02x", "ld c, %s"),
+        ["ld d, n8"] = get_byte_op_instruction_formatter("ld d, $%02x", "ld d, %s"),
         ["ld e, n8"] = get_byte_op_instruction_formatter("ld e, $%02x", "ld e, %s"),
         ["ld h, n8"] = get_byte_op_instruction_formatter("ld h, $%02x", "ld h, %s"),
         ["ld l, n8"] = get_byte_op_instruction_formatter("ld l, $%02x", "ld l, %s"),
