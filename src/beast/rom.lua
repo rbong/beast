@@ -47,7 +47,7 @@ local function jump_instruction_handler(rom, bank_num, address, instruction)
 end
 
 local function relative_jump_instruction_handler(rom, bank_num, address, instruction)
-    local target_address = address + instruction.data
+    local target_address = address + instruction.data + 2
 
     if bank_num == 0 then
         if target_address < 0 or target_address >= 0x4000 then
