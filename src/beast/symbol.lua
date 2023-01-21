@@ -91,6 +91,8 @@ Symbols.get_relative_memory_area = function(self, source_bank_num, target_addres
     elseif target_address < 0xc000 then
         -- Unable to determine SRAM target bank currently
         return nil
+    elseif target_address < 0xd000 then
+        return self:get_init_wram_bank(0x00)
     elseif target_address < 0xe000 then
         -- Unable to determine WRAM target bank currently
         return nil

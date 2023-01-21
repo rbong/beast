@@ -412,8 +412,17 @@ Formatter.new = function(self, options)
 
             local label = rom_labels[bank_num][data]
             if label then
-                -- Format octet instruction with label symbol
+                -- Format octet instruction with ROM label symbol
                 return string.format(label_format, label[1])
+            end
+
+            local target_symbols = symbols:get_relative_memory_area(bank_num, data)
+            if target_symbols then
+                label = target_symbols.labels[data]
+                if label then
+                    -- Format octet instruction with label symbol
+                    return string.format(label_format, label[1])
+                end
             end
 
             -- Format octet instruction

@@ -284,9 +284,18 @@ describe("Formatter", function()
             )
         end)
 
-        it("formats octet instruction with label", function()
-            rom_labels[0x00][0xbeef] = { "my_label" }
-            instructions[0x0000] = { instruc = "ld a, [n16]", data = 0xbeef }
+        it("formats octet instruction with WRAM label", function()
+            symbols:add_label_symbol(0x00, 0xce2b, "my_label")
+            instructions[0x0000] = { instruc = "ld a, [n16]", data = 0xce2b }
+            assert.are.same(
+                "    ld a, [my_label]                                        ; 00:0000\n",
+                format_instruction()
+            )
+        end)
+
+        it("formats octet instruction with ROM label", function()
+            rom_labels[0x00][0x2b4e] = { "my_label" }
+            instructions[0x0000] = { instruc = "ld a, [n16]", data = 0x2b4e }
             assert.are.same(
                 "    ld a, [my_label]                                        ; 00:0000\n",
                 format_instruction()
