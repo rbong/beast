@@ -44,25 +44,6 @@ describe("Formatter", function()
         }, includes)
     end)
 
-    it("appends address", function()
-        local formatter = Formatter:new(Options:new())
-
-        assert.are.same(
-            "inc a                                                       ; 2b:beef\n",
-            formatter:append_address("inc a", 0x2b, 0xbeef)
-        )
-
-        assert.are.same(
-            "                                                            ; 2b:beef\n",
-            formatter:append_address("", 0x2b, 0xbeef)
-        )
-
-        assert.are.same(
-            "    db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00 ; 2b:beef\n",
-            formatter:append_address("    db $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00", 0x2b, 0xbeef)
-        )
-    end)
-
     it("formats bank header", function()
         local formatter = Formatter:new(Options:new())
         assert.are.same('SECTION "ROM Bank $000", ROM0[$0000]\n\n', formatter:format_bank_header(0))
@@ -125,10 +106,7 @@ describe("Formatter", function()
 
     it("formats incbin statement", function()
         local formatter = Formatter:new(Options:new())
-        assert.are.same(
-            '    INCBIN "my_file.data"                                   ; 2b:beef\n',
-            formatter:format_incbin_statement(0x2b, 0xbeef, "my_file.data")
-        )
+        assert.are.same('    INCBIN "my_file.data"', formatter:format_incbin_statement("my_file.data"))
     end)
 
     it("formats memory placeholder", function()
@@ -227,121 +205,79 @@ describe("Formatter", function()
 
         it("formats basic instruction", function()
             instructions[0x0000] = { instruc = "inc a" }
-            assert.are.same(
-                "    inc a                                                   ; 00:0000\n",
-                format_instruction()
-            )
+            assert.are.same("    inc a", format_instruction())
         end)
 
         it("formats byte instruction", function()
             instructions[0x0000] = { instruc = "ld a, n8", data = 0xbf }
-            assert.are.same(
-                "    ld a, $bf                                               ; 00:0000\n",
-                format_instruction()
-            )
+            assert.are.same("    ld a, $bf", format_instruction())
         end)
 
         it("formats byte instruction with op symbol", function()
             bank_symbols.operands[0x0000] = "my_operand"
             instructions[0x0000] = { instruc = "ld a, n8", data = 0xbf }
-            assert.are.same(
-                "    ld a, my_operand                                        ; 00:0000\n",
-                format_instruction()
-            )
+            assert.are.same("    ld a, my_operand", format_instruction())
         end)
 
         it("formats HRAM instruction", function()
             instructions[0x0000] = { instruc = "ldio a, [$ff00+n8]", data = 0x02 }
-            assert.are.same(
-                "    ldio a, [$ff00+$02]                                     ; 00:0000\n",
-                format_instruction()
-            )
+            assert.are.same("    ldio a, [$ff00+$02]", format_instruction())
         end)
 
         it("formats HRAM instruction with op symbol", function()
             bank_symbols.operands[0x0000] = "$ff00 + my_operand"
             instructions[0x0000] = { instruc = "ldio a, [$ff00+n8]", data = 0x02 }
-            assert.are.same(
-                "    ldio a, [$ff00 + my_operand]                            ; 00:0000\n",
-                format_instruction()
-            )
+            assert.are.same("    ldio a, [$ff00 + my_operand]", format_instruction())
         end)
 
         it("formats octet instruction", function()
             instructions[0x0000] = { instruc = "ld a, [n16]", data = 0xbeef }
-            assert.are.same(
-                "    ld a, [$beef]                                           ; 00:0000\n",
-                format_instruction()
-            )
+            assert.are.same("    ld a, [$beef]", format_instruction())
         end)
 
         it("formats octet instruction with op symbol", function()
             bank_symbols.operands[0x0000] = "my_operand"
             instructions[0x0000] = { instruc = "ld a, [n16]", data = 0xbeef }
-            assert.are.same(
-                "    ld a, [my_operand]                                      ; 00:0000\n",
-                format_instruction()
-            )
+            assert.are.same("    ld a, [my_operand]", format_instruction())
         end)
 
         it("formats octet instruction with WRAM label", function()
             symbols:add_label_symbol(0x00, 0xce2b, "my_label")
             instructions[0x0000] = { instruc = "ld a, [n16]", data = 0xce2b }
-            assert.are.same(
-                "    ld a, [my_label]                                        ; 00:0000\n",
-                format_instruction()
-            )
+            assert.are.same("    ld a, [my_label]", format_instruction())
         end)
 
         it("formats octet instruction with ROM label", function()
             rom_labels[0x00][0x2b4e] = { "my_label" }
             instructions[0x0000] = { instruc = "ld a, [n16]", data = 0x2b4e }
-            assert.are.same(
-                "    ld a, [my_label]                                        ; 00:0000\n",
-                format_instruction()
-            )
+            assert.are.same("    ld a, [my_label]", format_instruction())
         end)
 
         it("formats positive signed instruction", function()
             instructions[0x0000] = { instruc = "add sp, e8", data = 1 }
-            assert.are.same(
-                "    add sp, 1                                               ; 00:0000\n",
-                format_instruction()
-            )
+            assert.are.same("    add sp, 1", format_instruction())
         end)
 
         it("formats signed with op symbol", function()
             bank_symbols.operands[0x0000] = "my_operand"
             instructions[0x0000] = { instruc = "add sp, e8", data = 1 }
-            assert.are.same(
-                "    add sp, my_operand                                      ; 00:0000\n",
-                format_instruction()
-            )
+            assert.are.same("    add sp, my_operand", format_instruction())
         end)
 
         it("formats negative signed instruction", function()
             instructions[0x0000] = { instruc = "add sp, e8", data = -1 }
-            assert.are.same(
-                "    add sp, -1                                              ; 00:0000\n",
-                format_instruction()
-            )
+            assert.are.same("    add sp, -1", format_instruction())
         end)
 
         it("formats relative signed instruction", function()
             instructions[0x0000] = { instruc = "jr e8", data = 2 }
-            assert.are.same(
-                "    jr @+4                                                  ; 00:0000\n",
-                format_instruction()
-            )
+            assert.are.same("    jr @+4", format_instruction())
         end)
 
         it("formats relative signed instruction with label", function()
             rom_labels[0x00][0x0004] = { ".my_label" }
             instructions[0x0000] = { instruc = "jr e8", data = 2 }
-            assert.are.same(
-                "    jr .my_label                                            ; 00:0000\n",
-                format_instruction()
-            )
+            assert.are.same("    jr .my_label", format_instruction())
         end)
     end)
 
@@ -358,7 +294,7 @@ describe("Formatter", function()
             { banks = { [0x00] = { data = bytes_to_string({ 0xa1, 0xc4, 0xdf, 0x11, 0x40, 0xfe, 0x01, 0x91 }) } } }
         local formatter = Formatter:new(Options:new())
         assert.are.same(
-            "    db $a1, $c4, $df, $11, $40, $fe, $01, $91               ; 00:0000\n",
+            "    db $a1, $c4, $df, $11, $40, $fe, $01, $91",
             formatter:format_full_data_line(rom, 0x00, 0x0000)
         )
     end)
@@ -367,18 +303,14 @@ describe("Formatter", function()
         local rom =
             { banks = { [0x00] = { data = bytes_to_string({ 0xa1, 0xc4, 0xdf, 0x11, 0x40, 0xfe, 0x01, 0x91 }) } } }
         local formatter = Formatter:new(Options:new())
-        assert.are.same(
-            "    db $a1, $c4, $df, $11                                   ; 00:0000\n",
-            formatter:format_partial_data_line(rom, 0x00, 0x0000, 4)
-        )
+        assert.are.same("    db $a1, $c4, $df, $11", formatter:format_partial_data_line(rom, 0x00, 0x0000, 4))
     end)
 
     it("formats text", function()
-        local rom =
-            { banks = { [0x00] = { data = 'my "string"\ttest\n\0foo\\bar' } } }
+        local rom = { banks = { [0x00] = { data = 'my "string"\ttest\n\0foo\\bar' } } }
         local formatter = Formatter:new(Options:new())
         assert.are.same(
-            '    db "my \\"string\\"\\ttest\\n", $00, "foo\\\\bar"             ; 00:0000\n',
+            '    db "my \\"string\\"\\ttest\\n", $00, "foo\\\\bar"',
             formatter:format_text(rom, 0x00, 0x0000, 25)
         )
     end)

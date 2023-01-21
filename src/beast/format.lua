@@ -51,6 +51,19 @@ FileGenerator.get_bank_end_address = function(self, bank_num)
     return 0x8000
 end
 
+FileGenerator.write_line_with_address = function(self, bank_num, address, file, line)
+    file:write(line)
+
+    file:write(" ")
+    local len = #line
+    while len < 60 do
+        file:write(" ")
+        len = len + 1
+    end
+
+    file:write(self.formatter:format_address(bank_num, address))
+end
+
 FileGenerator.generate_memory_symbols = function(self, memory_symbols, address)
     local labels = memory_symbols.labels
     local comments = memory_symbols.comments
@@ -245,14 +258,16 @@ FileGenerator.generate_bank_data = function(self, bank_num, address, bank_file)
     -- Write output
 
     if region.region_type == "text" then
-        bank_file:write(self.formatter:format_text(self.rom, bank_num, address, size))
+        local line = self.formatter:format_text(self.rom, bank_num, address, size)
+        self:write_line_with_address(bank_num, address, bank_file, line)
     else
         local remaining_bytes = size
 
         -- Output by increments of 8
         if remaining_bytes >= 8 then
             repeat
-                bank_file:write(self.formatter:format_full_data_line(self.rom, bank_num, address))
+                local line = self.formatter:format_full_data_line(self.rom, bank_num, address)
+                self:write_line_with_address(bank_num, address, bank_file, line)
 
                 remaining_bytes = remaining_bytes - 8
                 address = address + 8
@@ -261,7 +276,8 @@ FileGenerator.generate_bank_data = function(self, bank_num, address, bank_file)
         end
 
         if remaining_bytes > 0 then
-            bank_file:write(self.formatter:format_partial_data_line(self.rom, bank_num, address, remaining_bytes))
+            local line = self.formatter:format_partial_data_line(self.rom, bank_num, address, remaining_bytes)
+            self:write_line_with_address(bank_num, address, bank_file, line)
         end
     end
 
@@ -315,14 +331,18 @@ FileGenerator.generate_bank_file = function(self, bank_num)
             if file_symbol then
                 -- Write file symbol
                 self:generate_file_symbol_file(bank_num, address, file_symbol)
-                file:write(self.formatter:format_incbin_statement(bank_num, address, file_symbol.file_name))
+                local line = self.formatter:format_incbin_statement(file_symbol.file_name)
+                self:write_line_with_address(bank_num, address, file, line)
                 address = address + file_symbol.size
             else
                 local instruction = bank.instructions[address]
 
                 if instruction then
                     -- Write instruction
-                    file:write(
+                    self:write_line_with_address(
+                        bank_num,
+                        address,
+                        file,
                         self.formatter:format_instruction(self.rom, self.symbols, self.rom_labels, bank_num, address)
                     )
                     address = address + (instruction.size or 1)
@@ -583,19 +603,8 @@ Formatter.get_include_files = function(self, base_path)
     end
 end
 
-Formatter.append_address = function(self, line, bank_num, address)
-    if self.options.no_address then
-        return line
-    end
-
-    line = line .. " "
-    local len = #line
-    while len < 60 do
-        line = line .. " "
-        len = len + 1
-    end
-
-    return line .. string.format("; %02x:%04x\n", bank_num, address)
+Formatter.format_address = function(self, bank_num, address)
+    return string.format("; %02x:%04x\n", bank_num, address)
 end
 
 Formatter.format_bank_header = function(self, bank_num)
@@ -644,9 +653,9 @@ Formatter.format_include_statement = function(self, file_name)
     return string.format('INCLUDE "%s"\n', file_name)
 end
 
-Formatter.format_incbin_statement = function(self, bank_num, address, file_name)
+Formatter.format_incbin_statement = function(self, file_name)
     -- TODO: configurable indentation
-    return self:append_address(string.format('    INCBIN "%s"', file_name), bank_num, address)
+    return string.format('    INCBIN "%s"', file_name)
 end
 
 Formatter.format_memory_placeholder = function(self)
@@ -738,29 +747,25 @@ Formatter.format_instruction = function(self, rom, symbols, rom_labels, bank_num
     end
 
     -- TODO: configurable indentation
-    return self:append_address("    " .. output, bank.bank_num, address)
+    return "    " .. output
 end
 
 Formatter.format_full_data_line = function(self, rom, bank_num, address)
     local data = rom.banks[bank_num].data
     local index = address_to_index(address)
 
-    return self:append_address(
-        string.format(
-            -- TODO: configurable indentation
-            "    db $%02x, $%02x, $%02x, $%02x, $%02x, $%02x, $%02x, $%02x",
-            string.byte(data:sub(index, index)),
-            string.byte(data:sub(index + 1, index + 1)),
-            string.byte(data:sub(index + 2, index + 2)),
-            string.byte(data:sub(index + 3, index + 3)),
-            string.byte(data:sub(index + 4, index + 4)),
-            string.byte(data:sub(index + 5, index + 5)),
-            string.byte(data:sub(index + 6, index + 6)),
-            string.byte(data:sub(index + 7, index + 7)),
-            string.byte(data:sub(index + 8, index + 8))
-        ),
-        bank_num,
-        address
+    return string.format(
+        -- TODO: configurable indentation
+        "    db $%02x, $%02x, $%02x, $%02x, $%02x, $%02x, $%02x, $%02x",
+        string.byte(data:sub(index, index)),
+        string.byte(data:sub(index + 1, index + 1)),
+        string.byte(data:sub(index + 2, index + 2)),
+        string.byte(data:sub(index + 3, index + 3)),
+        string.byte(data:sub(index + 4, index + 4)),
+        string.byte(data:sub(index + 5, index + 5)),
+        string.byte(data:sub(index + 6, index + 6)),
+        string.byte(data:sub(index + 7, index + 7)),
+        string.byte(data:sub(index + 8, index + 8))
     )
 end
 
@@ -783,7 +788,7 @@ Formatter.format_partial_data_line = function(self, rom, bank_num, address, size
         index = index + 1
     end
 
-    return self:append_address(output, bank_num, address)
+    return output
 end
 
 Formatter.format_text = function(self, rom, bank_num, address, size)
@@ -852,7 +857,7 @@ Formatter.format_text = function(self, rom, bank_num, address, size)
         output = output .. '"'
     end
 
-    return self:append_address(output, bank_num, address)
+    return output
 end
 
 Formatter.generate_files = function(self, base_path, rom, symbols)
