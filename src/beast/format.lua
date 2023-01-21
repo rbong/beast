@@ -400,14 +400,20 @@ Formatter.new = function(self, options)
         end
     end
 
-    local function get_hram_op_instruction_formatter(byte_format, op_format)
+    local function get_hram_op_instruction_formatter(byte_format, string_format)
         return function(bank, address, symbols)
             local bank_num = bank.bank_num
+
+            local label = symbols.hram.labels[0xff00 + bank.instructions[address].data]
+            if label then
+                -- Format octet instruction with label symbol
+                return string.format(string_format, label[1])
+            end
 
             local op_symbol = symbols:get_init_rom_bank(bank_num).operands[address]
             if op_symbol then
                 -- Format HRAM instruction with op symbol
-                return string.format(op_format, op_symbol)
+                return string.format(string_format, op_symbol)
             end
 
             -- Format HRAM instruction

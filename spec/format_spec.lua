@@ -224,6 +224,12 @@ describe("Formatter", function()
             assert.are.same("    ldio a, [$ff00+$02]", format_instruction())
         end)
 
+        it("formats HRAM instruction with label", function()
+            symbols.hram.labels[0xff02] = { "my_label" }
+            instructions[0x0000] = { instruc = "ldio a, [$ff00+n8]", data = 0x02 }
+            assert.are.same("    ldio a, [my_label]", format_instruction())
+        end)
+
         it("formats HRAM instruction with op symbol", function()
             bank_symbols.operands[0x0000] = "$ff00 + my_operand"
             instructions[0x0000] = { instruc = "ldio a, [$ff00+n8]", data = 0x02 }
