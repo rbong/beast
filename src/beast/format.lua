@@ -72,6 +72,8 @@ FileGenerator.generate_memory_symbols = function(self, memory_symbols, address)
 end
 
 FileGenerator.generate_sram_memory_file_sections = function(self, has_memory_sections)
+    -- TODO: get rid of table.maxn
+    -- TODO: warn when not using LuaJIT
     local max_sram_bank = table.maxn(self.symbols.sram_banks)
 
     if max_sram_bank == nil then
