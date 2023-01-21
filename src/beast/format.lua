@@ -55,7 +55,7 @@ FileGenerator.write_line_with_address = function(self, bank_num, address, file, 
     file:write(line)
 
     file:write(" ")
-    local len = #line
+    local len = #line + 1
     while len < 60 do
         file:write(" ")
         len = len + 1
