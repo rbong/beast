@@ -285,19 +285,28 @@ end
 
 -- TODO: count unconditional jumps as code end and treat return as new jump location
 Rom.parse_jump_call_location = function(self, symbols, bank_num, address)
+    local bank = self.banks[bank_num]
+    local instructions = bank.instructions
+
+    -- Already parsed, return early
+    if instructions[address] then
+        return false
+    end
+
+    local data = bank.data
     local bank_symbols = symbols:get_init_rom_bank(bank_num)
     local regions = bank_symbols.regions
     local files = bank_symbols.files
-
-    local bank = self.banks[bank_num]
-
-    local instructions = bank.instructions
-    local data = bank.data
 
     self:add_context(bank_num, address)
 
     while true do
         local index = address % 0x4000
+
+        -- Check for instructions - already parsed
+        if instructions[address] then
+            break
+        end
 
         -- Check for data region - terminates call/jump location
         -- TODO: optional warn
@@ -318,7 +327,7 @@ Rom.parse_jump_call_location = function(self, symbols, bank_num, address)
         -- Parse address
         local instruction = parse_next_instruction(data, index)
         if not instruction then
-            return
+            break
         end
 
         -- Record instruction
@@ -332,12 +341,14 @@ Rom.parse_jump_call_location = function(self, symbols, bank_num, address)
 
         -- End parsing if instruction ends code
         if instruction.code_end then
-            return
+            break
         end
 
         -- Iterate address
         address = address + (instruction.size or 1)
     end
+
+    return true
 end
 
 Rom.parse_jump_call_locations = function(self, symbols)
@@ -354,9 +365,10 @@ Rom.parse_jump_call_locations = function(self, symbols)
             unparsed_jump_call_locations[bank_num] = {}
 
             for address in pairs(bank_jump_call_locations) do
-                self:parse_jump_call_location(symbols, bank_num, address)
-                has_parsed = true
-                has_new_code_locations = true
+                if self:parse_jump_call_location(symbols, bank_num, address) then
+                    has_parsed = true
+                    has_new_code_locations = true
+                end
             end
         end
     end
