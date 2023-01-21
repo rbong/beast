@@ -630,7 +630,7 @@ end
 
 Formatter.format_incbin_statement = function(self, bank_num, address, file_name)
     -- TODO: configurable indentation
-    return self:append_address(string.format('    INCBIN("%s")', file_name), bank_num, address)
+    return self:append_address(string.format('    INCBIN "%s"', file_name), bank_num, address)
 end
 
 Formatter.format_memory_placeholder = function(self)

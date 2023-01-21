@@ -126,7 +126,7 @@ describe("Formatter", function()
     it("formats incbin statement", function()
         local formatter = Formatter:new(Options:new())
         assert.are.same(
-            '    INCBIN("my_file.data")                                  ; 2b:beef\n',
+            '    INCBIN "my_file.data"                                   ; 2b:beef\n',
             formatter:format_incbin_statement(0x2b, 0xbeef, "my_file.data")
         )
     end)
