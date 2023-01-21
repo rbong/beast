@@ -221,6 +221,7 @@ FileGenerator.generate_bank_data = function(self, bank_num, address, bank_file)
     local comments = bank_symbols.comments
     local regions = bank_symbols.regions
     local files = bank_symbols.files
+    local replacements = bank_symbols.replacements
 
     local index = address_to_index(address)
     local end_address = self:get_bank_end_address(bank_num)
@@ -240,7 +241,7 @@ FileGenerator.generate_bank_data = function(self, bank_num, address, bank_file)
             check_index = check_index + 1
         until check_index >= end_address or size >= region.size or files[check_address]
     else
-        -- Get data size for plain data: can be terminated by instructions, new labels, comments, or regions
+        -- Get data size for plain data: can be terminated by instructions, new labels, comments, and other symbols
         repeat
             size = size + 1
             check_address = check_address + 1
@@ -251,6 +252,7 @@ FileGenerator.generate_bank_data = function(self, bank_num, address, bank_file)
             or comments[check_address]
             or regions[check_address]
             or files[check_address]
+            or replacements[check_address]
     end
 
     -- Write output
