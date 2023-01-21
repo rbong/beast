@@ -285,6 +285,7 @@ end
 FileGenerator.generate_bank_file = function(self, bank_num)
     local bank = self.rom.banks[bank_num]
     local bank_symbols = self.symbols:get_init_rom_bank(bank_num)
+    local bank_instructions = bank.instructions
 
     local file_name = self.formatter:get_bank_file_name(bank_num)
     local path = self.formatter:get_bank_file_path(self.base_path, bank_num)
@@ -333,7 +334,7 @@ FileGenerator.generate_bank_file = function(self, bank_num)
                 self:write_line_with_address(bank_num, address, file, line)
                 address = address + file_symbol.size
             else
-                local instruction = bank.instructions[address]
+                local instruction = bank_instructions[address]
 
                 if instruction then
                     -- Write instruction
