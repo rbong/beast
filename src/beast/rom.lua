@@ -250,11 +250,12 @@ Rom.parse_code_regions = function(self, symbols, bank_num)
                         remaining = remaining - size
                         address = address + size
                     else
-                        -- Parse instruction
-                        local instruction = parse_next_instruction(data, index, remaining)
+                        -- Get existing instruction
+                        local instruction = instructions[address]
 
-                        if instruction then
-                            -- Handle instruction
+                        if not instruction then
+                            -- Parse instruction
+                            instruction = parse_next_instruction(data, index, remaining)
 
                             instructions[address] = instruction
 
@@ -263,6 +264,10 @@ Rom.parse_code_regions = function(self, symbols, bank_num)
                             if instruction_handler then
                                 instruction_handler(self, bank_num, address, instruction)
                             end
+                        end
+
+                        if instruction then
+                            -- Handle instruction
 
                             -- Iterate loop variables
                             local size = instruction.size or 1
