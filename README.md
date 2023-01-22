@@ -15,7 +15,7 @@ Using [LuaRocks](https://luarocks.org/):
 ```sh
 git clone "https://github.com/rbong/beast.git" beast
 cd beast
-luarocks make ./beast-git-0.rockspec
+luarocks make ./beast-git-1.rockspec
 ```
 
 Or, add BEAST to your system paths, ex.:

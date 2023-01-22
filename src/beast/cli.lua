@@ -91,7 +91,7 @@ Arguments:
 end
 
 local function print_version()
-    print("git-0")
+    print("git-1")
 end
 
 local Options = {}
